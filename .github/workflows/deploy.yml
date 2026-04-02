@@ -43,7 +43,7 @@ jobs:
 
       - name: Health check
         run: |
-          sleep 3
+          sleep 5
           ssh -i ~/.ssh/deploy_key \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "curl -f http://127.0.0.1:4321/ || (pm2 logs software-crafting --lines 20 && exit 1)"
+            "curl -sf --max-time 10 http://localhost:4321/ > /dev/null && echo 'Health check passed' || (pm2 logs software-crafting --nostream --lines 20 && exit 1)"
