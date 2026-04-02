@@ -39,7 +39,7 @@ jobs:
             dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/dist/
           ssh -i ~/.ssh/deploy_key \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "pm2 restart software-crafting"
+            "cd /var/www/software-crafting && pm2 startOrRestart ecosystem.config.cjs --update-env"
 
       - name: Health check
         run: |

@@ -1,0 +1,208 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import ObfuscatedContact from '../components/public/ObfuscatedContact.tsx';
+
+export const prerender = true;
+---
+
+<PublicLayout
+  title="Datenschutzerklärung — Software Crafting"
+  description="Datenschutzerklärung gemäß DSGVO für software-crafting.de"
+>
+  <article class="max-w-3xl mx-auto px-4 py-20 prose prose-invert prose-headings:font-display">
+    <h1>Datenschutzerklärung</h1>
+
+    <!-- 1. Verantwortlicher -->
+    <h2>1. Verantwortlicher</h2>
+    <p>
+      Software Crafting<br />
+      Inh. Daniel Eberl<br />
+      Untere Breite 11<br />
+      73087 Bad Boll
+    </p>
+    <ObfuscatedContact client:load />
+
+    <!-- 2. Überblick -->
+    <h2>2. Überblick der Datenverarbeitungen</h2>
+    <p>
+      Die folgenden Informationen geben einen Überblick darüber, welche personenbezogenen Daten
+      beim Besuch unserer Website und bei der Nutzung unseres Kundenportals verarbeitet werden.
+    </p>
+
+    <!-- 3. Hosting -->
+    <h2>3. Hosting</h2>
+    <p>
+      Diese Website wird bei <strong>Hetzner Online GmbH</strong>, Industriestr. 25,
+      91710 Gunzenhausen, Deutschland gehostet. Beim Aufruf unserer Website erfasst der
+      Hosting-Server automatisch technische Zugriffsdaten (sog. Server-Logfiles):
+    </p>
+    <ul>
+      <li>IP-Adresse des zugreifenden Geräts</li>
+      <li>Datum und Uhrzeit des Zugriffs</li>
+      <li>Aufgerufene Seite / Datei</li>
+      <li>Übertragene Datenmenge</li>
+      <li>Browser-Typ und -Version</li>
+      <li>Betriebssystem</li>
+      <li>Referrer-URL</li>
+    </ul>
+    <p>
+      Die Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an der
+      Bereitstellung und Sicherheit unserer Website (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO).
+      Server-Logfiles werden nach 7 Tagen automatisch gelöscht.
+    </p>
+    <p>
+      Mit Hetzner haben wir einen Auftragsverarbeitungsvertrag (AVV) gemäß Art.&nbsp;28 DSGVO
+      geschlossen. Die Server befinden sich in Deutschland.
+    </p>
+
+    <!-- 4. Kontaktformular -->
+    <h2>4. Kontaktformular</h2>
+    <p>
+      Wenn Sie uns über das Kontaktformular kontaktieren, werden folgende Angaben verarbeitet:
+    </p>
+    <ul>
+      <li>Name</li>
+      <li>E-Mail-Adresse</li>
+      <li>Nachrichtentext</li>
+    </ul>
+    <p>
+      Die Daten werden per E-Mail an uns übermittelt und nicht zusätzlich in einer Datenbank
+      gespeichert. Die Verarbeitung erfolgt zur Bearbeitung Ihrer Anfrage auf Grundlage Ihrer
+      Einwilligung (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;a DSGVO) bzw. zur Durchführung vorvertraglicher
+      Maßnahmen (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;b DSGVO). Die Daten werden gelöscht, sobald
+      Ihre Anfrage abschließend bearbeitet wurde, sofern keine gesetzlichen Aufbewahrungspflichten
+      entgegenstehen.
+    </p>
+
+    <!-- 5. Webanalyse -->
+    <h2>5. Webanalyse</h2>
+    <p>
+      Wir nutzen <strong>Pirsch Analytics</strong> (Emvi Software GmbH, Karlsruhe, Deutschland)
+      zur statistischen Auswertung der Website-Nutzung. Pirsch ist ein datenschutzfreundlicher
+      Analysedienst, der <strong>ohne Cookies</strong> arbeitet und keine personenbezogenen Daten
+      an Dritte übermittelt. Die Server befinden sich in Deutschland.
+    </p>
+    <p>
+      Es werden ausschließlich anonymisierte Zugriffsdaten erfasst (Seitenaufrufe, Referrer,
+      Browser-Typ, Bildschirmgröße, Land). Eine Identifikation einzelner Besucher ist nicht möglich.
+      Die Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an der Analyse der
+      Website-Nutzung (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO). Da Pirsch keine Cookies setzt
+      und keine personenbezogenen Daten verarbeitet, ist eine Einwilligung gemäß
+      TTDSG § 25 Abs.&nbsp;2 Nr.&nbsp;2 nicht erforderlich.
+    </p>
+
+    <!-- 6. Kundenportal -->
+    <h2>6. Kundenportal</h2>
+    <p>
+      Für registrierte Kunden stellen wir unter <code>/portal</code> ein geschütztes
+      Kundenportal bereit. Im Rahmen des Portals verarbeiten wir:
+    </p>
+    <ul>
+      <li>E-Mail-Adresse (zur Authentifizierung per Magic Link)</li>
+      <li>Fragebogen-Antworten und projektbezogene Daten</li>
+      <li>Bereitgestellte Projektdateien (Entwürfe, Berichte, Designs)</li>
+    </ul>
+    <p>
+      Die Verarbeitung erfolgt zur Durchführung des Vertragsverhältnisses
+      (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;b DSGVO).
+    </p>
+
+    <h3>6.1 Supabase</h3>
+    <p>
+      Für Authentifizierung und Datenspeicherung im Kundenportal nutzen wir
+      <strong>Supabase</strong> (Supabase Inc.). Die Daten werden in der EU
+      (Frankfurt am Main, Deutschland) gehostet. Supabase verarbeitet in unserem Auftrag:
+    </p>
+    <ul>
+      <li>E-Mail-Adressen der Portal-Nutzer</li>
+      <li>Authentifizierungs-Token (verschlüsselt)</li>
+      <li>Fragebogen-Antworten und Metadaten zu bereitgestellten Dateien</li>
+    </ul>
+
+    <!-- 7. Cookies -->
+    <h2>7. Cookies</h2>
+    <p>
+      Unsere öffentliche Website verwendet <strong>keine Cookies</strong>.
+    </p>
+    <p>
+      Das Kundenportal (<code>/portal</code>) setzt <strong>funktional notwendige Cookies</strong>,
+      die für die Authentifizierung und den sicheren Betrieb des Portals erforderlich sind:
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Cookie</th>
+          <th>Zweck</th>
+          <th>Dauer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>sb-*-auth-token</code></td>
+          <td>Supabase Authentifizierung / Session</td>
+          <td>Session / 1 Stunde</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      Für funktional notwendige Cookies ist eine Einwilligung gemäß TTDSG § 25 Abs.&nbsp;2
+      Nr.&nbsp;2 nicht erforderlich, da sie unbedingt erforderlich sind, um den vom Nutzer
+      ausdrücklich gewünschten Dienst (Portal-Zugang) zu erbringen.
+    </p>
+
+    <!-- 8. SSL/TLS -->
+    <h2>8. SSL-/TLS-Verschlüsselung</h2>
+    <p>
+      Diese Website nutzt aus Sicherheitsgründen eine SSL-/TLS-Verschlüsselung. Eine
+      verschlüsselte Verbindung erkennen Sie daran, dass die Adresszeile des Browsers von
+      „http://" auf „https://" wechselt und an dem Schloss-Symbol.
+    </p>
+
+    <!-- 9. Ihre Rechte -->
+    <h2>9. Ihre Rechte</h2>
+    <p>Sie haben jederzeit folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
+    <ul>
+      <li><strong>Auskunft</strong> (Art.&nbsp;15 DSGVO) — Welche Daten wir über Sie speichern</li>
+      <li><strong>Berichtigung</strong> (Art.&nbsp;16 DSGVO) — Korrektur unrichtiger Daten</li>
+      <li><strong>Löschung</strong> (Art.&nbsp;17 DSGVO) — Entfernung Ihrer Daten</li>
+      <li><strong>Einschränkung</strong> (Art.&nbsp;18 DSGVO) — Einschränkung der Verarbeitung</li>
+      <li><strong>Datenübertragbarkeit</strong> (Art.&nbsp;20 DSGVO) — Export Ihrer Daten</li>
+      <li><strong>Widerspruch</strong> (Art.&nbsp;21 DSGVO) — Widerspruch gegen die Verarbeitung</li>
+    </ul>
+    <p>
+      Zur Ausübung Ihrer Rechte wenden Sie sich bitte an die oben genannten Kontaktdaten.
+    </p>
+
+    <!-- 10. Beschwerderecht -->
+    <h2>10. Beschwerderecht</h2>
+    <p>
+      Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren, wenn
+      Sie der Ansicht sind, dass die Verarbeitung Ihrer Daten gegen die DSGVO verstößt.
+      Die für uns zuständige Aufsichtsbehörde ist:
+    </p>
+    <p>
+      Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg<br />
+      Lautenschlagerstraße 20<br />
+      70173 Stuttgart
+    </p>
+
+    <!-- 11. Speicherdauer -->
+    <h2>11. Speicherdauer</h2>
+    <p>
+      Personenbezogene Daten werden für die Dauer der Geschäftsbeziehung bzw. solange für
+      den jeweiligen Verarbeitungszweck erforderlich gespeichert. Nach Zweckerfüllung oder
+      Vertragsende werden Daten gelöscht, sofern keine gesetzlichen Aufbewahrungsfristen
+      (z.&thinsp;B. steuerrechtlich bis zu 10 Jahre gemäß AO/HGB) entgegenstehen.
+    </p>
+
+    <!-- 12. Änderungen -->
+    <h2>12. Änderungen dieser Datenschutzerklärung</h2>
+    <p>
+      Wir behalten uns vor, diese Datenschutzerklärung zu aktualisieren, um sie an geänderte
+      Rechtslagen oder Änderungen unseres Dienstes anzupassen. Die aktuelle Version finden
+      Sie stets auf dieser Seite.
+    </p>
+
+    <p class="text-sm mt-12" style="color: oklch(0.5 0 0)">Stand: April 2026</p>
+  </article>
+</PublicLayout>
