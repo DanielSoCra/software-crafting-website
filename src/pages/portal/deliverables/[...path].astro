@@ -1,0 +1,217 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../../layouts/PortalLayout.astro';
+import { resolveDeliverablePath, readDeliverableFile, listDeliverableFiles, getMimeType, buildAccelRedirectPath } from '../../../lib/deliverables';
+import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '../../../lib/types';
+import type { DeliverableType } from '../../../lib/types';
+import { marked } from 'marked';
+import sanitizeHtml from 'sanitize-html';
+
+const user = Astro.locals.user!;
+const supabase = Astro.locals.supabase!;
+
+// Parse path: first segment = deliverable type, rest = file path
+const pathSegments = (Astro.params.path ?? '').split('/').filter(Boolean);
+const deliverableType = pathSegments[0] as DeliverableType;
+const filePath = pathSegments.slice(1).join('/');
+
+// Validate deliverable type
+if (!deliverableType || !DELIVERABLE_TYPES.includes(deliverableType)) {
+  return new Response('Nicht gefunden', { status: 404 });
+}
+
+// Check admin impersonation
+const clientParam = Astro.url.searchParams.get('client');
+const { data: adminRole } = await supabase
+  .from('user_roles')
+  .select('role')
+  .eq('user_id', user.id)
+  .eq('role', 'admin')
+  .single();
+const isAdmin = !!adminRole;
+
+// Get client
+let clientQuery = supabase.from('clients').select('id, slug, company');
+if (isAdmin && clientParam) {
+  clientQuery = clientQuery.eq('slug', clientParam);
+} else {
+  clientQuery = clientQuery.eq('user_id', user.id);
+}
+const { data: client, error: clientError } = await clientQuery.single();
+
+if (clientError && clientError.code !== 'PGRST116') {
+  return new Response('Ein Fehler ist aufgetreten.', { status: 500 });
+}
+
+if (!client) {
+  return new Response('Kein Zugriff', { status: 403 });
+}
+
+// Verify deliverable is published in Supabase
+const { data: deliverable, error: deliverableError } = await supabase
+  .from('deliverables')
+  .select('*')
+  .eq('client_id', client.id)
+  .eq('type', deliverableType)
+  .single();
+
+if (deliverableError && deliverableError.code !== 'PGRST116') {
+  return new Response('Ein Fehler ist aufgetreten.', { status: 500 });
+}
+
+if (!deliverable) {
+  return new Response('Noch nicht verfügbar', { status: 404 });
+}
+
+// Mark as viewed (first visit)
+if (!deliverable.viewed_at && !isAdmin) {
+  await supabase
+    .from('deliverables')
+    .update({ viewed_at: new Date().toISOString(), status: 'viewed' })
+    .eq('id', deliverable.id);
+}
+
+const slug = client.slug;
+const requestedPath = filePath || '';
+
+// Helper: render markdown safely
+function renderMarkdown(mdText: string): string {
+  return sanitizeHtml(marked.parse(mdText) as string, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'h3', 'img']),
+    allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, img: ['src', 'alt'] },
+  });
+}
+
+// If no specific file requested, show type-root view
+if (!requestedPath) {
+  const metadata = deliverable.metadata as Record<string, unknown>;
+  const metadataFiles = Array.isArray(metadata?.files) ? (metadata.files as string[]) : [];
+  const files = metadataFiles.length > 0 ? metadataFiles : listDeliverableFiles(slug, deliverableType);
+
+  if (deliverableType === 'brand-guide') {
+    const content = readDeliverableFile(slug, 'brand-guide/brand-guide.md');
+    if (!content) return new Response('Datei nicht gefunden', { status: 404 });
+    Astro.locals.renderMode = 'markdown';
+    Astro.locals.markdownHtml = renderMarkdown(content.toString('utf-8'));
+  } else if (deliverableType === 'proposal') {
+    Astro.locals.renderMode = 'pdf';
+    Astro.locals.pdfPath = `/portal/deliverables/proposal/angebot.pdf${isAdmin && clientParam ? '?client=' + clientParam : ''}`;
+  } else if (deliverableType === 'website-preview') {
+    Astro.locals.renderMode = 'iframe';
+    Astro.locals.iframeSrc = `/portal/deliverables/website-preview/index.html?raw=true${isAdmin && clientParam ? '&client=' + clientParam : ''}`;
+  } else if (deliverableType === 'mood-board') {
+    Astro.locals.renderMode = 'filelist';
+    Astro.locals.fileList = files.filter(f => f.endsWith('.html')).map(f => ({
+      name: f.replace('.html', '').replace(/-/g, ' '),
+      href: `/portal/deliverables/mood-board/${f}${isAdmin && clientParam ? '?client=' + clientParam : ''}`,
+    }));
+  } else if (deliverableType === 'analysis') {
+    Astro.locals.renderMode = 'filelist';
+    Astro.locals.fileList = files.map(f => ({
+      name: f,
+      href: `/portal/deliverables/analysis/${f}${isAdmin && clientParam ? '?client=' + clientParam : ''}`,
+    }));
+  }
+} else {
+  // Specific file requested
+  const resolvedPath = resolveDeliverablePath(slug, `${deliverableType}/${requestedPath}`);
+  if (!resolvedPath) {
+    return new Response('Ungültiger Pfad', { status: 403 });
+  }
+
+  const mimeType = getMimeType(requestedPath);
+
+  if (mimeType === 'text/html') {
+    const isRaw = Astro.url.searchParams.get('raw') === 'true';
+    if (isRaw) {
+      const content = readDeliverableFile(slug, `${deliverableType}/${requestedPath}`);
+      if (!content) return new Response('Nicht gefunden', { status: 404 });
+      return new Response(content, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Security-Policy': "default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; frame-ancestors 'self'",
+          'X-Content-Type-Options': 'nosniff',
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
+    Astro.locals.renderMode = 'iframe';
+    Astro.locals.iframeSrc = `/portal/deliverables/${deliverableType}/${requestedPath}?raw=true${isAdmin && clientParam ? '&client=' + clientParam : ''}`;
+  } else if (mimeType === 'application/pdf') {
+    const isRaw = Astro.url.searchParams.get('raw') === 'true';
+    if (isRaw) {
+      const accelPath = buildAccelRedirectPath(slug, `${deliverableType}/${requestedPath}`);
+      return new Response(null, {
+        headers: {
+          'X-Accel-Redirect': accelPath,
+          'Content-Type': mimeType,
+          'X-Content-Type-Options': 'nosniff',
+        },
+      });
+    }
+    Astro.locals.renderMode = 'pdf';
+    Astro.locals.pdfPath = `/portal/deliverables/${deliverableType}/${requestedPath}?raw=true${isAdmin && clientParam ? '&client=' + clientParam : ''}`;
+  } else if (mimeType === 'text/markdown') {
+    const content = readDeliverableFile(slug, `${deliverableType}/${requestedPath}`);
+    if (!content) return new Response('Nicht gefunden', { status: 404 });
+    Astro.locals.renderMode = 'markdown';
+    Astro.locals.markdownHtml = renderMarkdown(content.toString('utf-8'));
+  } else {
+    const accelPath = buildAccelRedirectPath(slug, `${deliverableType}/${requestedPath}`);
+    return new Response(null, {
+      headers: {
+        'X-Accel-Redirect': accelPath,
+        'Content-Type': mimeType,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  }
+}
+
+const renderMode = (Astro.locals as any).renderMode ?? 'filelist';
+const markdownHtml = (Astro.locals as any).markdownHtml ?? '';
+const iframeSrc = (Astro.locals as any).iframeSrc ?? '';
+const pdfPath = (Astro.locals as any).pdfPath ?? '';
+const fileList = (Astro.locals as any).fileList ?? [];
+const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
+---
+<PortalLayout title={`${title} — ${client.company}`} email={user.email}>
+  <div class="mb-4">
+    <a href={`/portal/dashboard${isAdmin && clientParam ? '?client=' + clientParam : ''}`} class="text-sm text-gray-500 hover:text-gray-700">&larr; Zurück zum Dashboard</a>
+  </div>
+  <h1 class="text-xl font-bold mb-6">{title}</h1>
+
+  {renderMode === 'markdown' && (
+    <article class="prose prose-sm max-w-none" set:html={markdownHtml} />
+  )}
+
+  {renderMode === 'iframe' && (
+    <iframe
+      src={iframeSrc}
+      sandbox="allow-scripts"
+      class="w-full border border-gray-200 rounded-lg"
+      style="min-height: 80vh;"
+    />
+  )}
+
+  {renderMode === 'pdf' && (
+    <object data={pdfPath} type="application/pdf" class="w-full rounded-lg" style="min-height: 80vh;">
+      <p>PDF kann nicht angezeigt werden. <a href={pdfPath} class="text-teal-600 underline">Herunterladen</a></p>
+    </object>
+  )}
+
+  {renderMode === 'filelist' && (
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {fileList.map((file: { name: string; href: string }) => (
+        <a href={file.href} class="block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+          <span class="text-sm font-medium">{file.name}</span>
+        </a>
+      ))}
+      {fileList.length === 0 && (
+        <p class="text-gray-400 text-sm col-span-2">Keine Dateien verfügbar.</p>
+      )}
+    </div>
+  )}
+</PortalLayout>
