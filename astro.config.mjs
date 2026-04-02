@@ -4,9 +4,11 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import node from '@astrojs/node';
 
+import sitemap from '@astrojs/sitemap';
+
 export default defineConfig({
   adapter: node({ mode: 'standalone' }),
-  integrations: [react()],
+  integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
   },
