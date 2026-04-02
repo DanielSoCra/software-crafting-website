@@ -1,0 +1,46 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  category: string;
+  desc: string;
+  img: string;
+}
+
+const { slug, title, category, desc, img } = Astro.props;
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/projects/*.{jpg,jpeg,png,webp}",
+  { eager: true }
+);
+const imagePath = `/src/assets/${img}`;
+const resolved = images[imagePath]?.default;
+---
+
+<a href={`/referenzen/${slug}`} class="group flex flex-col md:flex-row gap-8 md:gap-16 items-start">
+  <div class="w-full md:w-1/2 aspect-[16/10] rounded-lg overflow-hidden">
+    {resolved ? (
+      <img
+        src={resolved.src}
+        width={resolved.width}
+        height={resolved.height}
+        alt={title}
+        loading="lazy"
+        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+    ) : (
+      <div class="w-full h-full bg-bg-secondary flex items-center justify-center text-text-muted text-sm">
+        Bild folgt
+      </div>
+    )}
+  </div>
+  <div class="w-full md:w-1/2 flex flex-col justify-center">
+    <span class="text-primary text-xs tracking-[0.2em] uppercase mb-3">{category}</span>
+    <h3 class="font-display text-3xl font-bold mb-4 group-hover:text-primary transition-colors">{title}</h3>
+    <p class="text-text-muted font-light leading-relaxed">{desc}</p>
+    <span class="inline-flex items-center gap-2 text-primary text-sm mt-4 group-hover:text-accent transition-colors">
+      Projekt ansehen
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </span>
+  </div>
+</a>

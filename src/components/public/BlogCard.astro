@@ -1,0 +1,49 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  category: string;
+  img: string;
+  date: string;
+  readTime: string;
+}
+
+const { slug, title, category, img, date, readTime } = Astro.props;
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/blog/*.{jpg,jpeg,png,webp}",
+  { eager: true }
+);
+const imagePath = `/src/assets/${img}`;
+const resolved = images[imagePath]?.default;
+---
+
+<a href={`/blog/${slug}`} class="group block">
+  <div class="rounded-2xl overflow-hidden border border-border/40 bg-bg-card hover:border-primary/50 transition-colors duration-300">
+    <div class="aspect-[16/10] overflow-hidden">
+      {resolved ? (
+        <img
+          src={resolved.src}
+          width={resolved.width}
+          height={resolved.height}
+          alt={title}
+          loading="lazy"
+          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        <div class="w-full h-full bg-bg-secondary flex items-center justify-center text-text-muted text-sm">
+          Bild folgt
+        </div>
+      )}
+    </div>
+    <div class="p-6">
+      <span class="text-primary text-xs tracking-[0.15em] uppercase">{category}</span>
+      <h3 class="font-display text-lg font-semibold mt-2 mb-3 group-hover:text-primary transition-colors">
+        {title}
+      </h3>
+      <p class="text-text-muted text-xs font-light">
+        {date} &middot; {readTime}
+      </p>
+    </div>
+  </div>
+</a>

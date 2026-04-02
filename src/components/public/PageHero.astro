@@ -1,0 +1,39 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+interface Props {
+  tag: string;
+  title: string;
+  subtitle?: string;
+  backgroundImage: ImageMetadata;
+}
+
+const { tag, title, subtitle, backgroundImage } = Astro.props;
+---
+
+<section class="min-h-screen flex items-end relative">
+  <Image
+    src={backgroundImage}
+    alt=""
+    widths={[640, 960, 1440, 1920]}
+    sizes="100vw"
+    class="absolute inset-0 w-full h-full object-cover"
+    loading="eager"
+  />
+  <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/30" />
+
+  <div class="relative z-10 max-w-4xl mx-auto px-6 pb-24 w-full">
+    <div class="scroll-reveal">
+      <p class="text-primary font-sans text-sm tracking-[0.3em] uppercase mb-4">{tag}</p>
+    </div>
+    <div class="scroll-reveal" style="transition-delay: 100ms">
+      <h1 class="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] mb-6">{title}</h1>
+    </div>
+    {subtitle && (
+      <div class="scroll-reveal" style="transition-delay: 200ms">
+        <p class="text-text-muted text-lg md:text-xl font-light leading-relaxed max-w-2xl">{subtitle}</p>
+      </div>
+    )}
+  </div>
+</section>

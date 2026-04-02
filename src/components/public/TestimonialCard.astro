@@ -1,0 +1,29 @@
+---
+interface Props {
+  text: string;
+  name: string;
+  company: string;
+  role: string;
+  stars: number;
+}
+
+const { text, name, company, role, stars } = Astro.props;
+---
+
+<div class="relative">
+  <span class="font-display text-6xl text-primary/15 absolute -top-4 -left-2 leading-none select-none"
+    >&bdquo;</span
+  >
+  <div class="flex gap-1 mb-4 ml-6">
+    {Array.from({ length: stars }).map(() => (
+      <span class="text-accent text-sm">&starf;</span>
+    ))}
+  </div>
+  <p class="text-text/80 font-light leading-relaxed mb-6 ml-6">{text}</p>
+  <div class="ml-6">
+    <p class="font-display font-semibold text-sm">{name}</p>
+    <p class="text-text-muted text-xs font-light">
+      {role} &middot; {company}
+    </p>
+  </div>
+</div>

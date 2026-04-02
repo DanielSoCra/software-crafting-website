@@ -1,0 +1,44 @@
+---
+interface Props {
+  class?: string;
+  delay?: number;
+}
+
+const { class: className, delay } = Astro.props;
+const style = delay ? `transition-delay: ${delay}ms` : undefined;
+---
+
+<div class:list={["scroll-reveal", className]} style={style}>
+  <slot />
+</div>
+
+<script>
+  if (!(window as any).__scrollRevealInit) {
+    (window as any).__scrollRevealInit = true;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        }
+      },
+      { rootMargin: "-80px" }
+    );
+
+    function observe() {
+      document.querySelectorAll(".scroll-reveal").forEach((el) => {
+        if (!el.classList.contains("visible")) {
+          observer.observe(el);
+        }
+      });
+    }
+
+    observe();
+
+    // Re-observe after Astro page transitions
+    document.addEventListener("astro:page-load", observe);
+  }
+</script>

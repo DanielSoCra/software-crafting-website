@@ -1,0 +1,75 @@
+---
+interface Props {
+  name: string;
+  slug: string;
+  role: string;
+  img: string;
+  bio: string;
+  linkedin?: string;
+  website?: string;
+}
+
+const { name, slug, role, img, bio, linkedin, website } = Astro.props;
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/team/*.{jpg,jpeg,png,webp}",
+  { eager: true }
+);
+const imagePath = `/src/assets/${img}`;
+const resolved = images[imagePath]?.default;
+---
+
+<div class="border border-border/40 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+  <a href={`/autor/${slug}`} class="flex-shrink-0">
+    {resolved ? (
+      <img
+        src={resolved.src}
+        width={80}
+        height={80}
+        alt={name}
+        class="w-20 h-20 rounded-full object-cover"
+      />
+    ) : (
+      <div class="w-20 h-20 rounded-full bg-bg-secondary flex items-center justify-center text-text-muted text-xs">
+        Foto
+      </div>
+    )}
+  </a>
+  <div class="text-center sm:text-left">
+    <p class="text-text-muted text-xs uppercase tracking-[0.15em] mb-1">
+      &Uuml;ber den Autor
+    </p>
+    <a
+      href={`/autor/${slug}`}
+      class="font-display text-lg font-semibold hover:text-primary transition-colors"
+    >
+      {name}
+    </a>
+    <p class="text-primary text-sm mb-2">{role}</p>
+    <p class="text-text-muted text-sm font-light leading-relaxed mb-3">{bio}</p>
+    <div class="flex items-center justify-center sm:justify-start gap-3">
+      {linkedin && (
+        <a
+          href={linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-text-muted hover:text-primary transition-colors"
+          aria-label={`${name} auf LinkedIn`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+        </a>
+      )}
+      {website && (
+        <a
+          href={website}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-text-muted hover:text-primary transition-colors"
+          aria-label={`${name} Website`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        </a>
+      )}
+    </div>
+  </div>
+</div>

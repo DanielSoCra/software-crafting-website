@@ -1,0 +1,37 @@
+---
+interface Props {
+  name: string;
+  role: string;
+  img: string;
+}
+
+const { name, role, img } = Astro.props;
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/team/*.{jpg,jpeg,png,webp}",
+  { eager: true }
+);
+const imagePath = `/src/assets/${img}`;
+const resolved = images[imagePath]?.default;
+---
+
+<div class="text-center">
+  <div class="w-24 h-24 rounded-full overflow-hidden mx-auto mb-6">
+    {resolved ? (
+      <img
+        src={resolved.src}
+        width={resolved.width}
+        height={resolved.height}
+        alt={name}
+        loading="lazy"
+        class="w-full h-full object-cover"
+      />
+    ) : (
+      <div class="w-full h-full bg-bg-secondary flex items-center justify-center text-text-muted text-xs">
+        Foto
+      </div>
+    )}
+  </div>
+  <h3 class="font-display text-lg font-semibold mb-1">{name}</h3>
+  <p class="text-text-muted font-light text-sm">{role}</p>
+</div>

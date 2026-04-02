@@ -1,0 +1,32 @@
+---
+interface Props {
+  heading: string;
+  subtitle: string;
+  buttonText: string;
+  buttonHref: string;
+}
+
+const { heading, subtitle, buttonText, buttonHref } = Astro.props;
+---
+
+<section class="py-32 px-6">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="scroll-reveal">
+      <div class="border border-border/40 rounded-2xl bg-bg-card p-12 md:p-16">
+        <h2 class="font-display text-3xl md:text-5xl font-bold mb-6">
+          <span class="gradient-text">{heading}</span>
+        </h2>
+        <p class="text-text-muted text-lg font-light leading-relaxed mb-10 max-w-2xl mx-auto">
+          {subtitle}
+        </p>
+        <a
+          href={buttonHref}
+          class="gradient-btn inline-flex items-center gap-2 text-white px-8 py-3.5 rounded-full font-medium text-base"
+        >
+          {buttonText}
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

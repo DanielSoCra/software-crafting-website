@@ -1,0 +1,20 @@
+---
+interface Props {
+  icon: string;
+  title: string;
+  desc: string;
+  href: string;
+}
+
+const { icon, title, desc, href } = Astro.props;
+---
+
+<a href={href} class="group block">
+  <div class="border border-border/40 rounded-2xl p-6 bg-bg-card hover:border-primary/50 transition-colors duration-300">
+    <span class="text-3xl mb-5 block">{icon}</span>
+    <h3 class="font-display text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+      {title}
+    </h3>
+    <p class="text-text-muted font-light leading-relaxed text-sm">{desc}</p>
+  </div>
+</a>
