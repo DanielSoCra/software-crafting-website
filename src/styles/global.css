@@ -1,2 +1,72 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/* Fonts */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/500.css";
+@import "@fontsource/playfair-display/700.css";
+
+/* Design tokens */
+@theme {
+  --color-primary: oklch(0.55 0.2 280);
+  --color-primary-light: oklch(0.65 0.2 280);
+  --color-accent: oklch(0.7 0.12 70);
+  --color-bg: oklch(0.15 0.02 270);
+  --color-bg-secondary: oklch(0.18 0.015 270);
+  --color-bg-card: oklch(0.2 0.015 270);
+  --color-text: oklch(0.95 0 0);
+  --color-text-muted: oklch(0.7 0 0);
+  --color-border: oklch(0.25 0.01 270);
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+}
+
+/* Public page dark theme */
+.public-page {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient button */
+.gradient-btn {
+  background: linear-gradient(135deg, var(--color-primary) 0%, oklch(0.45 0.2 280) 100%);
+  color: white;
+  transition: opacity 0.2s;
+}
+.gradient-btn:hover {
+  opacity: 0.9;
+}
+
+/* Scroll reveal */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
