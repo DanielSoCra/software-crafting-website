@@ -64,3 +64,33 @@ export interface FrageItem {
   placeholder?: string;
   options?: string[];
 }
+
+export interface Deliverable {
+  id: string;
+  client_id: string;
+  type: 'analysis' | 'mood-board' | 'brand-guide' | 'website-preview' | 'proposal';
+  status: 'published' | 'viewed';
+  published_at: string;
+  viewed_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export const DELIVERABLE_TYPES = [
+  'analysis',
+  'mood-board',
+  'brand-guide',
+  'website-preview',
+  'proposal',
+] as const;
+
+export type DeliverableType = typeof DELIVERABLE_TYPES[number];
+
+export const DELIVERABLE_LABELS: Record<DeliverableType, string> = {
+  'analysis': 'Analyse',
+  'mood-board': 'Mood Board',
+  'brand-guide': 'Brand Guide',
+  'website-preview': 'Website-Vorschau',
+  'proposal': 'Angebot',
+};
