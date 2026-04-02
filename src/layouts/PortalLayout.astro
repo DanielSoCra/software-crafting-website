@@ -17,19 +17,20 @@ const { title, email } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} — Kundenportal</title>
   </head>
-  <body class="min-h-screen flex flex-col bg-gray-50 text-gray-900">
-    <header class="bg-white border-b border-gray-200">
-      <nav class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/portal" class="text-lg font-semibold tracking-tight">
-          Kundenportal
+  <body class="portal-page min-h-screen flex flex-col" style="background-color: var(--color-bg); color: var(--color-text); font-family: var(--font-sans);">
+    <header class="border-b border-border/50 bg-bg-secondary/50 backdrop-blur-md">
+      <nav class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <a href="/portal" class="font-display text-lg font-bold tracking-tight">
+          Software <span class="text-primary">Crafting</span>
+          <span class="text-text-muted font-sans text-sm font-light ml-2">Kundenportal</span>
         </a>
-        <div class="flex items-center gap-4 text-sm">
+        <div class="flex items-center gap-4 text-sm font-light">
           {email && (
-            <span class="text-gray-500">{email}</span>
+            <span class="text-text-muted">{email}</span>
           )}
           <a
             href="/portal/login?logout=true"
-            class="text-gray-600 hover:text-gray-900 transition-colors"
+            class="text-text-muted hover:text-text transition-colors"
           >
             Abmelden
           </a>
@@ -37,18 +38,18 @@ const { title, email } = Astro.props;
       </nav>
     </header>
 
-    <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
+    <main class="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
       <slot />
     </main>
 
-    <footer class="bg-white border-t border-gray-200 mt-auto">
-      <div class="max-w-5xl mx-auto px-4 py-6 flex items-center justify-between text-sm text-gray-500">
+    <footer class="border-t border-border/50 mt-auto">
+      <div class="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between text-xs font-light text-text-muted">
         <p>Software Crafting &middot; Inh. Daniel Eberl</p>
         <div class="flex gap-4">
-          <a href="/portal/datenschutz" class="hover:text-gray-700 transition-colors">
+          <a href="/datenschutz" class="hover:text-text transition-colors">
             Datenschutz
           </a>
-          <a href="/impressum" class="hover:text-gray-700 transition-colors">
+          <a href="/impressum" class="hover:text-text transition-colors">
             Impressum
           </a>
         </div>

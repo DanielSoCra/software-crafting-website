@@ -38,7 +38,8 @@ export default function LoginForm() {
         </p>
         <button
           onClick={() => setStatus('idle')}
-          className="mt-4 text-teal-600 hover:underline text-sm"
+          className="mt-4 hover:underline text-sm"
+          style={{ color: 'var(--color-primary-light)' }}
         >
           Andere E-Mail verwenden
         </button>
@@ -68,7 +69,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="w-full py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 disabled:opacity-50"
+        className="w-full py-2.5 gradient-btn text-white rounded-lg font-medium disabled:opacity-50"
       >
         {status === 'sending' ? 'Wird gesendet...' : 'Zugangslink anfordern'}
       </button>

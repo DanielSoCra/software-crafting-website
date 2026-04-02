@@ -44,7 +44,7 @@ const exchangeFailed = code && !user;
       Gib deine E-Mail-Adresse ein — wir senden dir einen Zugangslink.
     </p>
     {exchangeFailed && (
-      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-sm text-red-700">
+      <div class="rounded-lg p-4 mb-6 text-sm" style="background-color: oklch(0.25 0.05 25); border: 1px solid oklch(0.35 0.08 25); color: oklch(0.75 0.12 25);">
         Der Zugangslink ist abgelaufen oder ungültig. Bitte fordere einen neuen an.
       </div>
     )}
