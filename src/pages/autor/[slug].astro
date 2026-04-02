@@ -1,0 +1,189 @@
+---
+export const prerender = true;
+
+import { getCollection } from 'astro:content';
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import SEOHead from '../../components/public/SEOHead.astro';
+import ScrollReveal from '../../components/public/ScrollReveal.astro';
+import BlogCard from '../../components/public/BlogCard.astro';
+import { authors, blogAuthorMap } from '../../data/authors';
+
+export async function getStaticPaths() {
+  return Object.values(authors).map((author) => ({
+    params: { slug: author.slug },
+    props: { author },
+  }));
+}
+
+const { author } = Astro.props;
+
+const allPosts = await getCollection('blog');
+const authorPosts = allPosts.filter((p) => blogAuthorMap[p.id] === author.slug);
+
+// Sort by date descending
+const months: Record<string, number> = {
+  Januar: 0, Februar: 1, 'März': 2, April: 3, Mai: 4, Juni: 5,
+  Juli: 6, August: 7, September: 8, Oktober: 9, November: 10, Dezember: 11,
+};
+const parseDate = (d: string) => {
+  const [day, month, year] = d.replace('.', '').split(' ');
+  return new Date(Number(year), months[month] ?? 0, Number(day)).getTime();
+};
+authorPosts.sort((a, b) => parseDate(b.data.date) - parseDate(a.data.date));
+
+const siteUrl = 'https://software-crafting.de';
+
+// Blog images (pre-resolve for template use)
+const blogImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/blog/*.{jpg,jpeg,png,webp}',
+  { eager: true }
+);
+const postImages: Record<string, ImageMetadata | undefined> = {};
+for (const post of authorPosts) {
+  const imgPath = `/src/assets/${post.data.img}`;
+  postImages[post.id] = blogImages[imgPath]?.default;
+}
+
+// Author image
+const teamImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/team/*.{jpg,jpeg,png,webp}',
+  { eager: true }
+);
+const authorImgPath = `/src/assets/${author.img}`;
+const authorImgResolved = teamImages[authorImgPath]?.default;
+
+// JSON-LD
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  mainEntity: {
+    '@type': 'Person',
+    name: author.name,
+    jobTitle: author.role,
+    image: authorImgResolved ? `${siteUrl}${authorImgResolved.src}` : undefined,
+    url: `${siteUrl}/autor/${author.slug}`,
+    sameAs: [author.linkedin, author.website].filter(Boolean),
+  },
+};
+---
+
+<PublicLayout
+  title={`${author.name} – Autor | Software Crafting`}
+  description={`Alle Artikel von ${author.name}, ${author.role}. ${author.bio}`}
+>
+  <SEOHead
+    slot="head"
+    title={`${author.name} – Autor`}
+    description={`Alle Artikel von ${author.name}, ${author.role}. ${author.bio}`}
+    jsonLd={jsonLd}
+  />
+
+  {/* Author Hero */}
+  <section class="min-h-[60vh] flex items-end relative px-6">
+    <div class="absolute inset-0 overflow-hidden">
+      <div
+        class="absolute top-1/3 left-1/4 w-80 h-80 rounded-full opacity-15 blur-[120px]"
+        style="background-color: var(--color-primary)"
+      />
+    </div>
+    <div class="relative z-10 max-w-3xl mx-auto pb-24 w-full">
+      <ScrollReveal>
+        <div class="flex flex-col sm:flex-row items-center sm:items-end gap-8">
+          {authorImgResolved ? (
+            <img
+              src={authorImgResolved.src}
+              width={120}
+              height={120}
+              alt={author.name}
+              class="w-28 h-28 rounded-full object-cover"
+            />
+          ) : (
+            <div class="w-28 h-28 rounded-full bg-bg-secondary flex items-center justify-center text-text-muted text-sm">
+              Foto
+            </div>
+          )}
+          <div class="text-center sm:text-left">
+            <p class="text-primary text-xs tracking-[0.2em] uppercase mb-2">Autor</p>
+            <h1 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-2">{author.name}</h1>
+            <p class="text-text-muted text-lg font-light mb-3">{author.role}</p>
+            <div class="flex items-center justify-center sm:justify-start gap-3">
+              {author.linkedin && (
+                <a
+                  href={author.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-text-muted hover:text-primary transition-colors"
+                  aria-label="LinkedIn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                </a>
+              )}
+              {author.website && (
+                <a
+                  href={author.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-text-muted hover:text-primary transition-colors"
+                  aria-label="Website"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
+    </div>
+  </section>
+
+  {/* Bio */}
+  <section class="py-16 px-6">
+    <div class="max-w-3xl mx-auto">
+      <ScrollReveal>
+        <p class="text-text/90 text-lg font-light leading-relaxed border-l-2 border-primary/40 pl-6">
+          {author.bio}
+        </p>
+      </ScrollReveal>
+    </div>
+  </section>
+
+  {/* Author Posts */}
+  <section class="pb-32 px-6">
+    <div class="max-w-3xl mx-auto">
+      <ScrollReveal>
+        <h2 class="font-display text-2xl font-bold mb-10">
+          Artikel von {author.name.split(' ')[0]} ({authorPosts.length})
+        </h2>
+      </ScrollReveal>
+      <div class="space-y-8">
+        {authorPosts.map((post, i) => (
+          <ScrollReveal delay={i * 50}>
+            <a href={`/blog/${post.id}`} class="group flex gap-6 items-start">
+              {postImages[post.id] ? (
+                <img
+                  src={postImages[post.id]!.src}
+                  width={160}
+                  height={100}
+                  alt={post.data.title}
+                  class="w-28 sm:w-40 aspect-[16/10] rounded-lg object-cover flex-shrink-0"
+                  loading="lazy"
+                />
+              ) : (
+                <div class="w-28 sm:w-40 aspect-[16/10] rounded-lg bg-bg-secondary flex-shrink-0" />
+              )}
+              <div>
+                <span class="text-primary text-xs tracking-[0.15em] uppercase">{post.data.category}</span>
+                <h3 class="font-display text-base font-semibold mt-1 mb-1 group-hover:text-primary transition-colors leading-snug">
+                  {post.data.title}
+                </h3>
+                <p class="text-text-muted text-xs font-light">
+                  {post.data.date} &middot; {post.data.readTime}
+                </p>
+              </div>
+            </a>
+          </ScrollReveal>
+        ))}
+      </div>
+    </div>
+  </section>
+</PublicLayout>

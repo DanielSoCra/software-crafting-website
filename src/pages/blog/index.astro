@@ -1,0 +1,70 @@
+---
+export const prerender = true;
+
+import { getCollection } from 'astro:content';
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import SEOHead from '../../components/public/SEOHead.astro';
+import PageHero from '../../components/public/PageHero.astro';
+import BlogCard from '../../components/public/BlogCard.astro';
+import ScrollReveal from '../../components/public/ScrollReveal.astro';
+import CTASection from '../../components/public/CTASection.astro';
+import heroImg from '../../assets/hero/hero-blog.jpg';
+
+const posts = await getCollection('blog');
+posts.sort((a, b) => {
+  // Parse German date format "12. März 2026"
+  const months: Record<string, number> = {
+    Januar: 0, Februar: 1, 'März': 2, April: 3, Mai: 4, Juni: 5,
+    Juli: 6, August: 7, September: 8, Oktober: 9, November: 10, Dezember: 11,
+  };
+  const parse = (d: string) => {
+    const [day, month, year] = d.replace('.', '').split(' ');
+    return new Date(Number(year), months[month] ?? 0, Number(day)).getTime();
+  };
+  return parse(b.data.date) - parse(a.data.date);
+});
+---
+
+<PublicLayout
+  title="Blog | Software Crafting"
+  description="Expertenwissen zu Webdesign, Branding, SEO und AI Search Optimization. Insights direkt aus der Praxis."
+>
+  <SEOHead
+    slot="head"
+    title="Blog"
+    description="Expertenwissen zu Webdesign, Branding, SEO und AI Search Optimization. Insights direkt aus der Praxis."
+  />
+
+  <PageHero
+    tag="Insights & Wissen"
+    title="Der Software Crafting Blog."
+    subtitle="Expertenwissen direkt aus der Praxis."
+    backgroundImage={heroImg}
+  />
+
+  <section class="py-32 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
+        {posts.map((post, i) => (
+          <ScrollReveal delay={i * 60}>
+            <BlogCard
+              slug={post.id}
+              title={post.data.title}
+              category={post.data.category}
+              img={post.data.img}
+              date={post.data.date}
+              readTime={post.data.readTime}
+            />
+          </ScrollReveal>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CTASection
+    heading="Bereit, Ihr Projekt zu starten?"
+    subtitle="Lassen Sie uns gemeinsam Ihrem Business den digitalen Vorsprung verschaffen."
+    buttonText="Kostenloses Erstgespräch"
+    buttonHref="/#kontakt"
+  />
+</PublicLayout>

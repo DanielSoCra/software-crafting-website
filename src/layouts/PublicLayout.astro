@@ -47,6 +47,8 @@ const canonicalUrl = new URL(currentPath, Astro.site ?? 'https://software-crafti
     <meta name="twitter:image" content={image} />
 
     <link rel="canonical" href={canonicalUrl.href} />
+
+    <slot name="head" />
   </head>
   <body class="public-page min-h-screen flex flex-col overflow-x-hidden">
     <Navigation currentPath={currentPath} />

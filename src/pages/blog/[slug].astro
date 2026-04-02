@@ -1,0 +1,286 @@
+---
+export const prerender = true;
+
+import { getCollection, render } from 'astro:content';
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import SEOHead from '../../components/public/SEOHead.astro';
+import ScrollReveal from '../../components/public/ScrollReveal.astro';
+import AuthorBox from '../../components/public/AuthorBox.astro';
+import CTASection from '../../components/public/CTASection.astro';
+import ShareButtons from '../../components/public/ShareButtons.tsx';
+import { authors, blogAuthorMap } from '../../data/authors';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+
+  // Sort for prev/next navigation
+  const months: Record<string, number> = {
+    Januar: 0, Februar: 1, 'März': 2, April: 3, Mai: 4, Juni: 5,
+    Juli: 6, August: 7, September: 8, Oktober: 9, November: 10, Dezember: 11,
+  };
+  const parseDate = (d: string) => {
+    const [day, month, year] = d.replace('.', '').split(' ');
+    return new Date(Number(year), months[month] ?? 0, Number(day)).getTime();
+  };
+  posts.sort((a, b) => parseDate(b.data.date) - parseDate(a.data.date));
+
+  return posts.map((post, index) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      prevPost: index > 0 ? posts[index - 1] : null,
+      nextPost: index < posts.length - 1 ? posts[index + 1] : null,
+    },
+  }));
+}
+
+const { post, prevPost, nextPost } = Astro.props;
+const { Content, headings } = await render(post);
+
+const authorSlug = blogAuthorMap[post.id];
+const author = authorSlug ? authors[authorSlug] : null;
+
+const siteUrl = 'https://software-crafting.de';
+const articleUrl = `${siteUrl}/blog/${post.id}`;
+
+// Resolve blog images
+const blogImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/blog/*.{jpg,jpeg,png,webp}',
+  { eager: true }
+);
+const mainImgPath = `/src/assets/${post.data.img}`;
+const mainImgResolved = blogImages[mainImgPath]?.default;
+
+// Resolve section images
+const sectionImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/blog/inline/*.{jpg,jpeg,png,webp}',
+  { eager: true }
+);
+
+// Filter headings to h2 only for TOC
+const tocHeadings = headings.filter((h) => h.depth === 2);
+
+// JSON-LD
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.data.title,
+    description: post.data.intro,
+    image: mainImgResolved ? `${siteUrl}${mainImgResolved.src}` : undefined,
+    datePublished: post.data.date,
+    url: articleUrl,
+    author: author
+      ? {
+          '@type': 'Person',
+          name: author.name,
+          jobTitle: author.role,
+          url: `${siteUrl}/autor/${author.slug}`,
+          sameAs: [author.linkedin, author.website].filter(Boolean),
+        }
+      : undefined,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Software Crafting',
+      url: siteUrl,
+    },
+    articleSection: post.data.category,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Start', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteUrl}/blog` },
+      { '@type': 'ListItem', position: 3, name: post.data.title, item: articleUrl },
+    ],
+  },
+];
+
+// Author image
+const teamImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/team/*.{jpg,jpeg,png,webp}',
+  { eager: true }
+);
+const authorImgPath = author ? `/src/assets/${author.img}` : '';
+const authorImgResolved = teamImages[authorImgPath]?.default;
+---
+
+<PublicLayout
+  title={`${post.data.title} | Software Crafting`}
+  description={post.data.intro.slice(0, 155)}
+  type="article"
+>
+  <SEOHead
+    slot="head"
+    title={post.data.title}
+    description={post.data.intro.slice(0, 155)}
+    type="article"
+    article={{
+      publishedTime: post.data.date,
+      author: author?.name || 'Software Crafting',
+      section: post.data.category,
+    }}
+    jsonLd={jsonLd}
+  />
+
+  {/* Hero */}
+  <section class="min-h-[70vh] flex items-end relative px-6">
+    <div class="absolute inset-0 overflow-hidden">
+      <div
+        class="absolute top-1/3 left-1/4 w-80 h-80 rounded-full opacity-15 blur-[120px]"
+        style="background-color: var(--color-primary)"
+      />
+      <div
+        class="absolute bottom-1/4 right-1/3 w-64 h-64 rounded-full opacity-10 blur-[100px]"
+        style="background-color: var(--color-accent)"
+      />
+    </div>
+    <div class="relative z-10 max-w-3xl mx-auto pb-24 w-full">
+      <ScrollReveal>
+        <nav aria-label="Breadcrumb" class="mb-8">
+          <ol class="flex items-center gap-2 text-sm text-text-muted">
+            <li><a href="/" class="hover:text-text transition-colors">Start</a></li>
+            <li>/</li>
+            <li><a href="/blog" class="hover:text-text transition-colors">Blog</a></li>
+            <li>/</li>
+            <li class="text-text truncate max-w-[200px]">{post.data.title}</li>
+          </ol>
+        </nav>
+      </ScrollReveal>
+      <ScrollReveal delay={50}>
+        <div class="flex items-center gap-4 mb-4">
+          <span class="text-primary text-xs tracking-[0.2em] uppercase">{post.data.category}</span>
+          <span class="text-text-muted text-xs flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {post.data.readTime}
+          </span>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={100}>
+        <h1 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] mb-4">
+          {post.data.title}
+        </h1>
+      </ScrollReveal>
+      <ScrollReveal delay={150}>
+        <div class="flex flex-wrap items-center gap-4 text-sm">
+          <p class="text-text-muted font-light">{post.data.date}</p>
+          {author && (
+            <>
+              <span class="text-border">&middot;</span>
+              <a href={`/autor/${author.slug}`} class="flex items-center gap-2 hover:text-primary transition-colors text-text-muted">
+                {authorImgResolved ? (
+                  <img src={authorImgResolved.src} alt={author.name} width={24} height={24} class="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div class="w-6 h-6 rounded-full bg-bg-secondary" />
+                )}
+                {author.name}
+              </a>
+            </>
+          )}
+        </div>
+      </ScrollReveal>
+    </div>
+  </section>
+
+  {/* Intro */}
+  <section class="py-16 px-6">
+    <div class="max-w-3xl mx-auto">
+      <ScrollReveal>
+        <p class="text-text/90 text-xl md:text-2xl font-light leading-relaxed border-l-2 border-primary/40 pl-6">
+          {post.data.intro}
+        </p>
+      </ScrollReveal>
+      <div class="mt-8">
+        <ShareButtons title={post.data.title} url={articleUrl} client:visible />
+      </div>
+    </div>
+  </section>
+
+  {/* Table of Contents */}
+  {tocHeadings.length > 0 && (
+    <section class="pb-8 px-6">
+      <div class="max-w-3xl mx-auto">
+        <ScrollReveal>
+          <nav class="border border-border/40 rounded-xl p-6" aria-label="Inhaltsverzeichnis">
+            <p class="text-xs uppercase tracking-[0.15em] text-text-muted mb-3">Inhaltsverzeichnis</p>
+            <ol class="space-y-2">
+              {tocHeadings.map((heading, i) => (
+                <li>
+                  <a href={`#${heading.slug}`} class="text-sm text-text-muted hover:text-primary transition-colors font-light">
+                    {i + 1}. {heading.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </ScrollReveal>
+      </div>
+    </section>
+  )}
+
+  {/* Article Content */}
+  <section class="pb-24 px-6">
+    <div class="max-w-3xl mx-auto prose prose-invert prose-lg prose-headings:font-display prose-headings:font-bold prose-p:font-light prose-p:text-text-muted prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-text prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-16 prose-h2:mb-5 prose-img:rounded-xl">
+      <Content />
+    </div>
+  </section>
+
+  {/* Share + Author */}
+  <section class="px-6 pb-16">
+    <div class="max-w-3xl mx-auto space-y-10">
+      <div class="flex justify-center">
+        <ShareButtons title={post.data.title} url={articleUrl} client:visible />
+      </div>
+      {author && (
+        <AuthorBox
+          name={author.name}
+          slug={author.slug}
+          role={author.role}
+          img={author.img}
+          bio={author.bio}
+          linkedin={author.linkedin}
+          website={author.website}
+        />
+      )}
+    </div>
+  </section>
+
+  {/* Prev/Next Navigation */}
+  <section class="py-16 px-6 border-t border-border/30">
+    <div class="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-8">
+      {prevPost ? (
+        <a href={`/blog/${prevPost.id}`} class="group">
+          <p class="text-text-muted text-xs mb-2 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Vorheriger Artikel
+          </p>
+          <p class="font-display text-sm font-medium group-hover:text-primary transition-colors leading-snug">
+            {prevPost.data.title}
+          </p>
+        </a>
+      ) : (
+        <div />
+      )}
+      {nextPost && (
+        <a href={`/blog/${nextPost.id}`} class="group text-right sm:text-right">
+          <p class="text-text-muted text-xs mb-2 flex items-center gap-1 justify-end">
+            Nächster Artikel
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </p>
+          <p class="font-display text-sm font-medium group-hover:text-primary transition-colors leading-snug">
+            {nextPost.data.title}
+          </p>
+        </a>
+      )}
+    </div>
+  </section>
+
+  <CTASection
+    heading="Bereit, diese Insights umzusetzen?"
+    subtitle="Lassen Sie uns gemeinsam Ihre digitale Strategie auf das nächste Level bringen."
+    buttonText="Kostenloses Erstgespräch"
+    buttonHref="/#kontakt"
+  />
+</PublicLayout>
