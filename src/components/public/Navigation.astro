@@ -1,0 +1,45 @@
+---
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+const navLinks = [
+  { href: '/leistungen', label: 'Leistungen' },
+  { href: '/referenzen', label: 'Referenzen' },
+  { href: '/prozess', label: 'Prozess' },
+  { href: '/team', label: 'Team' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/faq', label: 'FAQ' },
+];
+---
+
+<nav class="fixed top-0 left-0 right-0 z-50 bg-bg/80 backdrop-blur-md border-b border-border/50">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/" class="font-display text-xl font-bold tracking-tight">
+      Software <span class="text-primary">Crafting</span>
+    </a>
+    <div class="hidden md:flex items-center gap-8 text-sm font-light text-text-muted">
+      {navLinks.map((link) => (
+        <a
+          href={link.href}
+          class:list={[
+            'hover:text-text transition-colors',
+            { 'text-primary-light': currentPath === link.href },
+          ]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+    <div class="flex items-center gap-3">
+      <a
+        href="/#kontakt"
+        class="hidden sm:inline-flex gradient-btn text-white text-sm px-5 py-2 rounded-full font-medium hover:opacity-90 transition-opacity"
+      >
+        Kontakt
+      </a>
+    </div>
+  </div>
+</nav>

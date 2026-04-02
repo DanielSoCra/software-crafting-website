@@ -1,11 +1,25 @@
 ---
 import '../styles/global.css';
+import Navigation from '../components/public/Navigation.astro';
+import MobileMenu from '../components/public/MobileMenu.tsx';
+import Footer from '../components/public/Footer.astro';
 
 interface Props {
   title?: string;
+  description?: string;
+  image?: string;
+  type?: string;
 }
 
-const { title = 'Software Crafting' } = Astro.props;
+const {
+  title = 'Software Crafting',
+  description = 'Handwerklich gebaute Websites und Web-Applikationen aus Deutschland.',
+  image = '/og-image.png',
+  type = 'website',
+} = Astro.props;
+
+const currentPath = new URL(Astro.request.url).pathname;
+const canonicalUrl = new URL(currentPath, Astro.site ?? 'https://software-crafting.de');
 ---
 
 <html lang="de">
@@ -15,31 +29,33 @@ const { title = 'Software Crafting' } = Astro.props;
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
-  </head>
-  <body class="min-h-screen flex flex-col bg-white text-gray-900">
-    <header class="border-b border-gray-200">
-      <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/" class="text-lg font-semibold tracking-tight">
-          Software Crafting
-        </a>
-        <a
-          href="/portal/login"
-          class="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          Kundenportal
-        </a>
-      </nav>
-    </header>
 
-    <main class="flex-1">
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalUrl.href} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+
+    <link rel="canonical" href={canonicalUrl.href} />
+  </head>
+  <body class="public-page min-h-screen flex flex-col overflow-x-hidden">
+    <Navigation currentPath={currentPath} />
+    <MobileMenu client:load />
+
+    <main class="flex-1 pt-16">
       <slot />
     </main>
 
-    <footer class="border-t border-gray-200 mt-auto">
-      <div class="max-w-4xl mx-auto px-4 py-6 text-sm text-gray-500">
-        <p>Software Crafting &middot; Inh. Daniel Eberl</p>
-      </div>
-    </footer>
+    <Footer />
   </body>
 </html>
