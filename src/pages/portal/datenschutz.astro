@@ -1,0 +1,85 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+
+export const prerender = false;
+---
+
+<PublicLayout title="Datenschutz — Kundenportal">
+  <article class="max-w-3xl mx-auto px-4 py-16 prose prose-gray">
+    <h1>Datenschutzerklaerung</h1>
+
+    <h2>1. Verantwortlicher</h2>
+    <p>
+      Software Crafting<br />
+      Inh. Daniel Eberl<br />
+      E-Mail: daniel@software-crafting.de
+    </p>
+
+    <h2>2. Erhobene Daten</h2>
+    <p>
+      Im Rahmen des Kundenportals verarbeiten wir folgende personenbezogene Daten:
+    </p>
+    <ul>
+      <li>E-Mail-Adresse (zur Authentifizierung und Kommunikation)</li>
+      <li>Zugangsdaten (verschluesselt gespeichert)</li>
+      <li>Projektbezogene Daten (Fragebogen-Antworten, Uploads, Projektfortschritt)</li>
+      <li>Technische Zugriffsdaten (IP-Adresse, Zeitstempel, Browser-Typ)</li>
+    </ul>
+
+    <h2>3. Zweck der Verarbeitung</h2>
+    <p>
+      Die Verarbeitung erfolgt zur Durchfuehrung des Vertragsverhaeltnisses
+      (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;b DSGVO) sowie zur Bereitstellung des
+      Kundenportals und der darin enthaltenen Projektmanagement-Funktionen.
+    </p>
+
+    <h2>4. Speicherdauer</h2>
+    <p>
+      Personenbezogene Daten werden fuer die Dauer der Geschaeftsbeziehung
+      gespeichert. Nach Vertragsende werden Daten geloescht, sofern keine
+      gesetzlichen Aufbewahrungsfristen (z.&thinsp;B. steuerrechtlich 10 Jahre)
+      entgegenstehen.
+    </p>
+
+    <h2>5. Hosting und Datenverarbeitung</h2>
+    <p>
+      Das Kundenportal nutzt <strong>Supabase</strong> als Backend-Dienst.
+      Die Daten werden in der EU (Frankfurt am Main, Deutschland) gehostet.
+      Die Webseite selbst wird bei <strong>Hetzner Online GmbH</strong>
+      (Gunzenhausen, Deutschland) bereitgestellt.
+    </p>
+
+    <h2>6. Cookies</h2>
+    <p>
+      Wir verwenden ausschliesslich <strong>funktional notwendige Cookies</strong>,
+      die fuer die Authentifizierung und den sicheren Betrieb des Portals
+      erforderlich sind. Es werden keine Tracking- oder Marketing-Cookies
+      eingesetzt. Eine Einwilligung ist fuer funktional notwendige Cookies
+      nicht erforderlich (Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO).
+    </p>
+
+    <h2>7. Ihre Rechte</h2>
+    <p>Sie haben folgende Rechte bezueglich Ihrer personenbezogenen Daten:</p>
+    <ul>
+      <li><strong>Auskunft</strong> (Art.&nbsp;15 DSGVO) — Welche Daten wir ueber Sie speichern</li>
+      <li><strong>Berichtigung</strong> (Art.&nbsp;16 DSGVO) — Korrektur unrichtiger Daten</li>
+      <li><strong>Loeschung</strong> (Art.&nbsp;17 DSGVO) — Entfernung Ihrer Daten</li>
+      <li><strong>Einschraenkung</strong> (Art.&nbsp;18 DSGVO) — Einschraenkung der Verarbeitung</li>
+      <li><strong>Datenuebertragbarkeit</strong> (Art.&nbsp;20 DSGVO) — Export Ihrer Daten</li>
+      <li><strong>Widerspruch</strong> (Art.&nbsp;21 DSGVO) — Widerspruch gegen die Verarbeitung</li>
+    </ul>
+    <p>
+      Zur Ausuebung Ihrer Rechte wenden Sie sich bitte an:
+      <a href="mailto:daniel@software-crafting.de">daniel@software-crafting.de</a>
+    </p>
+
+    <h2>8. Beschwerderecht</h2>
+    <p>
+      Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehoerde zu
+      beschweren, wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer Daten
+      gegen die DSGVO verstoesst.
+    </p>
+
+    <p class="text-sm text-gray-500 mt-12">Stand: Maerz 2026</p>
+  </article>
+</PublicLayout>

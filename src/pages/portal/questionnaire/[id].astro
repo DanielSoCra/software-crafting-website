@@ -1,0 +1,61 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../../layouts/PortalLayout.astro';
+import QuestionnaireForm from '../../../components/portal/QuestionnaireForm';
+import { formSchemaValidator } from '../../../lib/form-schema';
+import type { Form } from '../../../lib/types';
+
+const { id } = Astro.params;
+const user = Astro.locals.user!;
+const supabase = Astro.locals.supabase!;
+
+// Fetch form
+const { data: form, error } = await supabase
+  .from('forms')
+  .select('*')
+  .eq('id', id)
+  .single();
+
+if (error || !form) {
+  return Astro.redirect('/portal/login');
+}
+
+// Validate form schema with Zod before rendering
+const schemaResult = formSchemaValidator.safeParse(form.schema);
+if (!schemaResult.success) {
+  return new Response('Ungültiges Formular-Schema. Bitte kontaktiere daniel@software-crafting.de.', {
+    status: 500,
+  });
+}
+
+// For completed forms, load submitted answers
+let submittedAnswers: Record<string, string | string[]> = {};
+if (form.status === 'completed') {
+  const { data: response } = await supabase
+    .from('responses')
+    .select('answers')
+    .eq('form_id', form.id)
+    .single();
+  if (response) {
+    submittedAnswers = response.answers as Record<string, string | string[]>;
+  }
+}
+
+// Merge submitted answers for read-only view
+const formForClient: Form = {
+  ...form,
+  schema: schemaResult.data,
+  draft_answers: form.status === 'completed' ? submittedAnswers : (form.draft_answers ?? {}),
+} as Form;
+
+// Get client info for layout
+const { data: client } = await supabase
+  .from('clients')
+  .select('company')
+  .eq('id', form.client_id)
+  .single();
+---
+<PortalLayout title={`Fragebogen — ${client?.company ?? ''}`} email={user.email}>
+  <QuestionnaireForm form={formForClient} client:load />
+</PortalLayout>

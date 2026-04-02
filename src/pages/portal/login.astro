@@ -1,0 +1,75 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import LoginForm from '../../components/portal/LoginForm';
+import { createSupabaseServerClient } from '../../lib/supabase-server';
+
+// Handle logout
+const logoutParam = Astro.url.searchParams.get('logout');
+if (logoutParam === 'true') {
+  const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
+  await supabase.auth.signOut();
+  return Astro.redirect('/portal/login');
+}
+
+// Handle magic link callback (PKCE code exchange)
+const code = Astro.url.searchParams.get('code');
+if (code) {
+  const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (!error) {
+    // Validate redirect target — only allow /portal/* paths (prevent open redirect)
+    const next = Astro.url.searchParams.get('next') ?? '';
+    const safeNext = next.startsWith('/portal/') ? next : '/portal/login';
+    return Astro.redirect(safeNext);
+  }
+  // If exchange failed, show login page with error context
+}
+
+// Check if already logged in
+const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
+const { data: { user } } = await supabase.auth.getUser();
+
+if (user) {
+  // Find latest active form
+  const { data: forms } = await supabase
+    .from('forms')
+    .select('id, status')
+    .order('created_at', { ascending: false })
+    .in('status', ['sent', 'in_progress'])
+    .limit(1);
+
+  if (forms && forms.length > 0) {
+    return Astro.redirect(`/portal/questionnaire/${forms[0].id}`);
+  }
+
+  // Check completed forms
+  const { data: completed } = await supabase
+    .from('forms')
+    .select('id')
+    .eq('status', 'completed')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (completed && completed.length > 0) {
+    return Astro.redirect(`/portal/questionnaire/${completed[0].id}`);
+  }
+}
+
+const exchangeFailed = code && !user;
+---
+<PortalLayout title="Login">
+  <div class="max-w-md mx-auto mt-16">
+    <h1 class="text-2xl font-bold mb-2 text-center">Kundenportal</h1>
+    <p class="text-gray-600 text-center mb-8">
+      Gib deine E-Mail-Adresse ein — wir senden dir einen Zugangslink.
+    </p>
+    {exchangeFailed && (
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-sm text-red-700">
+        Der Zugangslink ist abgelaufen oder ungültig. Bitte fordere einen neuen an.
+      </div>
+    )}
+    <LoginForm client:load />
+  </div>
+</PortalLayout>

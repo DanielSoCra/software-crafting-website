@@ -1,0 +1,24 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+
+export const prerender = true;
+---
+
+<PublicLayout title="Software Crafting — Webentwicklung">
+  <section class="max-w-4xl mx-auto px-4 py-24 text-center">
+    <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
+      Software Crafting
+    </h1>
+    <p class="mt-4 text-lg text-gray-600">
+      Webentwicklung &middot; Inh. Daniel Eberl
+    </p>
+    <div class="mt-10">
+      <a
+        href="/portal/login"
+        class="inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+      >
+        Zum Kundenportal
+      </a>
+    </div>
+  </section>
+</PublicLayout>
