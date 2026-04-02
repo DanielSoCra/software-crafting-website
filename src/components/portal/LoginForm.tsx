@@ -22,12 +22,20 @@ export default function LoginForm() {
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/portal/login`,
+        shouldCreateUser: false,
       },
     });
 
+    // Always show "sent" — never reveal whether the account exists
+    if (error?.message === 'Signups not allowed for otp') {
+      setStep('sent');
+      return;
+    }
+
     if (error) {
+      // Only surface genuine errors (rate limit, network, etc.)
       setStep('error');
-      setErrorMsg(error.message);
+      setErrorMsg('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.');
       return;
     }
 
