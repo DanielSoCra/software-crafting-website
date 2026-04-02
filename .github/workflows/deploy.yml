@@ -32,18 +32,22 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           echo "${{ secrets.SSH_KNOWN_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy via rsync
-        # SAFE: --delete only affects dist/, not /var/www/portal-assets/
+      - name: Deploy to production + preview
         run: |
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
-            dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/dist/
-          ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "cd /var/www/software-crafting && pm2 startOrRestart ecosystem.config.cjs --update-env"
+          SSH="ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
+          RSYNC="rsync -avz --delete -e 'ssh -i ~/.ssh/deploy_key'"
+
+          # Deploy to both production and preview
+          eval $RSYNC dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/dist/
+          eval $RSYNC dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting-preview/dist/
+
+          # Restart both PM2 processes
+          $SSH "cd /var/www/software-crafting && pm2 startOrRestart ecosystem.config.cjs --update-env"
+          $SSH "cd /var/www/software-crafting-preview && pm2 startOrRestart ecosystem.config.cjs --update-env"
 
       - name: Health check
         run: |
           sleep 5
-          ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "curl -sf --max-time 10 http://localhost:4321/ > /dev/null && echo 'Health check passed' || (pm2 logs software-crafting --nostream --lines 20 && exit 1)"
+          SSH="ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
+          $SSH "curl -sf --max-time 10 http://localhost:4321/ > /dev/null && echo 'Production OK' || (pm2 logs software-crafting --nostream --lines 20 && exit 1)"
+          $SSH "curl -sf --max-time 10 http://localhost:4322/ > /dev/null && echo 'Preview OK' || (pm2 logs software-crafting-preview --nostream --lines 20 && exit 1)"
