@@ -1,0 +1,72 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import PageHero from '../components/public/PageHero.astro';
+import ScrollReveal from '../components/public/ScrollReveal.astro';
+import CTASection from '../components/public/CTASection.astro';
+import { team } from '../data/team';
+import heroImg from '../assets/hero/hero-team.jpg';
+
+export const prerender = true;
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/team/*.{jpg,jpeg,png,webp}",
+  { eager: true }
+);
+---
+
+<PublicLayout
+  title="Team — Software Crafting"
+  description="Lernen Sie das Software Crafting-Team kennen: Strategen, Designer und Entwickler, vereint durch die Leidenschaft für digitale Exzellenz."
+>
+  <PageHero
+    tag="Die Menschen dahinter"
+    title="Ein Team, das brennt."
+    subtitle="Strategen, Designer und Entwickler — vereint durch die Leidenschaft für digitale Exzellenz."
+    backgroundImage={heroImg}
+  />
+
+  <section class="py-32 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="space-y-24">
+        {team.map((m, i) => {
+          const imagePath = `/src/assets/${m.img}`;
+          const resolved = images[imagePath]?.default;
+          return (
+            <ScrollReveal delay={100}>
+              <div class="flex flex-col md:flex-row items-center gap-12 md:gap-16">
+                <div class="w-40 h-40 rounded-full overflow-hidden flex-shrink-0">
+                  {resolved ? (
+                    <img
+                      src={resolved.src}
+                      width={resolved.width}
+                      height={resolved.height}
+                      alt={m.name}
+                      loading="lazy"
+                      class="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div class="w-full h-full bg-bg-secondary flex items-center justify-center text-text-muted text-sm">
+                      Foto
+                    </div>
+                  )}
+                </div>
+                <div class="text-center md:text-left">
+                  <h3 class="font-display text-2xl font-semibold mb-1">{m.name}</h3>
+                  <p class="text-primary text-sm mb-4">{m.role}</p>
+                  <p class="text-text-muted font-light leading-relaxed max-w-lg">{m.bio}</p>
+                </div>
+              </div>
+            </ScrollReveal>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <CTASection
+    heading="Lassen Sie uns zusammenarbeiten."
+    subtitle="Wir freuen uns darauf, Sie und Ihr Projekt kennenzulernen."
+    buttonText="Kostenloses Erstgespräch"
+    buttonHref="/#kontakt"
+  />
+</PublicLayout>

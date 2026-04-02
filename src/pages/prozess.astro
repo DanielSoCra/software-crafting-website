@@ -1,0 +1,51 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import PageHero from '../components/public/PageHero.astro';
+import ScrollReveal from '../components/public/ScrollReveal.astro';
+import CTASection from '../components/public/CTASection.astro';
+import { processSteps } from '../data/process';
+import heroImg from '../assets/hero/hero-prozess.jpg';
+
+export const prerender = true;
+---
+
+<PublicLayout
+  title="Prozess — Software Crafting"
+  description="Unser bewährter 4-Phasen-Prozess: Analyse, Konzeption, Umsetzung und Launch für Ihr digitales Projekt."
+>
+  <PageHero
+    tag="Wie wir arbeiten"
+    title="Struktur schafft Ergebnisse."
+    subtitle="Unser bewährter Prozess: pünktlich, im Budget, höchste Qualität."
+    backgroundImage={heroImg}
+  />
+
+  <section class="py-32 px-6">
+    <div class="max-w-3xl mx-auto relative">
+      <!-- Vertical connecting line -->
+      <div class="absolute left-[19px] top-0 bottom-0 w-px bg-border/50" />
+      <div class="space-y-24">
+        {processSteps.map((step, i) => (
+          <ScrollReveal delay={i * 120}>
+            <div class="relative flex gap-8 items-start">
+              <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full border-2 border-primary/40 bg-bg flex items-center justify-center">
+                <span class="font-display text-sm font-bold text-primary">{step.num}</span>
+              </div>
+              <div class="pt-1">
+                <h3 class="font-display text-2xl font-semibold mb-3">{step.title}</h3>
+                <p class="text-text-muted font-light leading-relaxed">{step.longDesc}</p>
+              </div>
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CTASection
+    heading="Bereit für den ersten Schritt?"
+    subtitle="Starten Sie mit einem unverbindlichen Erstgespräch — wir freuen uns auf Ihr Projekt."
+    buttonText="Kostenloses Erstgespräch"
+    buttonHref="/#kontakt"
+  />
+</PublicLayout>

@@ -1,0 +1,24 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+
+export const prerender = true;
+---
+
+<PublicLayout title="Seite nicht gefunden — Software Crafting" description="Die gewünschte Seite wurde nicht gefunden.">
+  <section class="min-h-[80vh] flex items-center justify-center px-6">
+    <div class="text-center">
+      <p class="font-display text-8xl md:text-9xl font-bold gradient-text mb-6">404</p>
+      <h1 class="font-display text-2xl md:text-3xl font-bold mb-4">Seite nicht gefunden</h1>
+      <p class="text-text-muted font-light text-lg mb-10 max-w-md mx-auto">
+        Die gewünschte Seite existiert leider nicht oder wurde verschoben.
+      </p>
+      <a
+        href="/"
+        class="gradient-btn inline-flex items-center gap-2 text-white px-8 py-3.5 rounded-full font-medium text-base"
+      >
+        Zur Startseite
+        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+</PublicLayout>

@@ -1,0 +1,45 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import PageHero from '../components/public/PageHero.astro';
+import ProjectCard from '../components/public/ProjectCard.astro';
+import ScrollReveal from '../components/public/ScrollReveal.astro';
+import CTASection from '../components/public/CTASection.astro';
+import { projects } from '../data/projects';
+import heroImg from '../assets/hero/hero-referenzen.jpg';
+
+export const prerender = true;
+---
+
+<PublicLayout
+  title="Referenzen — Software Crafting"
+  description="Entdecken Sie unsere Referenzprojekte: Webdesign, Branding und SEO für namhafte Kunden."
+>
+  <PageHero
+    tag="Ausgewählte Arbeiten"
+    title="Projekte, die für sich sprechen."
+    backgroundImage={heroImg}
+  />
+
+  <section class="py-32 px-6">
+    <div class="max-w-6xl mx-auto space-y-32">
+      {projects.map((p, i) => (
+        <ScrollReveal delay={100}>
+          <ProjectCard
+            slug={p.slug}
+            title={p.title}
+            category={p.category}
+            desc={p.desc}
+            img={p.img}
+          />
+        </ScrollReveal>
+      ))}
+    </div>
+  </section>
+
+  <CTASection
+    heading="Ihr Projekt könnte das nächste sein."
+    subtitle="Lassen Sie uns gemeinsam etwas Außergewöhnliches schaffen."
+    buttonText="Kostenloses Erstgespräch"
+    buttonHref="/#kontakt"
+  />
+</PublicLayout>

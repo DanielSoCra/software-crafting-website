@@ -1,0 +1,140 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import ScrollReveal from '../../components/public/ScrollReveal.astro';
+import CTASection from '../../components/public/CTASection.astro';
+import { projects } from '../../data/projects';
+import type { GetStaticPaths } from 'astro';
+
+export const prerender = true;
+
+export const getStaticPaths: GetStaticPaths = () => {
+  return projects.map((p) => ({ params: { slug: p.slug }, props: { project: p } }));
+};
+
+const { project } = Astro.props;
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/projects/*.{jpg,jpeg,png,webp}",
+  { eager: true }
+);
+const imagePath = `/src/assets/${project.img}`;
+const resolved = images[imagePath]?.default;
+---
+
+<PublicLayout
+  title={`${project.title} — Referenz | Software Crafting`}
+  description={project.longDesc.slice(0, 155)}
+>
+  <!-- Hero -->
+  <section class="min-h-screen flex items-end relative">
+    {resolved ? (
+      <img
+        src={resolved.src}
+        width={resolved.width}
+        height={resolved.height}
+        alt={project.title}
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+    ) : (
+      <div class="absolute inset-0 bg-bg-secondary" />
+    )}
+    <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/30" />
+    <div class="relative z-10 max-w-4xl mx-auto px-6 pb-24 w-full">
+      <ScrollReveal>
+        <a
+          href="/referenzen"
+          class="inline-flex items-center gap-2 text-primary text-sm mb-8 hover:text-accent transition-colors"
+        >
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Alle Projekte
+        </a>
+      </ScrollReveal>
+      <ScrollReveal delay={50}>
+        <p class="text-primary font-sans text-sm tracking-[0.3em] uppercase mb-4">{project.category}</p>
+      </ScrollReveal>
+      <ScrollReveal delay={100}>
+        <h1 class="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08]">
+          {project.title}
+        </h1>
+      </ScrollReveal>
+    </div>
+  </section>
+
+  <!-- Challenge & Solution -->
+  <section class="py-32 px-6">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20">
+      <ScrollReveal>
+        <div>
+          <p class="text-primary text-xs tracking-[0.2em] uppercase mb-4">Die Herausforderung</p>
+          <h2 class="font-display text-2xl md:text-3xl font-bold mb-6">Das Problem</h2>
+          <p class="text-text-muted font-light leading-relaxed text-lg">{project.challenge}</p>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={150}>
+        <div>
+          <p class="text-primary text-xs tracking-[0.2em] uppercase mb-4">Unsere Lösung</p>
+          <h2 class="font-display text-2xl md:text-3xl font-bold mb-6">Der Ansatz</h2>
+          <p class="text-text-muted font-light leading-relaxed text-lg">{project.solution}</p>
+        </div>
+      </ScrollReveal>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="py-24 px-6 bg-bg-secondary/50">
+    <div class="max-w-5xl mx-auto">
+      <ScrollReveal>
+        <p class="text-primary text-xs tracking-[0.2em] uppercase mb-4 text-center">Ergebnisse</p>
+        <h2 class="font-display text-3xl md:text-4xl font-bold mb-16 text-center">Zahlen, die sprechen.</h2>
+      </ScrollReveal>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {project.results.map((r, i) => (
+          <ScrollReveal delay={i * 80}>
+            <div class="text-center">
+              <p class="font-display text-4xl md:text-5xl font-bold gradient-text mb-2">{r.value}</p>
+              <p class="text-text-muted text-sm font-light">{r.label}</p>
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Used -->
+  <section class="py-24 px-6">
+    <div class="max-w-3xl mx-auto">
+      <ScrollReveal>
+        <p class="text-primary text-xs tracking-[0.2em] uppercase mb-4">Eingesetzte Leistungen</p>
+        <ul class="space-y-4 mt-8">
+          {project.services.map((s) => (
+            <li class="flex items-center gap-3 text-text/80 font-light text-lg">
+              <svg class="w-5 h-5 text-primary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+              {s}
+            </li>
+          ))}
+        </ul>
+      </ScrollReveal>
+    </div>
+  </section>
+
+  <!-- Testimonial -->
+  <section class="py-24 px-6">
+    <div class="max-w-3xl mx-auto text-center">
+      <ScrollReveal>
+        <svg class="w-10 h-10 text-primary/30 mx-auto mb-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+        <blockquote class="font-display text-2xl md:text-3xl font-medium leading-relaxed mb-8">
+          &bdquo;{project.testimonial.text}&ldquo;
+        </blockquote>
+        <p class="text-text font-medium">{project.testimonial.name}</p>
+        <p class="text-text-muted text-sm font-light">{project.testimonial.role}</p>
+      </ScrollReveal>
+    </div>
+  </section>
+
+  <CTASection
+    heading="Ihr Projekt könnte das nächste sein."
+    subtitle="Lassen Sie uns gemeinsam etwas Außergewöhnliches schaffen."
+    buttonText="Kostenloses Erstgespräch"
+    buttonHref="/#kontakt"
+  />
+</PublicLayout>
