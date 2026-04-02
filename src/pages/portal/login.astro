@@ -21,7 +21,7 @@ if (code) {
   if (!error) {
     // Validate redirect target — only allow /portal/* paths (prevent open redirect)
     const next = Astro.url.searchParams.get('next') ?? '';
-    const safeNext = next.startsWith('/portal/') ? next : '/portal/login';
+    const safeNext = next.startsWith('/portal/') ? next : '/portal/dashboard';
     return Astro.redirect(safeNext);
   }
   // If exchange failed, show login page with error context
@@ -32,29 +32,7 @@ const supabase = createSupabaseServerClient(Astro.request, Astro.cookies);
 const { data: { user } } = await supabase.auth.getUser();
 
 if (user) {
-  // Find latest active form
-  const { data: forms } = await supabase
-    .from('forms')
-    .select('id, status')
-    .order('created_at', { ascending: false })
-    .in('status', ['sent', 'in_progress'])
-    .limit(1);
-
-  if (forms && forms.length > 0) {
-    return Astro.redirect(`/portal/questionnaire/${forms[0].id}`);
-  }
-
-  // Check completed forms
-  const { data: completed } = await supabase
-    .from('forms')
-    .select('id')
-    .eq('status', 'completed')
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (completed && completed.length > 0) {
-    return Astro.redirect(`/portal/questionnaire/${completed[0].id}`);
-  }
+  return Astro.redirect('/portal/dashboard');
 }
 
 const exchangeFailed = code && !user;

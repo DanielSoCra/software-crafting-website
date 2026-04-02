@@ -1,0 +1,94 @@
+---
+export const prerender = false;
+
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import Dashboard from '../../components/portal/Dashboard';
+import type { Deliverable } from '../../lib/types';
+
+const user = Astro.locals.user!;
+const supabase = Astro.locals.supabase!;
+
+// Admin impersonation: if admin and ?client= param, load that client
+let clientSlug: string | undefined;
+const clientParam = Astro.url.searchParams.get('client');
+
+// Check if user is admin
+const { data: adminRole } = await supabase
+  .from('user_roles')
+  .select('role')
+  .eq('user_id', user.id)
+  .eq('role', 'admin')
+  .single();
+
+const isAdmin = !!adminRole;
+
+// Get client data
+let clientQuery = supabase.from('clients').select('id, company, slug');
+if (isAdmin && clientParam) {
+  clientQuery = clientQuery.eq('slug', clientParam);
+  clientSlug = clientParam;
+} else {
+  clientQuery = clientQuery.eq('user_id', user.id);
+}
+const { data: client, error: clientError } = await clientQuery.single();
+
+if (clientError && clientError.code !== 'PGRST116') {
+  return new Response('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', { status: 500 });
+}
+
+// Admin without client param — show client picker
+let adminClientList: Array<{ slug: string; company: string }> | undefined;
+if (!client && isAdmin) {
+  const { data: allClients } = await supabase.from('clients').select('slug, company').order('company');
+  adminClientList = allClients ?? [];
+} else if (!client) {
+  return Astro.redirect('/portal/login');
+}
+
+// Get deliverables (only if we have a client)
+let deliverables: Deliverable[] = [];
+let latestForm: { id: string; status: string } | null = null;
+
+if (client) {
+  const { data: delData, error: delError } = await supabase
+    .from('deliverables')
+    .select('*')
+    .eq('client_id', client.id);
+
+  if (delError) {
+    return new Response('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', { status: 500 });
+  }
+  deliverables = (delData ?? []) as Deliverable[];
+
+  const { data: forms } = await supabase
+    .from('forms')
+    .select('id, status')
+    .eq('client_id', client.id)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  latestForm = forms?.[0] ?? null;
+}
+---
+{adminClientList ? (
+<PortalLayout title="Admin — Client auswählen" email={user.email}>
+  <h1 class="text-2xl font-bold mb-4">Client auswählen</h1>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    {adminClientList.map((c) => (
+      <a href={`/portal/dashboard?client=${c.slug}`} class="block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+        <span class="text-sm font-medium">{c.company}</span>
+      </a>
+    ))}
+  </div>
+</PortalLayout>
+) : (
+<PortalLayout title={`Dashboard — ${client!.company}`} email={user.email}>
+  <Dashboard
+    company={client!.company}
+    deliverables={deliverables}
+    questionnaireFormId={latestForm?.id ?? null}
+    questionnaireStatus={latestForm?.status ?? null}
+    clientSlug={clientSlug}
+  />
+</PortalLayout>
+)}
