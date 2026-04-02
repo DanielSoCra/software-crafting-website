@@ -45,6 +45,13 @@ export default function MobileMenu() {
             </a>
           ))}
           <a
+            href="/portal/login"
+            onClick={() => setOpen(false)}
+            className="block text-lg font-light text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+          >
+            Kundenportal
+          </a>
+          <a
             href="/#kontakt"
             onClick={() => setOpen(false)}
             className="inline-flex gradient-btn text-white text-sm px-5 py-2 rounded-full font-medium mt-2"
