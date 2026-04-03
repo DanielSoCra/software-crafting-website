@@ -2,9 +2,9 @@ import { useState } from "react";
 
 const navLinks = [
   { href: "/leistungen", label: "Leistungen" },
-  { href: "/referenzen", label: "Referenzen" },
+  // { href: "/referenzen", label: "Referenzen" },  // HIDDEN: activate when real portfolio exists
   { href: "/prozess", label: "Prozess" },
-  { href: "/team", label: "Team" },
+  { href: "/team", label: "Über mich" },
   { href: "/blog", label: "Blog" },
   { href: "/faq", label: "FAQ" },
 ];

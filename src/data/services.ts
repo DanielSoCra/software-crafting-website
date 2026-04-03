@@ -18,9 +18,9 @@ export const services: Service[] = [
     title: "Webdesign & Entwicklung",
     desc: "Maßgeschneiderte Websites, Web-Apps und E-Commerce-Lösungen, die Ihre Marke zum Strahlen bringen.",
     detail: [
-      "Jede Website, die wir entwickeln, ist ein strategisches Werkzeug — kein hübsches Beiwerk. Wir verbinden visuelles Storytelling mit technischer Exzellenz, um digitale Erlebnisse zu schaffen, die konvertieren.",
-      "Von der ersten Wireframe-Skizze bis zum letzten Pixel arbeiten wir mit modernen Technologien wie React, Next.js und Headless CMS-Systemen. Das Ergebnis: blitzschnelle, SEO-optimierte Websites, die auf jedem Gerät perfekt aussehen.",
-      "Ob Corporate Website, E-Commerce-Plattform oder komplexe Web-Applikation — wir liefern maßgeschneiderte Lösungen, die Ihre Geschäftsziele direkt unterstützen.",
+      "Jede Website ist ein strategisches Werkzeug — kein hübsches Beiwerk. Ich verbinde visuelles Storytelling mit technischer Exzellenz, um digitale Erlebnisse zu schaffen, die konvertieren.",
+      "Von der ersten Wireframe-Skizze bis zum letzten Pixel arbeite ich mit modernen Technologien wie React, Next.js und Headless CMS-Systemen. Das Ergebnis: blitzschnelle, SEO-optimierte Websites, die auf jedem Gerät perfekt aussehen.",
+      "Ob Corporate Website, E-Commerce-Plattform oder komplexe Web-Applikation — Sie bekommen maßgeschneiderte Lösungen, die Ihre Geschäftsziele direkt unterstützen.",
     ],
     benefits: [
       "Responsive Design für alle Endgeräte",
@@ -38,10 +38,10 @@ export const services: Service[] = [
   {
     icon: "Palette",
     title: "Branding & Corporate Design",
-    desc: "Von Logo bis Styleguide – wir erschaffen eine unverwechselbare Markenidentität für Ihr Unternehmen.",
+    desc: "Von Logo bis Styleguide – eine unverwechselbare Markenidentität für Ihr Unternehmen.",
     detail: [
-      "Eine starke Marke ist mehr als ein Logo. Sie ist das Versprechen, das Sie Ihren Kunden geben — und die Art, wie Sie es halten. Wir entwickeln Markenidentitäten, die Vertrauen aufbauen und Emotionen wecken.",
-      "Unser Branding-Prozess beginnt mit einer tiefgehenden Analyse Ihrer Positionierung, Zielgruppe und Wettbewerber. Daraus entsteht eine visuelle Sprache, die Ihre Werte authentisch transportiert.",
+      "Eine starke Marke ist mehr als ein Logo. Sie ist das Versprechen, das Sie Ihren Kunden geben — und die Art, wie Sie es halten. Ich entwickle Markenidentitäten, die Vertrauen aufbauen und Emotionen wecken.",
+      "Der Branding-Prozess beginnt mit einer tiefgehenden Analyse Ihrer Positionierung, Zielgruppe und Wettbewerber. Daraus entsteht eine visuelle Sprache, die Ihre Werte authentisch transportiert.",
       "Von der Farbpalette über Typografie bis zum umfassenden Styleguide — jedes Detail wird sorgfältig aufeinander abgestimmt, damit Ihre Marke konsistent und wiedererkennbar auftritt.",
     ],
     benefits: [
@@ -60,9 +60,9 @@ export const services: Service[] = [
     title: "UI/UX Design",
     desc: "Intuitive Interfaces und nahtlose Nutzererlebnisse, die Ihre Kunden begeistern und konvertieren.",
     detail: [
-      "Großartiges Design ist unsichtbar — es fühlt sich einfach richtig an. Wir gestalten digitale Erlebnisse, bei denen Nutzer intuitiv ans Ziel kommen, ohne nachzudenken.",
-      "Mit nutzerzentrierten Methoden wie User Research, Persona-Entwicklung und iterativem Prototyping stellen wir sicher, dass jede Interaktion durchdacht ist. Weniger Reibung, mehr Conversion.",
-      "Von der Informationsarchitektur über Wireframes bis zum High-Fidelity-Prototyp — wir validieren jeden Schritt, bevor eine einzige Zeile Code geschrieben wird.",
+      "Großartiges Design ist unsichtbar — es fühlt sich einfach richtig an. Ich gestalte digitale Erlebnisse, bei denen Nutzer intuitiv ans Ziel kommen, ohne nachzudenken.",
+      "Mit nutzerzentrierten Methoden wie User Research, Persona-Entwicklung und iterativem Prototyping stelle ich sicher, dass jede Interaktion durchdacht ist. Weniger Reibung, mehr Conversion.",
+      "Von der Informationsarchitektur über Wireframes bis zum High-Fidelity-Prototyp — jeder Schritt wird validiert, bevor eine einzige Zeile Code geschrieben wird.",
     ],
     benefits: [
       "User Research und Persona-Entwicklung",
@@ -81,8 +81,8 @@ export const services: Service[] = [
     title: "SEO & Online-Marketing",
     desc: "Suchmaschinenoptimierung, Google Ads und datengetriebene Strategien für maximale Sichtbarkeit.",
     detail: [
-      "Was nützt die schönste Website, wenn sie niemand findet? Wir sorgen dafür, dass Ihre Zielgruppe Sie genau dann entdeckt, wenn sie nach Ihren Leistungen sucht.",
-      "Unsere SEO-Strategie ist ganzheitlich: Technisches SEO, Content-Optimierung, Linkbuilding und lokale Suchmaschinenoptimierung greifen nahtlos ineinander. Ergänzt durch Google Ads für schnelle Sichtbarkeit.",
+      "Was nützt die schönste Website, wenn sie niemand findet? Ich sorge dafür, dass Ihre Zielgruppe Sie genau dann entdeckt, wenn sie nach Ihren Leistungen sucht.",
+      "Meine SEO-Strategie ist ganzheitlich: Technisches SEO, Content-Optimierung, Linkbuilding und lokale Suchmaschinenoptimierung greifen nahtlos ineinander. Ergänzt durch Google Ads für schnelle Sichtbarkeit.",
       "Jede Maßnahme wird datengetrieben gesteuert und transparent reportet. Sie sehen genau, welche Ergebnisse Ihre Investition bringt.",
     ],
     benefits: [
@@ -102,8 +102,8 @@ export const services: Service[] = [
     desc: "Optimierung für KI-gestützte Suchmaschinen – damit Sie auch in der Zukunft der Suche gefunden werden.",
     detail: [
       "Die Suche verändert sich fundamental. ChatGPT, Perplexity und Google AI Overviews verändern, wie Menschen Informationen finden. Wer jetzt nicht optimiert, wird unsichtbar.",
-      "Wir analysieren, wie KI-Modelle Ihre Inhalte verstehen und referenzieren. Dann optimieren wir Ihre digitale Präsenz so, dass Sie in AI-generierten Antworten prominent erscheinen.",
-      "Von strukturierten Daten über semantische Content-Architekturen bis zu E-E-A-T-Signalen — wir machen Ihre Marke fit für die KI-Ära der Suche.",
+      "Ich analysiere, wie KI-Modelle Ihre Inhalte verstehen und referenzieren. Dann optimiere ich Ihre digitale Präsenz so, dass Sie in AI-generierten Antworten prominent erscheinen.",
+      "Von strukturierten Daten über semantische Content-Architekturen bis zu E-E-A-T-Signalen — ich mache Ihre Marke fit für die KI-Ära der Suche.",
     ],
     benefits: [
       "AI-Suchlandschaft-Analyse",
@@ -121,9 +121,9 @@ export const services: Service[] = [
     title: "Content & Social Media Marketing",
     desc: "Strategische Content-Erstellung und Social-Media-Kampagnen, die Ihre Zielgruppe erreichen.",
     detail: [
-      "Content ist König — aber nur, wenn er strategisch geplant und exzellent umgesetzt wird. Wir entwickeln Content-Strategien, die Ihre Expertise sichtbar machen und Vertrauen aufbauen.",
-      "Von Blogartikeln und Whitepapers über Social-Media-Content bis zu Video-Produktion — wir schaffen Inhalte, die Ihre Zielgruppe wirklich interessieren und zum Handeln bewegen.",
-      "Unsere Social-Media-Strategien gehen über hübsche Posts hinaus. Wir bauen Communities auf, generieren Leads und messen den Impact jeder Kampagne.",
+      "Content ist König — aber nur, wenn er strategisch geplant und exzellent umgesetzt wird. Ich entwickle Content-Strategien, die Ihre Expertise sichtbar machen und Vertrauen aufbauen.",
+      "Von Blogartikeln und Whitepapers über Social-Media-Content bis zu Video-Produktion — Inhalte, die Ihre Zielgruppe wirklich interessieren und zum Handeln bewegen.",
+      "Meine Social-Media-Strategien gehen über hübsche Posts hinaus: Communities aufbauen, Leads generieren und den Impact jeder Kampagne messen.",
     ],
     benefits: [
       "Content-Strategie und Redaktionsplanung",

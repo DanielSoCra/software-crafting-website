@@ -2,20 +2,21 @@
 import PublicLayout from '../layouts/PublicLayout.astro';
 import ScrollReveal from '../components/public/ScrollReveal.astro';
 import ServiceCard from '../components/public/ServiceCard.astro';
-import ProjectCard from '../components/public/ProjectCard.astro';
-import TestimonialCard from '../components/public/TestimonialCard.astro';
 import TeamCard from '../components/public/TeamCard.astro';
 import CTASection from '../components/public/CTASection.astro';
 import HeroSlideshow from '../components/public/HeroSlideshow.tsx';
 import ContactForm from '../components/public/ContactForm.tsx';
 
 import { services } from '../data/services';
-import { projects } from '../data/projects';
-import { testimonials } from '../data/testimonials';
 import { processSteps } from '../data/process';
 import { team } from '../data/team';
 
 export const prerender = true;
+
+// Feature flags — activate when real content is available
+const SHOW_STATS = false;
+const SHOW_PROJECTS = false;
+const SHOW_TESTIMONIALS = false;
 
 const iconMap: Record<string, string> = {
   Globe: '🌐',
@@ -36,17 +37,18 @@ const serviceChips = [
   { label: 'Social Media', anchor: 'service-5' },
 ];
 
-const stats = [
-  { value: '50+', label: 'Projekte realisiert' },
-  { value: '98%', label: 'Kundenzufriedenheit' },
-  { value: '12+', label: 'Jahre Erfahrung' },
-  { value: '340%', label: 'Ø Reichweiten-Boost' },
-];
+// --- HIDDEN: Activate when real metrics exist ---
+// const stats = [
+//   { value: '50+', label: 'Projekte realisiert' },
+//   { value: '98%', label: 'Kundenzufriedenheit' },
+//   { value: '12+', label: 'Jahre Erfahrung' },
+//   { value: '340%', label: 'Ø Reichweiten-Boost' },
+// ];
 ---
 
 <PublicLayout
   title="Software Crafting — Webdesign, Branding, SEO & AI Search Optimization"
-  description="Software Crafting ist Ihre Web-Agentur für Webdesign, Branding, UI/UX, SEO und AI Search Optimization. Wir schaffen digitale Meisterwerke, die konvertieren."
+  description="Webdesign, Branding, UI/UX, SEO und AI Search Optimization — handwerklich gebaut, persönlich betreut."
 >
   <!-- Hero -->
   <section class="min-h-screen flex items-center relative px-6 pt-24 pb-16">
@@ -66,13 +68,13 @@ const stats = [
         <div>
           <ScrollReveal>
             <p class="text-primary font-sans text-sm tracking-[0.3em] uppercase mb-6">
-              Web-Agentur für digitale Exzellenz
+              Webdesign & digitale Strategien
             </p>
           </ScrollReveal>
           <ScrollReveal delay={100}>
             <h1 class="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-8">
-              Wir schmieden<br />
-              <span class="gradient-text">digitale Meisterwerke</span>
+              Handwerklich<br />
+              <span class="gradient-text">gebaut.</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={200}>
@@ -100,7 +102,7 @@ const stats = [
                 href="/leistungen"
                 class="text-text-muted hover:text-text transition-colors text-base font-light py-3.5"
               >
-                Unsere Leistungen entdecken &rarr;
+                Leistungen entdecken &rarr;
               </a>
             </div>
           </ScrollReveal>
@@ -114,7 +116,8 @@ const stats = [
     </div>
   </section>
 
-  <!-- Stats -->
+  {/* --- HIDDEN: Stats — activate when real metrics exist ---
+  {SHOW_STATS && (
   <section class="py-24 px-6">
     <div class="max-w-5xl mx-auto">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
@@ -131,13 +134,15 @@ const stats = [
       </div>
     </div>
   </section>
+  )}
+  */}
 
   <!-- Services -->
   <section class="py-32 px-6">
     <div class="max-w-6xl mx-auto">
       <ScrollReveal>
-        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Was wir tun</p>
-        <h2 class="font-display text-4xl md:text-5xl font-bold mb-20">Unsere Leistungen</h2>
+        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Was ich anbiete</p>
+        <h2 class="font-display text-4xl md:text-5xl font-bold mb-20">Leistungen</h2>
       </ScrollReveal>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {services.map((s, i) => (
@@ -164,70 +169,34 @@ const stats = [
 
   <hr class="max-w-6xl mx-auto border-border/30" />
 
-  <!-- Projects -->
+  {/* --- HIDDEN: Projects — activate when real portfolio exists ---
+  {SHOW_PROJECTS && (
   <section class="py-32 px-6">
     <div class="max-w-6xl mx-auto">
-      <ScrollReveal>
-        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Ausgewählte Arbeiten</p>
-        <h2 class="font-display text-4xl md:text-5xl font-bold mb-20">Referenzen</h2>
-      </ScrollReveal>
-      <div class="space-y-20">
-        {projects.slice(0, 2).map((p) => (
-          <ScrollReveal delay={100}>
-            <ProjectCard
-              slug={p.slug}
-              title={p.title}
-              category={p.category}
-              desc={p.desc}
-              img={p.img}
-            />
-          </ScrollReveal>
-        ))}
-      </div>
-      <ScrollReveal delay={200}>
-        <div class="mt-16 text-center">
-          <a href="/referenzen" class="inline-flex items-center gap-2 text-primary hover:text-accent transition-colors font-medium">
-            Alle Projekte ansehen
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-          </a>
-        </div>
-      </ScrollReveal>
+      ...projects section...
     </div>
   </section>
-
   <hr class="max-w-6xl mx-auto border-border/30" />
+  )}
+  */}
 
-  <!-- Testimonials -->
+  {/* --- HIDDEN: Testimonials — activate when real reviews exist ---
+  {SHOW_TESTIMONIALS && (
   <section class="py-32 px-6">
     <div class="max-w-6xl mx-auto">
-      <ScrollReveal>
-        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Was unsere Kunden sagen</p>
-        <h2 class="font-display text-4xl md:text-5xl font-bold mb-20">Kundenstimmen</h2>
-      </ScrollReveal>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-        {testimonials.map((t, i) => (
-          <ScrollReveal delay={i * 100}>
-            <TestimonialCard
-              text={t.text}
-              name={t.name}
-              company={t.company}
-              role={t.role}
-              stars={t.stars}
-            />
-          </ScrollReveal>
-        ))}
-      </div>
+      ...testimonials section...
     </div>
   </section>
-
   <hr class="max-w-6xl mx-auto border-border/30" />
+  )}
+  */}
 
   <!-- Process -->
   <section class="py-32 px-6">
     <div class="max-w-3xl mx-auto">
       <ScrollReveal>
-        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Wie wir arbeiten</p>
-        <h2 class="font-display text-4xl md:text-5xl font-bold mb-20">Unser Prozess</h2>
+        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Wie ich arbeite</p>
+        <h2 class="font-display text-4xl md:text-5xl font-bold mb-20">Mein Prozess</h2>
       </ScrollReveal>
       <div class="relative">
         <div class="absolute left-[19px] top-0 bottom-0 w-px bg-border/50"></div>
@@ -250,7 +219,7 @@ const stats = [
       <ScrollReveal delay={400}>
         <div class="mt-16 text-center">
           <a href="/prozess" class="inline-flex items-center gap-2 text-primary hover:text-accent transition-colors font-medium">
-            Mehr über unseren Prozess
+            Mehr über meinen Prozess
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </a>
         </div>
@@ -260,24 +229,24 @@ const stats = [
 
   <hr class="max-w-6xl mx-auto border-border/30" />
 
-  <!-- Team -->
+  <!-- About -->
   <section class="py-32 px-6">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-6xl mx-auto text-center">
       <ScrollReveal>
-        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Die Menschen dahinter</p>
-        <h2 class="font-display text-4xl md:text-5xl font-bold mb-20">Unser Team</h2>
+        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Über mich</p>
+        <h2 class="font-display text-4xl md:text-5xl font-bold mb-8">Persönliche Betreuung</h2>
       </ScrollReveal>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-16">
-        {team.map((m, i) => (
-          <ScrollReveal delay={i * 100}>
+      <ScrollReveal delay={100}>
+        <div class="flex justify-center">
+          {team.map((m) => (
             <TeamCard name={m.name} role={m.role} img={m.img} />
-          </ScrollReveal>
-        ))}
-      </div>
-      <ScrollReveal delay={300}>
-        <div class="mt-16 text-center">
+          ))}
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={200}>
+        <div class="mt-8 text-center">
           <a href="/team" class="inline-flex items-center gap-2 text-primary hover:text-accent transition-colors font-medium">
-            Das Team kennenlernen
+            Mehr erfahren
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </a>
         </div>
@@ -291,12 +260,12 @@ const stats = [
   <section id="kontakt" class="py-32 px-6">
     <div class="max-w-6xl mx-auto">
       <ScrollReveal>
-        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Lassen Sie uns sprechen</p>
+        <p class="text-primary text-sm tracking-[0.3em] uppercase mb-4">Schreiben Sie mir</p>
         <h2 class="font-display text-4xl md:text-5xl font-bold mb-6">
           Bereit für Ihr <span class="gradient-text">nächstes Projekt?</span>
         </h2>
         <p class="text-text-muted font-light text-lg mb-12 leading-relaxed">
-          Erzählen Sie uns von Ihrer Vision. Wir melden uns innerhalb von 24 Stunden bei Ihnen.
+          Erzählen Sie mir von Ihrer Vision. Ich melde mich innerhalb von 24 Stunden.
         </p>
       </ScrollReveal>
       <ScrollReveal delay={150}>
@@ -306,15 +275,7 @@ const stats = [
         <div class="mt-16 flex flex-col sm:flex-row gap-8 text-text-muted text-sm font-light">
           <span class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            hallo@softwarecrafting.de
-          </span>
-          <span class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            +49 30 123 456 78
-          </span>
-          <span class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            Berlin, Deutschland
+            daniel@software-crafting.de
           </span>
         </div>
       </ScrollReveal>
@@ -324,7 +285,7 @@ const stats = [
   <!-- CTA -->
   <CTASection
     heading="Starten wir Ihr Projekt"
-    subtitle="Lassen Sie uns gemeinsam etwas Außergewöhnliches schaffen. Von der ersten Idee bis zum fertigen Launch — wir begleiten Sie auf dem gesamten Weg."
+    subtitle="Von der ersten Idee bis zum fertigen Launch — ich begleite Sie auf dem gesamten Weg."
     buttonText="Jetzt Kontakt aufnehmen"
     buttonHref="#kontakt"
   />

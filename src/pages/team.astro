@@ -12,60 +12,74 @@ const images = import.meta.glob<{ default: ImageMetadata }>(
   "/src/assets/team/*.{jpg,jpeg,png,webp}",
   { eager: true }
 );
+
+const daniel = team[0];
+const danielImg = images[`/src/assets/${daniel.img}`]?.default;
 ---
 
 <PublicLayout
-  title="Team — Software Crafting"
-  description="Lernen Sie das Software Crafting-Team kennen: Strategen, Designer und Entwickler, vereint durch die Leidenschaft für digitale Exzellenz."
+  title="Über mich — Software Crafting"
+  description="Daniel Eberl — Gründer von Software Crafting. Webdesign, Branding und digitale Strategien aus einer Hand."
 >
   <PageHero
-    tag="Die Menschen dahinter"
-    title="Ein Team, das brennt."
-    subtitle="Strategen, Designer und Entwickler — vereint durch die Leidenschaft für digitale Exzellenz."
+    tag="Über mich"
+    title="Handwerk trifft Strategie."
+    subtitle="Persönliche Betreuung von der ersten Idee bis zum fertigen Ergebnis."
     backgroundImage={heroImg}
   />
 
   <section class="py-32 px-6">
-    <div class="max-w-5xl mx-auto">
-      <div class="space-y-24">
-        {team.map((m, i) => {
-          const imagePath = `/src/assets/${m.img}`;
-          const resolved = images[imagePath]?.default;
-          return (
-            <ScrollReveal delay={100}>
-              <div class="flex flex-col md:flex-row items-center gap-12 md:gap-16">
-                <div class="w-40 h-40 rounded-full overflow-hidden flex-shrink-0">
-                  {resolved ? (
-                    <img
-                      src={resolved.src}
-                      width={resolved.width}
-                      height={resolved.height}
-                      alt={m.name}
-                      loading="lazy"
-                      class="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div class="w-full h-full bg-bg-secondary flex items-center justify-center text-text-muted text-sm">
-                      Foto
-                    </div>
-                  )}
-                </div>
-                <div class="text-center md:text-left">
-                  <h3 class="font-display text-2xl font-semibold mb-1">{m.name}</h3>
-                  <p class="text-primary text-sm mb-4">{m.role}</p>
-                  <p class="text-text-muted font-light leading-relaxed max-w-lg">{m.bio}</p>
-                </div>
+    <div class="max-w-4xl mx-auto">
+      <ScrollReveal>
+        <div class="flex flex-col md:flex-row items-center gap-12 md:gap-16">
+          <div class="w-48 h-48 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-border/50">
+            {danielImg ? (
+              <img
+                src={danielImg.src}
+                width={danielImg.width}
+                height={danielImg.height}
+                alt={daniel.name}
+                class="w-full h-full object-cover"
+                style="filter: brightness(0.95) contrast(1.05) saturate(0.85);"
+              />
+            ) : (
+              <div class="w-full h-full bg-bg-secondary flex items-center justify-center text-text-muted text-sm">
+                Foto
               </div>
-            </ScrollReveal>
-          );
-        })}
-      </div>
+            )}
+          </div>
+          <div class="text-center md:text-left">
+            <h3 class="font-display text-3xl font-semibold mb-2">{daniel.name}</h3>
+            <p class="text-primary text-sm mb-6">{daniel.role}</p>
+            <p class="text-text-muted font-light leading-relaxed max-w-lg text-lg">
+              {daniel.bio}
+            </p>
+          </div>
+        </div>
+      </ScrollReveal>
+
+      <ScrollReveal delay={200}>
+        <div class="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+          <div class="p-6 rounded-xl bg-bg-card border border-border/50">
+            <p class="font-display text-2xl font-semibold text-primary mb-2">10+</p>
+            <p class="text-text-muted font-light text-sm">Jahre Erfahrung in Software & Design</p>
+          </div>
+          <div class="p-6 rounded-xl bg-bg-card border border-border/50">
+            <p class="font-display text-2xl font-semibold text-primary mb-2">Full-Stack</p>
+            <p class="text-text-muted font-light text-sm">Von Strategie über Design bis Code</p>
+          </div>
+          <div class="p-6 rounded-xl bg-bg-card border border-border/50">
+            <p class="font-display text-2xl font-semibold text-primary mb-2">Persönlich</p>
+            <p class="text-text-muted font-light text-sm">Jedes Projekt direkt betreut</p>
+          </div>
+        </div>
+      </ScrollReveal>
     </div>
   </section>
 
   <CTASection
     heading="Lassen Sie uns zusammenarbeiten."
-    subtitle="Wir freuen uns darauf, Sie und Ihr Projekt kennenzulernen."
+    subtitle="Ich freue mich darauf, Sie und Ihr Projekt kennenzulernen."
     buttonText="Kostenloses Erstgespräch"
     buttonHref="/#kontakt"
   />
