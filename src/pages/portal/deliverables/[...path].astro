@@ -98,9 +98,20 @@ if (!requestedPath) {
     Astro.locals.renderMode = 'pdf';
     Astro.locals.pdfPath = `/portal/deliverables/proposal/angebot.pdf${isAdmin && clientParam ? '?client=' + clientParam : ''}`;
   } else if (deliverableType === 'website-preview') {
-    // Serve via internal auth route (nginx large_client_header_buffers fixed to 4 32k)
-    Astro.locals.renderMode = 'iframe';
-    Astro.locals.iframeSrc = `/portal/deliverables/website-preview/index.html?raw=true${isAdmin && clientParam ? '&client=' + clientParam : ''}`;
+    // Inline preview: read HTML and embed assets as data URIs to avoid auth issues in iframe
+    const previewHtml = readDeliverableFile(slug, 'website-preview/index.html');
+    if (!previewHtml) return new Response('Preview nicht gefunden', { status: 404 });
+    let html = previewHtml.toString('utf-8');
+    // Replace relative asset references with inline data URIs
+    html = html.replace(/src="(assets\/[^"]+)"/g, (_match, assetPath) => {
+      const assetContent = readDeliverableFile(slug, `website-preview/${assetPath}`);
+      if (!assetContent) return `src="${assetPath}"`;
+      const ext = assetPath.split('.').pop()?.toLowerCase();
+      const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'svg' ? 'image/svg+xml' : ext === 'webp' ? 'image/webp' : 'application/octet-stream';
+      return `src="data:${mime};base64,${assetContent.toString('base64')}"`;
+    });
+    Astro.locals.renderMode = 'srcdoc';
+    Astro.locals.srcdocHtml = html;
   } else if (deliverableType === 'mood-board') {
     Astro.locals.renderMode = 'filelist';
     Astro.locals.fileList = files.filter(f => f.endsWith('.html')).map(f => ({
@@ -142,10 +153,10 @@ if (!requestedPath) {
   } else if (mimeType === 'application/pdf') {
     const isRaw = Astro.url.searchParams.get('raw') === 'true';
     if (isRaw) {
-      const accelPath = buildAccelRedirectPath(slug, `${deliverableType}/${requestedPath}`);
-      return new Response(null, {
+      const content = readDeliverableFile(slug, `${deliverableType}/${requestedPath}`);
+      if (!content) return new Response('Nicht gefunden', { status: 404 });
+      return new Response(content, {
         headers: {
-          'X-Accel-Redirect': accelPath,
           'Content-Type': mimeType,
           'X-Content-Type-Options': 'nosniff',
         },
@@ -159,10 +170,11 @@ if (!requestedPath) {
     Astro.locals.renderMode = 'markdown';
     Astro.locals.markdownHtml = renderMarkdown(content.toString('utf-8'));
   } else {
-    const accelPath = buildAccelRedirectPath(slug, `${deliverableType}/${requestedPath}`);
-    return new Response(null, {
+    // Serve binary files (images, fonts, etc.) directly from disk
+    const content = readDeliverableFile(slug, `${deliverableType}/${requestedPath}`);
+    if (!content) return new Response('Nicht gefunden', { status: 404 });
+    return new Response(content, {
       headers: {
-        'X-Accel-Redirect': accelPath,
         'Content-Type': mimeType,
         'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'public, max-age=3600',
@@ -190,12 +202,54 @@ const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
   )}
 
   {renderMode === 'srcdoc' && (
-    <iframe
-      srcdoc={srcdocHtml}
-      sandbox="allow-scripts"
-      class="w-full border border-gray-200 rounded-lg"
-      style="min-height: 80vh;"
-    />
+    <div>
+      <div class="flex items-center gap-2 mb-4" id="device-switcher">
+        <button data-device="desktop" class="device-btn active px-3 py-1.5 text-xs rounded-md border transition-colors" title="Desktop">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+        </button>
+        <button data-device="tablet" class="device-btn px-3 py-1.5 text-xs rounded-md border transition-colors" title="Tablet">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
+        </button>
+        <button data-device="mobile" class="device-btn px-3 py-1.5 text-xs rounded-md border transition-colors" title="Mobile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
+        </button>
+        <span class="text-xs text-gray-500 ml-2" id="device-label">Desktop</span>
+      </div>
+      <div class="flex justify-center transition-all duration-500 ease-out" id="preview-container">
+        <iframe
+          id="preview-iframe"
+          srcdoc={srcdocHtml}
+          sandbox="allow-scripts"
+          class="border border-gray-200 rounded-lg transition-all duration-500 ease-out"
+          style="width: 100%; min-height: 80vh;"
+        />
+      </div>
+      <script>
+        const sizes = {
+          desktop: { width: '100%', label: 'Desktop' },
+          tablet: { width: '768px', label: 'Tablet · 768px' },
+          mobile: { width: '375px', label: 'Mobile · 375px' },
+        };
+        const iframe = document.getElementById('preview-iframe');
+        const label = document.getElementById('device-label');
+        const buttons = document.querySelectorAll('.device-btn');
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const device = btn.dataset.device;
+            const size = sizes[device];
+            iframe.style.width = size.width;
+            label.textContent = size.label;
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          });
+        });
+      </script>
+      <style>
+        .device-btn { color: var(--color-text-muted); border-color: var(--color-border); background: transparent; cursor: pointer; display: flex; align-items: center; }
+        .device-btn:hover { color: var(--color-text); border-color: var(--color-text-muted); }
+        .device-btn.active { color: var(--color-primary); border-color: var(--color-primary); background: rgba(var(--color-primary-rgb, 45,107,74), 0.1); }
+      </style>
+    </div>
   )}
 
   {renderMode === 'iframe' && (
