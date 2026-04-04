@@ -3,83 +3,107 @@ export const prerender = false;
 
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import Dashboard from '../../components/portal/Dashboard';
-import type { Deliverable } from '../../lib/types';
+import AdminDashboard from '../../components/portal/AdminDashboard';
+import type { Deliverable, AdminClient, AdminDeliverable, AdminForm } from '../../lib/types';
 
 const user = Astro.locals.user!;
 const supabase = Astro.locals.supabase!;
 
-// Admin impersonation: if admin and ?client= param, load that client
-let clientSlug: string | undefined;
-const clientParam = Astro.url.searchParams.get('client');
-
 // Check if user is admin
-const { data: adminRole } = await supabase
+const { data: adminRole, error: adminRoleError } = await supabase
   .from('user_roles')
   .select('role')
   .eq('user_id', user.id)
   .eq('role', 'admin')
   .single();
 
+// PGRST116 = "no rows" (not admin) — real errors should surface
+if (adminRoleError && adminRoleError.code !== 'PGRST116') {
+  return new Response('Ein Fehler ist aufgetreten.', { status: 500 });
+}
 const isAdmin = !!adminRole;
+const clientParam = Astro.url.searchParams.get('client');
 
-// Get client data
-let clientQuery = supabase.from('clients').select('id, company, slug');
-if (isAdmin && clientParam) {
-  clientQuery = clientQuery.eq('slug', clientParam);
-  clientSlug = clientParam;
-} else {
-  clientQuery = clientQuery.eq('user_id', user.id);
-}
-const { data: client, error: clientError } = await clientQuery.single();
+// Admin without ?client= → admin overview (skip client lookup entirely)
+let showAdminDashboard = false;
+let adminClients: AdminClient[] = [];
+let adminDeliverables: AdminDeliverable[] = [];
+let adminForms: AdminForm[] = [];
 
-if (clientError && clientError.code !== 'PGRST116') {
-  return new Response('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', { status: 500 });
-}
-
-// Admin without client param — show client picker
-let adminClientList: Array<{ slug: string; company: string }> | undefined;
-if (!client && isAdmin) {
-  const { data: allClients } = await supabase.from('clients').select('slug, company').order('company');
-  adminClientList = allClients ?? [];
-} else if (!client) {
-  return Astro.redirect('/portal/login');
-}
-
-// Get deliverables (only if we have a client)
+let client: { id: string; company: string; slug: string } | null = null;
+let clientSlug: string | undefined;
 let deliverables: Deliverable[] = [];
 let latestForm: { id: string; status: string } | null = null;
 
-if (client) {
-  const { data: delData, error: delError } = await supabase
-    .from('deliverables')
-    .select('*')
-    .eq('client_id', client.id);
+if (isAdmin && !clientParam) {
+  // Admin overview: fetch all data in parallel
+  showAdminDashboard = true;
 
-  if (delError) {
+  const [clientsRes, deliverablesRes, formsRes] = await Promise.all([
+    supabase.from('clients').select('id, company, slug, industry_key, contact_name').order('company'),
+    supabase.from('deliverables').select('client_id, type, status, published_at, viewed_at'),
+    supabase.from('forms').select('client_id, id, status, created_at, updated_at').order('created_at', { ascending: false }).order('id', { ascending: false }),
+  ]);
+
+  if (clientsRes.error || deliverablesRes.error || formsRes.error) {
+    return new Response('Ein Fehler ist aufgetreten.', { status: 500 });
+  }
+
+  adminClients = (clientsRes.data ?? []) as AdminClient[];
+  adminDeliverables = (deliverablesRes.data ?? []) as AdminDeliverable[];
+
+  // Deduplicate forms: keep latest per client_id
+  const formMap = new Map<string, AdminForm>();
+  for (const form of (formsRes.data ?? []) as AdminForm[]) {
+    if (!formMap.has(form.client_id)) {
+      formMap.set(form.client_id, form);
+    }
+  }
+  adminForms = Array.from(formMap.values());
+
+} else {
+  // Client view (regular user OR admin with ?client= param)
+  let clientQuery = supabase.from('clients').select('id, company, slug');
+  if (isAdmin && clientParam) {
+    clientQuery = clientQuery.eq('slug', clientParam);
+    clientSlug = clientParam;
+  } else {
+    clientQuery = clientQuery.eq('user_id', user.id);
+  }
+  const { data: clientData, error: clientError } = await clientQuery.single();
+
+  if (clientError && clientError.code !== 'PGRST116') {
     return new Response('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', { status: 500 });
   }
-  deliverables = (delData ?? []) as Deliverable[];
 
-  const { data: forms } = await supabase
-    .from('forms')
-    .select('id, status')
-    .eq('client_id', client.id)
-    .order('created_at', { ascending: false })
-    .limit(1);
+  if (!clientData) {
+    // Admin with bad slug → back to overview; non-admin → login
+    return isAdmin
+      ? Astro.redirect('/portal/dashboard')
+      : Astro.redirect('/portal/login');
+  }
 
-  latestForm = forms?.[0] ?? null;
+  client = clientData;
+
+  const [delRes, formRes] = await Promise.all([
+    supabase.from('deliverables').select('*').eq('client_id', client.id),
+    supabase.from('forms').select('id, status').eq('client_id', client.id).order('created_at', { ascending: false }).limit(1),
+  ]);
+
+  if (delRes.error) {
+    return new Response('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', { status: 500 });
+  }
+  deliverables = (delRes.data ?? []) as Deliverable[];
+  latestForm = formRes.data?.[0] ?? null;
 }
 ---
-{adminClientList ? (
-<PortalLayout title="Admin — Client auswählen" email={user.email}>
-  <h1 class="text-2xl font-bold mb-4">Client auswählen</h1>
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    {adminClientList.map((c) => (
-      <a href={`/portal/dashboard?client=${c.slug}`} class="block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-        <span class="text-sm font-medium">{c.company}</span>
-      </a>
-    ))}
-  </div>
+{showAdminDashboard ? (
+<PortalLayout title="Admin Dashboard" email={user.email}>
+  <AdminDashboard
+    clients={adminClients}
+    deliverables={adminDeliverables}
+    forms={adminForms}
+  />
 </PortalLayout>
 ) : (
 <PortalLayout title={`Dashboard — ${client!.company}`} email={user.email}>
