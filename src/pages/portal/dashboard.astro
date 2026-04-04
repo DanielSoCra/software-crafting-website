@@ -90,7 +90,7 @@ if (isAdmin && !clientParam) {
     supabase.from('forms').select('id, status').eq('client_id', client.id).order('created_at', { ascending: false }).limit(1),
   ]);
 
-  if (delRes.error) {
+  if (delRes.error || formRes.error) {
     return new Response('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', { status: 500 });
   }
   deliverables = (delRes.data ?? []) as Deliverable[];
