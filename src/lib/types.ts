@@ -94,3 +94,27 @@ export const DELIVERABLE_LABELS: Record<DeliverableType, string> = {
   'website-preview': 'Website-Vorschau',
   'proposal': 'Angebot',
 };
+
+export interface AdminClient {
+  id: string;
+  company: string;
+  slug: string;
+  industry_key: string | null;
+  contact_name: string | null;
+}
+
+export interface AdminDeliverable {
+  client_id: string;
+  type: DeliverableType;
+  status: 'published' | 'viewed';
+  published_at: string;
+  viewed_at: string | null;
+}
+
+export interface AdminForm {
+  client_id: string;
+  id: string;
+  status: 'draft' | 'sent' | 'in_progress' | 'completed';
+  created_at: string;
+  updated_at: string;
+}
