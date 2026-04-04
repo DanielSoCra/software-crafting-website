@@ -1,12 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getSupabaseBrowserClient } from '../../lib/supabase-client';
 
-type Step = 'email' | 'confirm' | 'sending' | 'sent' | 'error';
+type Step = 'email' | 'confirm' | 'sending' | 'sent' | 'error' | 'callback';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<Step>('email');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Handle implicit-flow magic link callback (#access_token in hash)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash || !hash.includes('access_token=')) return;
+
+    setStep('callback');
+
+    const params = new URLSearchParams(hash.substring(1));
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+
+    if (!access_token || !refresh_token) {
+      setStep('error');
+      setErrorMsg('Ungültiger Zugangslink.');
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+    supabase.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
+      if (!error) {
+        window.history.replaceState(null, '', window.location.pathname);
+        window.location.href = '/portal/dashboard';
+      } else {
+        setStep('error');
+        setErrorMsg('Anmeldung fehlgeschlagen. Bitte fordere einen neuen Link an.');
+      }
+    });
+  }, []);
 
   function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,6 +75,14 @@ export default function LoginForm() {
     setEmail('');
     setStep('email');
     setErrorMsg('');
+  }
+
+  if (step === 'callback') {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">Anmeldung wird verarbeitet…</p>
+      </div>
+    );
   }
 
   if (step === 'sent') {
