@@ -98,9 +98,9 @@ if (!requestedPath) {
     Astro.locals.renderMode = 'pdf';
     Astro.locals.pdfPath = `/portal/deliverables/proposal/angebot.pdf${isAdmin && clientParam ? '?client=' + clientParam : ''}`;
   } else if (deliverableType === 'website-preview') {
-    // Serve via preview subdomain to avoid nginx cookie buffer limits
+    // Serve via internal auth route (nginx large_client_header_buffers fixed to 4 32k)
     Astro.locals.renderMode = 'iframe';
-    Astro.locals.iframeSrc = `https://preview.software-crafting.de/preview/${slug}/index.html`;
+    Astro.locals.iframeSrc = `/portal/deliverables/website-preview/index.html?raw=true${isAdmin && clientParam ? '&client=' + clientParam : ''}`;
   } else if (deliverableType === 'mood-board') {
     Astro.locals.renderMode = 'filelist';
     Astro.locals.fileList = files.filter(f => f.endsWith('.html')).map(f => ({
