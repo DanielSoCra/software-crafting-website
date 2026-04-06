@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import type { FormSection as FormSectionType, AussageItem, FrageItem } from '../../lib/types';
 
 const colorMap: Record<string, { border: string; bg: string; heading: string }> = {
@@ -13,6 +14,9 @@ interface Props {
   answers: Record<string, string | string[]>;
   onChange: (key: string, value: string | string[]) => void;
   readOnly: boolean;
+  errors?: Record<string, string>;
+  onFileUpload?: (key: string, file: File) => void;
+  uploadStates?: Record<string, 'idle' | 'uploading' | 'done' | 'error'>;
 }
 
 function renderRadioField(frage: FrageItem, value: string | string[], onChange: (key: string, value: string | string[]) => void, readOnly: boolean) {
@@ -63,7 +67,86 @@ function renderCheckboxField(frage: FrageItem, value: string | string[], onChang
   );
 }
 
-export default function FormSection({ section, answers, onChange, readOnly }: Props) {
+function FileUploadField({
+  frage,
+  value,
+  readOnly,
+  onFileUpload,
+  uploadState,
+}: {
+  frage: FrageItem;
+  value: string | string[];
+  readOnly: boolean;
+  onFileUpload?: (key: string, file: File) => void;
+  uploadState?: 'idle' | 'uploading' | 'done' | 'error';
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const currentPath = typeof value === 'string' ? value : '';
+  const fileName = currentPath ? currentPath.split('/').pop() : null;
+  const [sizeError, setSizeError] = useState('');
+
+  return (
+    <div>
+      {!readOnly && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp,.pdf,.ai,.eps,.zip"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file || !onFileUpload) return;
+              if (file.size > 10 * 1024 * 1024) {
+                setSizeError('Datei zu groß (max. 10 MB)');
+                e.target.value = '';
+                return;
+              }
+              setSizeError('');
+              onFileUpload(frage.key, file);
+              e.target.value = ''; // allow re-selecting same file
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploadState === 'uploading'}
+            className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            Datei auswählen
+          </button>
+
+          {uploadState === 'uploading' && (
+            <span className="text-sm text-gray-400 flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-600 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-600" />
+              </span>
+              Wird hochgeladen...
+            </span>
+          )}
+          {uploadState === 'error' && (
+            <span className="text-sm text-red-500">Hochladen fehlgeschlagen</span>
+          )}
+          {sizeError && (
+            <span className="text-sm text-red-500">{sizeError}</span>
+          )}
+        </div>
+      )}
+
+      {fileName && (
+        <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+          <svg className="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {fileName}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function FormSection({ section, answers, onChange, readOnly, errors, onFileUpload, uploadStates }: Props) {
   const colors = colorMap[section.color] ?? colorMap.gray;
 
   return (
@@ -87,6 +170,7 @@ export default function FormSection({ section, answers, onChange, readOnly }: Pr
 
         const frage = item as FrageItem;
         const value = answers[frage.key] ?? '';
+        const error = errors?.[frage.key];
 
         return (
           <div key={frage.key} className="mb-4">
@@ -95,21 +179,33 @@ export default function FormSection({ section, answers, onChange, readOnly }: Pr
               {frage.required && <span className="text-red-500 ml-1">*</span>}
             </label>
 
-            {frage.field === 'textarea' ? (
+            {frage.field === 'file' ? (
+              <FileUploadField
+                frage={frage}
+                value={value}
+                readOnly={readOnly}
+                onFileUpload={onFileUpload}
+                uploadState={uploadStates?.[frage.key]}
+              />
+            ) : frage.field === 'textarea' ? (
               <textarea
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => onChange(frage.key, e.target.value)}
                 placeholder={frage.placeholder}
                 readOnly={readOnly}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-teal-500 read-only:bg-gray-50"
+                className={`w-full px-3 py-2 border rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-teal-500 read-only:bg-gray-50 ${
+                  error ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
             ) : frage.field === 'select' ? (
               <select
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => onChange(frage.key, e.target.value)}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                  error ? 'border-red-500' : 'border-gray-300'
+                }`}
               >
                 <option value="">{frage.placeholder ?? 'Bitte wählen...'}</option>
                 {(frage.options ?? []).map((opt) => (
@@ -127,9 +223,13 @@ export default function FormSection({ section, answers, onChange, readOnly }: Pr
                 onChange={(e) => onChange(frage.key, e.target.value)}
                 placeholder={frage.placeholder}
                 readOnly={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 read-only:bg-gray-50"
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 read-only:bg-gray-50 ${
+                  error ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
             )}
+
+            {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
           </div>
         );
       })}
