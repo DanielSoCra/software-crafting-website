@@ -126,14 +126,26 @@ if (!requestedPath) {
       if (!variantHtml) continue; // Skip variants that can't be loaded
 
       let html = variantHtml.toString('utf-8');
-      // Embed assets as data URIs
-      html = html.replace(/src="(assets\/[^"]+)"/g, (_match, assetPath) => {
+
+      // Helper to embed asset as data URI
+      const embedAsset = (assetPath: string): string => {
         const assetContent = readDeliverableFile(slug, `mood-board/${assetPath}`);
-        if (!assetContent) return `src="${assetPath}"`;
+        if (!assetContent) return assetPath;
         const ext = assetPath.split('.').pop()?.toLowerCase();
         const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'svg' ? 'image/svg+xml' : ext === 'webp' ? 'image/webp' : 'application/octet-stream';
-        return `src="data:${mime};base64,${assetContent.toString('base64')}"`;
+        return `data:${mime};base64,${assetContent.toString('base64')}`;
+      };
+
+      // Embed src attributes
+      html = html.replace(/src="(assets\/[^"]+)"/g, (_match, assetPath) => {
+        return `src="${embedAsset(assetPath)}"`;
       });
+
+      // Embed background-image URLs (both single and double quotes)
+      html = html.replace(/background-image:\s*url\(['"]?(assets\/[^'")]+)['"]?\)/g, (_match, assetPath) => {
+        return `background-image: url('${embedAsset(assetPath)}')`;
+      });
+
       variantData[variant.replace('.html', '')] = html;
     }
 
