@@ -30,7 +30,7 @@ let adminClients: AdminClient[] = [];
 let adminDeliverables: AdminDeliverable[] = [];
 let adminForms: AdminForm[] = [];
 
-let client: { id: string; company: string; slug: string } | null = null;
+let client: { id: string; company: string; slug: string; metadata: Record<string, unknown> } | null = null;
 let clientSlug: string | undefined;
 let deliverables: Deliverable[] = [];
 let latestForm: { id: string; status: string } | null = null;
@@ -63,7 +63,7 @@ if (isAdmin && !clientParam) {
 
 } else {
   // Client view (regular user OR admin with ?client= param)
-  let clientQuery = supabase.from('clients').select('id, company, slug');
+  let clientQuery = supabase.from('clients').select('id, company, slug, metadata');
   if (isAdmin && clientParam) {
     clientQuery = clientQuery.eq('slug', clientParam);
     clientSlug = clientParam;
@@ -113,6 +113,7 @@ if (isAdmin && !clientParam) {
     questionnaireFormId={latestForm?.id ?? null}
     questionnaireStatus={latestForm?.status ?? null}
     clientSlug={clientSlug}
+    projectPlan={(client!.metadata as any)?.project_plan ?? null}
   />
 </PortalLayout>
 )}

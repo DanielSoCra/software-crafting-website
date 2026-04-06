@@ -38,8 +38,9 @@ jobs:
           RSYNC="rsync -avz --delete -e 'ssh -i ~/.ssh/deploy_key'"
 
           # Deploy to both production and preview
-          eval $RSYNC dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/dist/
-          eval $RSYNC dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting-preview/dist/
+          # --exclude preserves client preview symlinks that point to /var/www/portal-assets/
+          eval $RSYNC --exclude='client/preview/' dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/dist/
+          eval $RSYNC --exclude='client/preview/' dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting-preview/dist/
 
           # Restart both PM2 processes
           $SSH "cd /var/www/software-crafting && pm2 startOrRestart ecosystem.config.cjs --update-env"
