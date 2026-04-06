@@ -114,7 +114,7 @@ if (isAdmin && !clientParam) {
     questionnaireFormId={latestForm?.id ?? null}
     questionnaireStatus={latestForm?.status ?? null}
     clientSlug={clientSlug}
-    projectPlan={client!.metadata?.project_plan ?? null}
+    projectPlan={Array.isArray(client!.metadata?.project_plan) ? client!.metadata.project_plan.filter((s: any) => typeof s?.key === 'string') : null}
   />
 </PortalLayout>
 )}

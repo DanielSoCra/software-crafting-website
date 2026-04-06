@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Deliverable, DeliverableType, Form } from '../../lib/types';
 import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '../../lib/types';
 
@@ -163,7 +164,8 @@ function buildSteps(
     } else {
       status = entry.status ?? 'upcoming';
       if (status === 'in_progress') hasExplicitInProgress = true;
-      href = entry.href;
+      // Only allow relative paths and http(s) URLs to prevent javascript: XSS
+      if (entry.href && /^(\/|https?:\/\/)/.test(entry.href)) href = entry.href;
     }
 
     if (entry.description) description = entry.description;
@@ -279,7 +281,7 @@ function UpcomingRow({ step }: { step: ProjectStep }) {
   );
 }
 
-const STEP_CARD: Record<StepStatus, (props: { step: ProjectStep }) => JSX.Element> = {
+const STEP_CARD: Record<StepStatus, (props: { step: ProjectStep }) => React.ReactElement> = {
   ready: ReadyCard,
   completed: CompletedRow,
   in_progress: InProgressCard,
@@ -338,7 +340,7 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
           const isActive = i === activeIndex;
           const isLastVisible = i === visibleSteps.length - 1;
           const showLine = !isLastVisible || hiddenCount > 0;
-          const Card = STEP_CARD[step.status];
+          const Card = STEP_CARD[step.status] ?? UpcomingRow;
 
           return (
             <div key={step.id} className="relative flex gap-4">
