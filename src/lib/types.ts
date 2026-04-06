@@ -125,3 +125,33 @@ export interface AdminForm {
   created_at: string;
   updated_at: string;
 }
+
+// Mood Board Feedback Types
+export type MoodBoardVote = 'like' | 'dislike' | 'favorite' | null;
+export type MoodBoardFeedbackStatus = 'editing' | 'submitted';
+
+export interface MoodBoardFeedback {
+  id: string;
+  deliverable_id: string;
+  client_id: string;
+  variant_name: string;
+  vote: MoodBoardVote;
+  is_favorite: boolean;
+  comment_negative: string | null;
+  comment_positive: string | null;
+  comment_very_good: string | null;
+  status: MoodBoardFeedbackStatus;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MoodBoardFeedbackInput {
+  deliverable_id: string;
+  variant_name: string;
+  vote?: MoodBoardVote;
+  is_favorite?: boolean;
+  comment_negative?: string | null;
+  comment_positive?: string | null;
+  comment_very_good?: string | null;
+}
