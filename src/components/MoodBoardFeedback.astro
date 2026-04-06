@@ -210,3 +210,130 @@ const isEditable = currentFeedback.status === 'editing';
     @apply opacity-50 cursor-not-allowed;
   }
 </style>
+
+<script define:vars={{ deliverableId, variants: JSON.stringify(variants.split(',') || []) }}>
+  // Get auth token
+  const authToken = document.querySelector('meta[name="auth-token"]')?.getAttribute('content') || '';
+
+  const feedbackState = new Map();
+  const voteButtons = document.querySelectorAll('.vote-button');
+  const commentInputs = document.querySelectorAll('.comment-input');
+  const submitBtn = document.getElementById('submit-feedback-btn');
+
+  const FUNCTION_URL = '/functions/v1/mood-board-feedback';
+
+  async function saveFeedback(variant, updates) {
+    try {
+      const response = await fetch(FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          deliverable_id: deliverableId,
+          variant_name: variant,
+          ...updates,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('Failed to save feedback:', err);
+      alert('Fehler beim Speichern');
+    }
+  }
+
+  // Vote buttons
+  voteButtons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      if (btn.getAttribute('data-disabled') === 'true') return;
+
+      const vote = btn.getAttribute('data-vote');
+      const variant = btn.getAttribute('data-variant');
+
+      if (!feedbackState.has(variant)) {
+        feedbackState.set(variant, { vote: null, is_favorite: false });
+      }
+      const state = feedbackState.get(variant);
+
+      if (vote === 'favorite') {
+        state.is_favorite = !state.is_favorite;
+      } else {
+        state.vote = state.vote === vote ? null : vote;
+        state.is_favorite = false;
+      }
+
+      // Update UI
+      voteButtons.forEach(b => {
+        if (b.getAttribute('data-variant') === variant) {
+          if (b.getAttribute('data-vote') === 'favorite') {
+            b.setAttribute('data-active', state.is_favorite.toString());
+          } else if (b.getAttribute('data-vote') === state.vote) {
+            b.setAttribute('data-active', 'true');
+          } else {
+            b.setAttribute('data-active', 'false');
+          }
+        }
+      });
+
+      // Save
+      await saveFeedback(variant, {
+        vote: state.vote,
+        is_favorite: state.is_favorite,
+      });
+    });
+  });
+
+  // Comment inputs
+  commentInputs.forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const variant = input.getAttribute('data-variant');
+      const field = input.getAttribute('data-field');
+
+      if (!feedbackState.has(variant)) {
+        feedbackState.set(variant, {});
+      }
+      const state = feedbackState.get(variant);
+      state[field] = input.value || null;
+
+      await saveFeedback(variant, { [field]: state[field] });
+    });
+  });
+
+  // Submit
+  submitBtn?.addEventListener('click', async () => {
+    try {
+      const response = await fetch(`${FUNCTION_URL}?deliverable_id=${deliverableId}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      const allFeedback = await response.json();
+      const feedbackIds = allFeedback.map(f => f.id);
+
+      await Promise.all(
+        feedbackIds.map(id =>
+          fetch(`${FUNCTION_URL}/${id}/submit`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json',
+            },
+          })
+        )
+      );
+
+      submitBtn.textContent = '✓ Feedback erhalten, danke!';
+      submitBtn.disabled = true;
+      submitBtn.classList.add('bg-green-900', 'text-green-100', 'cursor-not-allowed', 'opacity-75');
+
+      voteButtons.forEach(btn => btn.disabled = true);
+      commentInputs.forEach(inp => inp.disabled = true);
+    } catch (err) {
+      console.error('Failed to submit:', err);
+      alert('Fehler beim Absenden');
+    }
+  });
+</script>
