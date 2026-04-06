@@ -325,4 +325,41 @@ const isEditable = currentFeedback.status === 'editing';
       alert('Fehler beim Absenden');
     }
   });
+
+  // Admin unlock handler
+  const unlockBtn = document.getElementById('unlock-feedback-btn');
+  const feedbackIds = unlockBtn?.getAttribute('data-feedback-ids')?.split(',') || [];
+
+  unlockBtn?.addEventListener('click', async () => {
+    if (!confirm('Feedback zum Bearbeiten freigeben?')) return;
+
+    try {
+      await Promise.all(
+        feedbackIds.map(id =>
+          fetch(`${FUNCTION_URL}/${id}/unlock`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json',
+            },
+          })
+        )
+      );
+
+      unlockBtn.textContent = 'Freigegeben!';
+      unlockBtn.disabled = true;
+      unlockBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Re-enable vote & comment inputs
+      document.querySelectorAll('.vote-button, .comment-input').forEach(el => {
+        el.disabled = false;
+        el.setAttribute('data-disabled', 'false');
+      });
+
+      alert('Feedback zum Bearbeiten freigegeben');
+    } catch (err) {
+      console.error('Failed to unlock:', err);
+      alert('Fehler beim Freigeben');
+    }
+  });
 </script>
