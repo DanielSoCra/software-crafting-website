@@ -121,7 +121,7 @@ export interface AdminDeliverable {
 export interface AdminForm {
   client_id: string;
   id: string;
-  status: 'draft' | 'sent' | 'in_progress' | 'completed';
+  status: 'draft' | 'published' | 'sent' | 'in_progress' | 'completed';
   created_at: string;
   updated_at: string;
 }

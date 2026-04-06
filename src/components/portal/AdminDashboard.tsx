@@ -54,6 +54,7 @@ function getFormDot(forms: AdminForm[], clientId: string): DotState {
   if (!f) return 'none';
   if (f.status === 'completed') return 'viewed';
   if (f.status === 'in_progress') return 'published';
+  if (f.status === 'published') return 'published';
   if (f.status === 'sent') {
     return hoursAgo(f.updated_at) > 48 ? 'waiting' : 'published';
   }
