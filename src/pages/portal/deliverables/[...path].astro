@@ -327,7 +327,7 @@ const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
       </div>
       <script define:vars={{ variantData: (Astro.locals as any).variantData }}>
         const buttons = document.querySelectorAll('[data-variant]');
-        const iframe = document.getElementById('mood-board-iframe') as HTMLIFrameElement;
+        const iframe = document.getElementById('mood-board-iframe');
 
         buttons.forEach(btn => {
           btn.addEventListener('click', () => {
