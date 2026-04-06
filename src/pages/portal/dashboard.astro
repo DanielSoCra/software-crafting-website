@@ -4,7 +4,8 @@ export const prerender = false;
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import Dashboard from '../../components/portal/Dashboard';
 import AdminDashboard from '../../components/portal/AdminDashboard';
-import type { Deliverable, AdminClient, AdminDeliverable, AdminForm } from '../../lib/types';
+import type { Deliverable, AdminClient, AdminDeliverable, AdminForm, Form } from '../../lib/types';
+import type { PlanStep } from '../../components/portal/Dashboard';
 
 const user = Astro.locals.user!;
 const supabase = Astro.locals.supabase!;
@@ -30,10 +31,10 @@ let adminClients: AdminClient[] = [];
 let adminDeliverables: AdminDeliverable[] = [];
 let adminForms: AdminForm[] = [];
 
-let client: { id: string; company: string; slug: string; metadata: Record<string, unknown> } | null = null;
+let client: { id: string; company: string; slug: string; metadata: { project_plan?: PlanStep[] } } | null = null;
 let clientSlug: string | undefined;
 let deliverables: Deliverable[] = [];
-let latestForm: { id: string; status: string } | null = null;
+let latestForm: { id: string; status: Form['status'] } | null = null;
 
 if (isAdmin && !clientParam) {
   // Admin overview: fetch all data in parallel
@@ -113,7 +114,7 @@ if (isAdmin && !clientParam) {
     questionnaireFormId={latestForm?.id ?? null}
     questionnaireStatus={latestForm?.status ?? null}
     clientSlug={clientSlug}
-    projectPlan={(client!.metadata as any)?.project_plan ?? null}
+    projectPlan={client!.metadata?.project_plan ?? null}
   />
 </PortalLayout>
 )}

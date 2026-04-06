@@ -1,23 +1,21 @@
-import type { Deliverable, DeliverableType } from '../../lib/types';
+import type { Deliverable, DeliverableType, Form } from '../../lib/types';
 import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '../../lib/types';
-
-// --- Types ---
 
 /** Per-client project plan step, stored in client.metadata.project_plan */
 export interface PlanStep {
-  key: string;              // deliverable type, 'questionnaire', or custom key
-  label?: string;           // override default label
-  icon?: string;            // override default icon
-  status?: StepStatus;      // for custom steps: explicit status
-  description?: string;     // override auto-generated description
-  href?: string;            // for custom steps: link target
+  key: string;
+  label?: string;
+  icon?: string;
+  status?: StepStatus;
+  description?: string;
+  href?: string;
 }
 
 interface Props {
   company: string;
   deliverables: Deliverable[];
   questionnaireFormId: string | null;
-  questionnaireStatus: string | null;
+  questionnaireStatus: Form['status'] | null;
   clientSlug?: string;
   projectPlan?: PlanStep[] | null;
 }
@@ -33,8 +31,6 @@ interface ProjectStep {
   href?: string;
   ctaLabel: string;
 }
-
-// --- Default step metadata ---
 
 const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string, string> }> = {
   questionnaire: {
@@ -94,8 +90,6 @@ const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string
   },
 };
 
-// --- Step building ---
-
 function getDefaultPlan(hasQuestionnaire: boolean): PlanStep[] {
   const plan: PlanStep[] = [];
   if (hasQuestionnaire) plan.push({ key: 'questionnaire' });
@@ -103,24 +97,31 @@ function getDefaultPlan(hasQuestionnaire: boolean): PlanStep[] {
   return plan;
 }
 
+function resolveLabel(entry: PlanStep, isQuestionnaire: boolean, isStandardDeliverable: boolean): string {
+  if (entry.label) return entry.label;
+  if (isQuestionnaire) return 'Fragebogen';
+  if (isStandardDeliverable) return DELIVERABLE_LABELS[entry.key as DeliverableType];
+  return entry.key;
+}
+
 function buildSteps(
   projectPlan: PlanStep[] | null | undefined,
   deliverables: Deliverable[],
   questionnaireFormId: string | null,
-  questionnaireStatus: string | null,
+  questionnaireStatus: Form['status'] | null,
   queryParam: string,
 ): ProjectStep[] {
   const deliverableMap = new Map(deliverables.map(d => [d.type, d]));
   const plan = projectPlan ?? getDefaultPlan(!!questionnaireFormId);
   const steps: ProjectStep[] = [];
+  let hasExplicitInProgress = false;
 
   for (const entry of plan) {
     const isQuestionnaire = entry.key === 'questionnaire';
     const isStandardDeliverable = (DELIVERABLE_TYPES as readonly string[]).includes(entry.key);
     const meta = STEP_META[entry.key];
 
-    const label = entry.label
-      ?? (isQuestionnaire ? 'Fragebogen' : isStandardDeliverable ? DELIVERABLE_LABELS[entry.key as DeliverableType] : entry.key);
+    const label = resolveLabel(entry, isQuestionnaire, isStandardDeliverable);
     const icon = entry.icon ?? meta?.icon ?? '📌';
     let ctaLabel = meta?.cta ?? 'Ansehen';
     let status: StepStatus;
@@ -160,62 +161,56 @@ function buildSteps(
       }
       if (deliverable) href = `/portal/deliverables/${entry.key}${queryParam}`;
     } else {
-      // Custom step — status & href from plan entry
       status = entry.status ?? 'upcoming';
+      if (status === 'in_progress') hasExplicitInProgress = true;
       href = entry.href;
     }
 
-    // Plan-level description always wins
     if (entry.description) description = entry.description;
 
     steps.push({ id: entry.key, label, icon, status, description, href, ctaLabel });
   }
 
-  // Auto-infer first "in_progress" step: the first 'upcoming' after a completed step
-  let prevCompleted = true;
-  let foundInProgress = steps.some(s => s.status === 'in_progress');
-  for (const step of steps) {
-    if (step.status === 'upcoming' && prevCompleted && !foundInProgress) {
-      step.status = 'in_progress';
-      const meta = STEP_META[step.id];
-      if (meta && !step.description) step.description = meta.desc.in_progress ?? '';
-      foundInProgress = true;
+  // Auto-infer first "in_progress": the first 'upcoming' after a completed step
+  if (!hasExplicitInProgress) {
+    let prevCompleted = true;
+    for (const step of steps) {
+      if (step.status === 'upcoming' && prevCompleted) {
+        step.status = 'in_progress';
+        const m = STEP_META[step.id];
+        if (m && !step.description) step.description = m.desc.in_progress ?? '';
+        break;
+      }
+      prevCompleted = step.status === 'completed';
     }
-    prevCompleted = step.status === 'completed';
   }
 
   return steps;
 }
 
-// --- Sub-components ---
+const DOT_STYLES: Record<StepStatus, string> = {
+  completed: 'bg-teal-50 border-teal-300',
+  ready: 'bg-teal-50 border-teal-300',
+  in_progress: 'bg-white border-gray-200',
+  upcoming: 'bg-gray-50 border-gray-200',
+};
 
 function StepDot({ status, icon, isActive }: { status: StepStatus; icon: string; isActive: boolean }) {
-  if (status === 'completed') {
-    return (
-      <div className="w-7 h-7 rounded-full bg-teal-50 border-2 border-teal-300 flex items-center justify-center">
-        <svg className="w-3.5 h-3.5 text-teal-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-    );
-  }
-  if (status === 'ready') {
-    return (
-      <div className={`w-7 h-7 rounded-full bg-teal-50 border-2 border-teal-300 flex items-center justify-center ${isActive ? 'ring-4 ring-teal-300/20' : ''}`}>
-        <span className="text-xs leading-none">{icon}</span>
-      </div>
-    );
-  }
-  if (status === 'in_progress') {
-    return (
-      <div className="w-7 h-7 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-        <span className="text-xs leading-none">{icon}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="w-7 h-7 rounded-full bg-gray-50 border-2 border-gray-200 flex items-center justify-center">
+  const ring = status === 'ready' && isActive ? ' ring-4 ring-teal-300/20' : '';
+  const inner =
+    status === 'completed' ? (
+      <svg className="w-3.5 h-3.5 text-teal-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    ) : status === 'upcoming' ? (
       <div className="w-2 h-2 rounded-full bg-gray-200" />
+    ) : (
+      <span className="text-xs leading-none">{icon}</span>
+    );
+
+  return (
+    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${DOT_STYLES[status]}${ring}`}>
+      {inner}
     </div>
   );
 }
@@ -284,26 +279,34 @@ function UpcomingRow({ step }: { step: ProjectStep }) {
   );
 }
 
-// --- Main component ---
+const STEP_CARD: Record<StepStatus, (props: { step: ProjectStep }) => JSX.Element> = {
+  ready: ReadyCard,
+  completed: CompletedRow,
+  in_progress: InProgressCard,
+  upcoming: UpcomingRow,
+};
 
 export default function Dashboard({ company, deliverables, questionnaireFormId, questionnaireStatus, clientSlug, projectPlan }: Props) {
   const queryParam = clientSlug ? `?client=${clientSlug}` : '';
   const steps = buildSteps(projectPlan, deliverables, questionnaireFormId, questionnaireStatus, queryParam);
 
-  const activeIndex = steps.findIndex(s => s.status !== 'completed');
+  // Single pass to derive all needed values
+  let activeIndex = -1;
+  let completedCount = 0;
+  let hasReadyOrInProgress = false;
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i].status;
+    if (s === 'completed') completedCount++;
+    if (s !== 'completed' && activeIndex === -1) activeIndex = i;
+    if (s === 'ready' || s === 'in_progress') hasReadyOrInProgress = true;
+  }
 
-  // Progressive disclosure: hide far-future steps when nothing is completed yet
-  const completedCount = steps.filter(s => s.status === 'completed').length;
-  const hasReadyOrInProgress = steps.some(s => s.status === 'ready' || s.status === 'in_progress');
   let visibleSteps: ProjectStep[];
   let hiddenCount: number;
-
   if (completedCount > 0 || !hasReadyOrInProgress) {
-    // Show all steps once progress is happening, or if everything is upcoming
     visibleSteps = steps;
     hiddenCount = 0;
   } else {
-    // Early stage: show active step + 2 upcoming as preview
     const showUpTo = Math.min((activeIndex < 0 ? 0 : activeIndex) + 3, steps.length);
     visibleSteps = steps.slice(0, showUpTo);
     hiddenCount = steps.length - showUpTo;
@@ -311,7 +314,6 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
 
   return (
     <div className="max-w-2xl">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{company}</h1>
         <p className="text-gray-500 text-sm mt-1">Projektübersicht</p>
@@ -331,12 +333,12 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
         )}
       </div>
 
-      {/* Timeline */}
       <div className="relative ml-1">
         {visibleSteps.map((step, i) => {
           const isActive = i === activeIndex;
           const isLastVisible = i === visibleSteps.length - 1;
           const showLine = !isLastVisible || hiddenCount > 0;
+          const Card = STEP_CARD[step.status];
 
           return (
             <div key={step.id} className="relative flex gap-4">
@@ -351,15 +353,7 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
                 )}
               </div>
               <div className={`flex-1 -mt-1 ${showLine ? 'pb-4' : ''}`}>
-                {step.status === 'ready' ? (
-                  <ReadyCard step={step} />
-                ) : step.status === 'completed' ? (
-                  <CompletedRow step={step} />
-                ) : step.status === 'in_progress' ? (
-                  <InProgressCard step={step} />
-                ) : (
-                  <UpcomingRow step={step} />
-                )}
+                <Card step={step} />
               </div>
             </div>
           );
