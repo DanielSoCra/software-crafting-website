@@ -200,7 +200,7 @@ const isEditable = currentFeedback.status === 'editing';
   }
 </style>
 
-<script define:vars={{ deliverableId, variants: JSON.stringify(variants.split(',') || []) }}>
+<script define:vars={{ deliverableId, variants: JSON.stringify(variants) }}>
   // Get auth token
   const authToken = document.querySelector('meta[name="auth-token"]')?.getAttribute('content') || '';
 
@@ -413,4 +413,12 @@ const isEditable = currentFeedback.status === 'editing';
       setupRealtime();
     }
   }
+
+  // Listen for variant changes from mood board buttons
+  document.addEventListener('mood-board-variant-changed', (e) => {
+    const newVariant = e.detail.variant;
+    // Reload the page to display feedback for the new variant
+    // This ensures the component props are updated with the new currentVariant
+    location.reload();
+  });
 </script>

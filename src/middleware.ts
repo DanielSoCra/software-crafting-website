@@ -14,13 +14,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const supabase = createSupabaseServerClient(context.request, context.cookies);
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user, session } } = await supabase.auth.getUser();
 
   if (!user) {
     return context.redirect('/portal/login');
   }
 
   context.locals.user = user;
+  context.locals.session = session;
   context.locals.supabase = supabase;
 
   return next();

@@ -160,6 +160,14 @@ if (!requestedPath) {
     Astro.locals.variantData = variantData;
     Astro.locals.srcdocHtml = variantData[firstVariantName];
     Astro.locals.activeVariant = firstVariantName;
+
+    // Load persisted feedback from Supabase
+    const { data: feedbackData } = await supabase
+      .from('mood_board_feedback')
+      .select('*')
+      .eq('deliverable_id', deliverable.id)
+      .eq('client_id', client.id);
+    Astro.locals.feedbackData = feedbackData || [];
   } else if (deliverableType === 'analysis') {
     Astro.locals.renderMode = 'filelist';
     Astro.locals.fileList = files.map(f => ({
@@ -353,6 +361,11 @@ const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
                 buttons.forEach(b => b.classList.add('bg-white', 'border-gray-200', 'text-gray-700'));
                 btn.classList.remove('bg-white', 'border-gray-200', 'text-gray-700');
                 btn.classList.add('bg-teal-600', 'text-white', 'border-teal-600');
+
+                // Dispatch custom event so feedback component knows variant changed
+                document.dispatchEvent(new CustomEvent('mood-board-variant-changed', {
+                  detail: { variant }
+                }));
               }
             });
           });
@@ -363,6 +376,7 @@ const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
         variants={((Astro.locals as any).variants || []).map((v: string) => v.replace('.html', ''))}
         isAdmin={isAdmin}
         currentVariant={(Astro.locals as any).activeVariant || ''}
+        feedbackData={(Astro.locals as any).feedbackData || []}
       />
     </div>
   )}

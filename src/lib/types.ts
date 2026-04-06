@@ -19,7 +19,7 @@ export interface Form {
   title: string | null;
   schema: FormSchema;
   draft_answers: Record<string, string | string[]>;
-  status: 'draft' | 'sent' | 'in_progress' | 'completed';
+  status: 'draft' | 'published' | 'sent' | 'in_progress' | 'completed';
   created_by: string | null;
   created_at: string;
   completed_at: string | null;

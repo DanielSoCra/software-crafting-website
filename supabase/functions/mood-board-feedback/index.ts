@@ -134,7 +134,18 @@ export default async (req: Request) => {
 
     // PUT /mood-board-feedback/:id/submit - Mark as submitted
     if (pathname.includes('/submit') && req.method === 'PUT') {
-      const id = pathname.split('/')[3];
+      // Extract ID from path: /functions/v1/mood-board-feedback/{id}/submit
+      const pathSegments = pathname.split('/').filter(Boolean);
+      const idIndex = pathSegments.indexOf('mood-board-feedback');
+      const id = idIndex >= 0 ? pathSegments[idIndex + 1] : null;
+
+      if (!id) {
+        return new Response(JSON.stringify({ error: 'Invalid path format' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const { data, error } = await supabase
         .from('mood_board_feedback')
         .update({
@@ -176,7 +187,18 @@ export default async (req: Request) => {
         });
       }
 
-      const id = pathname.split('/')[3];
+      // Extract ID from path: /functions/v1/mood-board-feedback/{id}/unlock
+      const pathSegments = pathname.split('/').filter(Boolean);
+      const idIndex = pathSegments.indexOf('mood-board-feedback');
+      const id = idIndex >= 0 ? pathSegments[idIndex + 1] : null;
+
+      if (!id) {
+        return new Response(JSON.stringify({ error: 'Invalid path format' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const { data, error } = await supabase
         .from('mood_board_feedback')
         .update({
