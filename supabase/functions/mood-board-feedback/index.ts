@@ -100,19 +100,34 @@ export default async (req: Request) => {
         });
       }
 
-      // Upsert feedback
+      // Upsert feedback — only include provided fields to preserve existing data
+      const updateFields: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (vote !== undefined && vote !== null) {
+        updateFields.vote = vote;
+      }
+      if (is_favorite !== undefined) {
+        updateFields.is_favorite = is_favorite;
+      }
+      if (comment_negative !== undefined) {
+        updateFields.comment_negative = comment_negative;
+      }
+      if (comment_positive !== undefined) {
+        updateFields.comment_positive = comment_positive;
+      }
+      if (comment_very_good !== undefined) {
+        updateFields.comment_very_good = comment_very_good;
+      }
+
       const { data, error } = await supabase
         .from('mood_board_feedback')
         .upsert({
           deliverable_id,
           client_id: client.id,
           variant_name,
-          vote: vote || null,
-          is_favorite: is_favorite || false,
-          comment_negative: comment_negative || null,
-          comment_positive: comment_positive || null,
-          comment_very_good: comment_very_good || null,
-          updated_at: new Date().toISOString(),
+          ...updateFields,
         }, {
           onConflict: 'deliverable_id,client_id,variant_name'
         })
@@ -146,6 +161,42 @@ export default async (req: Request) => {
         });
       }
 
+      // VERIFY OWNERSHIP: Check that this feedback row belongs to the authenticated user's client
+      const { data: feedbackRow, error: fetchError } = await supabase
+        .from('mood_board_feedback')
+        .select('client_id')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !feedbackRow) {
+        return new Response(JSON.stringify({ error: 'Feedback not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Verify the feedback belongs to the authenticated user's client
+      const { data: userClient, error: userClientError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (userClientError || !userClient) {
+        return new Response(JSON.stringify({ error: 'Client not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (feedbackRow.client_id !== userClient.id) {
+        return new Response(JSON.stringify({ error: 'Forbidden: not your feedback' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // NOW update the feedback status
       const { data, error } = await supabase
         .from('mood_board_feedback')
         .update({

@@ -296,12 +296,35 @@ const isEditable = currentFeedback.status === 'editing';
   // Submit
   submitBtn?.addEventListener('click', async () => {
     try {
+      // 1. Ensure all variants have feedback rows (create empty ones if needed)
+      for (const variant of variants) {
+        const createResponse = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            deliverable_id: deliverableId,
+            variant_name: variant,
+            // Leave other fields undefined so partial update doesn't overwrite
+          }),
+        });
+
+        if (!createResponse.ok) {
+          const err = await createResponse.json();
+          console.warn(`Failed to ensure variant ${variant} exists:`, err);
+        }
+      }
+
+      // 2. Fetch all feedback rows
       const response = await fetch(`${FUNCTION_URL}?deliverable_id=${deliverableId}`, {
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
       const allFeedback = await response.json();
       const feedbackIds = allFeedback.map(f => f.id);
 
+      // 3. Submit all feedback rows
       await Promise.all(
         feedbackIds.map(id =>
           fetch(`${FUNCTION_URL}/${id}/submit`, {
@@ -417,6 +440,10 @@ const isEditable = currentFeedback.status === 'editing';
   // Listen for variant changes from mood board buttons
   document.addEventListener('mood-board-variant-changed', (e) => {
     const newVariant = e.detail.variant;
+    // Update URL with variant param to preserve selection across reloads
+    const url = new URL(window.location);
+    url.searchParams.set('variant', newVariant);
+    window.history.replaceState({}, '', url);
     // Reload the page to display feedback for the new variant
     // This ensures the component props are updated with the new currentVariant
     location.reload();

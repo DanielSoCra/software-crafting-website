@@ -155,11 +155,18 @@ if (!requestedPath) {
     }
 
     const firstVariantName = variants[0].replace('.html', '');
+
+    // Check if variant was specified in URL query params (preserves selection across reloads)
+    const requestedVariant = Astro.url.searchParams.get('variant');
+    const activeVariantName = (requestedVariant && variantData[requestedVariant])
+      ? requestedVariant
+      : firstVariantName;
+
     Astro.locals.renderMode = 'mood-board';
     Astro.locals.variants = Object.keys(variantData);
     Astro.locals.variantData = variantData;
-    Astro.locals.srcdocHtml = variantData[firstVariantName];
-    Astro.locals.activeVariant = firstVariantName;
+    Astro.locals.srcdocHtml = variantData[activeVariantName];
+    Astro.locals.activeVariant = activeVariantName;
 
     // Load persisted feedback from Supabase
     const { data: feedbackData } = await supabase
