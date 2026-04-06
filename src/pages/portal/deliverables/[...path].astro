@@ -113,11 +113,18 @@ if (!requestedPath) {
     Astro.locals.renderMode = 'srcdoc';
     Astro.locals.srcdocHtml = html;
   } else if (deliverableType === 'mood-board') {
-    Astro.locals.renderMode = 'filelist';
-    Astro.locals.fileList = files.filter(f => f.endsWith('.html')).map(f => ({
-      name: f.replace('.html', '').replace(/-/g, ' '),
-      href: `/portal/deliverables/mood-board/${f}${isAdmin && clientParam ? '?client=' + clientParam : ''}`,
-    }));
+    // Variant switcher like website-preview: load first variant and set up switcher
+    const variants = files.filter(f => f.endsWith('.html')).sort();
+    if (variants.length === 0) {
+      return new Response('Keine Varianten gefunden', { status: 404 });
+    }
+    const firstVariant = variants[0];
+    const variantHtml = readDeliverableFile(slug, `mood-board/${firstVariant}`);
+    if (!variantHtml) return new Response('Variante nicht gefunden', { status: 404 });
+    Astro.locals.renderMode = 'mood-board';
+    Astro.locals.variants = variants;
+    Astro.locals.srcdocHtml = variantHtml.toString('utf-8');
+    Astro.locals.activeVariant = firstVariant.replace('.html', '');
   } else if (deliverableType === 'analysis') {
     Astro.locals.renderMode = 'filelist';
     Astro.locals.fileList = files.map(f => ({
@@ -265,6 +272,57 @@ const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
     <object data={pdfPath} type="application/pdf" class="w-full rounded-lg" style="min-height: 80vh;">
       <p>PDF kann nicht angezeigt werden. <a href={pdfPath} class="text-teal-600 underline">Herunterladen</a></p>
     </object>
+  )}
+
+  {renderMode === 'mood-board' && (
+    <div>
+      <div class="flex flex-wrap gap-2 mb-4" id="variant-switcher">
+        {((Astro.locals as any).variants || []).map((variant: string) => {
+          const variantName = variant.replace('.html', '');
+          const isActive = variantName === (Astro.locals as any).activeVariant;
+          return (
+            <button
+              data-variant={variantName}
+              class={`px-4 py-2 rounded-lg border transition-colors font-medium text-sm ${
+                isActive
+                  ? 'bg-teal-600 text-white border-teal-600'
+                  : 'bg-white border-gray-200 text-gray-700 hover:border-teal-600'
+              }`}
+            >
+              {variantName}
+            </button>
+          );
+        })}
+      </div>
+      <div class="flex justify-center">
+        <iframe
+          id="mood-board-iframe"
+          srcdoc={(Astro.locals as any).srcdocHtml}
+          sandbox="allow-scripts"
+          class="border border-gray-200 rounded-lg"
+          style="width: 100%; min-height: 80vh;"
+        />
+      </div>
+      <script>
+        const buttons = document.querySelectorAll('[data-variant]');
+        const iframe = document.getElementById('mood-board-iframe') as HTMLIFrameElement;
+
+        buttons.forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const variant = btn.getAttribute('data-variant');
+            const response = await fetch(`/portal/deliverables/mood-board/${variant}.html?raw=true`);
+            if (response.ok) {
+              const html = await response.text();
+              iframe.srcdoc = html;
+              buttons.forEach(b => b.classList.remove('bg-teal-600', 'text-white', 'border-teal-600'));
+              buttons.forEach(b => b.classList.add('bg-white', 'border-gray-200', 'text-gray-700'));
+              btn.classList.remove('bg-white', 'border-gray-200', 'text-gray-700');
+              btn.classList.add('bg-teal-600', 'text-white', 'border-teal-600');
+            }
+          });
+        });
+      </script>
+    </div>
   )}
 
   {renderMode === 'filelist' && (
