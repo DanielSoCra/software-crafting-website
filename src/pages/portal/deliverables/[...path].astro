@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import PortalLayout from '../../../layouts/PortalLayout.astro';
+import MoodBoardFeedback from '../../../components/MoodBoardFeedback.astro';
 import { resolveDeliverablePath, readDeliverableFile, listDeliverableFiles, getMimeType, buildAccelRedirectPath } from '../../../lib/deliverables';
 import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '../../../lib/types';
 import type { DeliverableType } from '../../../lib/types';
@@ -309,52 +310,60 @@ const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
   )}
 
   {renderMode === 'mood-board' && (
-    <div>
-      <div class="flex flex-wrap gap-2 mb-4" id="variant-switcher">
-        {((Astro.locals as any).variants || []).map((variant: string) => {
-          const variantName = variant.replace('.html', '');
-          const isActive = variantName === (Astro.locals as any).activeVariant;
-          return (
-            <button
-              data-variant={variantName}
-              class={`px-4 py-2 rounded-lg border transition-colors font-medium text-sm ${
-                isActive
-                  ? 'bg-teal-600 text-white border-teal-600'
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-teal-600'
-              }`}
-            >
-              {variantName}
-            </button>
-          );
-        })}
-      </div>
-      <div class="flex justify-center">
-        <iframe
-          id="mood-board-iframe"
-          srcdoc={(Astro.locals as any).srcdocHtml}
-          sandbox="allow-scripts"
-          class="border border-gray-200 rounded-lg"
-          style="width: 100%; min-height: 80vh;"
-        />
-      </div>
-      <script define:vars={{ variantData: (Astro.locals as any).variantData }}>
-        const buttons = document.querySelectorAll('[data-variant]');
-        const iframe = document.getElementById('mood-board-iframe');
+    <div class="space-y-8">
+      <div>
+        <div class="flex flex-wrap gap-2 mb-4" id="variant-switcher">
+          {((Astro.locals as any).variants || []).map((variant: string) => {
+            const variantName = variant.replace('.html', '');
+            const isActive = variantName === (Astro.locals as any).activeVariant;
+            return (
+              <button
+                data-variant={variantName}
+                class={`px-4 py-2 rounded-lg border transition-colors font-medium text-sm ${
+                  isActive
+                    ? 'bg-teal-600 text-white border-teal-600'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-teal-600'
+                }`}
+              >
+                {variantName}
+              </button>
+            );
+          })}
+        </div>
+        <div class="flex justify-center">
+          <iframe
+            id="mood-board-iframe"
+            srcdoc={(Astro.locals as any).srcdocHtml}
+            sandbox="allow-scripts"
+            class="border border-gray-200 rounded-lg"
+            style="width: 100%; min-height: 80vh;"
+          />
+        </div>
+        <script define:vars={{ variantData: (Astro.locals as any).variantData }}>
+          const buttons = document.querySelectorAll('[data-variant]');
+          const iframe = document.getElementById('mood-board-iframe');
 
-        buttons.forEach(btn => {
-          btn.addEventListener('click', () => {
-            const variant = btn.getAttribute('data-variant');
-            const html = variantData[variant];
-            if (html) {
-              iframe.srcdoc = html;
-              buttons.forEach(b => b.classList.remove('bg-teal-600', 'text-white', 'border-teal-600'));
-              buttons.forEach(b => b.classList.add('bg-white', 'border-gray-200', 'text-gray-700'));
-              btn.classList.remove('bg-white', 'border-gray-200', 'text-gray-700');
-              btn.classList.add('bg-teal-600', 'text-white', 'border-teal-600');
-            }
+          buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+              const variant = btn.getAttribute('data-variant');
+              const html = variantData[variant];
+              if (html) {
+                iframe.srcdoc = html;
+                buttons.forEach(b => b.classList.remove('bg-teal-600', 'text-white', 'border-teal-600'));
+                buttons.forEach(b => b.classList.add('bg-white', 'border-gray-200', 'text-gray-700'));
+                btn.classList.remove('bg-white', 'border-gray-200', 'text-gray-700');
+                btn.classList.add('bg-teal-600', 'text-white', 'border-teal-600');
+              }
+            });
           });
-        });
-      </script>
+        </script>
+      </div>
+      <MoodBoardFeedback
+        deliverableId={deliverable.id}
+        variants={((Astro.locals as any).variants || []).map((v: string) => v.replace('.html', ''))}
+        isAdmin={isAdmin}
+        currentVariant={(Astro.locals as any).activeVariant || ''}
+      />
     </div>
   )}
 

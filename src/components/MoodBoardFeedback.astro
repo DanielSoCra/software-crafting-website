@@ -46,7 +46,7 @@ const isEditable = currentFeedback.status === 'editing';
         <label class="block text-sm font-semibold text-gray-100">Deine Bewertung</label>
         <div class="flex gap-3">
           <button
-            class="vote-button like-btn px-4 py-2 rounded-lg transition-colors"
+            class="vote-button px-4 py-2 rounded-lg font-semibold transition-all bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             data-vote="like"
             data-variant={currentVariant}
             data-disabled={!isEditable}
@@ -56,7 +56,7 @@ const isEditable = currentFeedback.status === 'editing';
             ❤️ Gefällt mir
           </button>
           <button
-            class="vote-button dislike-btn px-4 py-2 rounded-lg transition-colors"
+            class="vote-button px-4 py-2 rounded-lg font-semibold transition-all bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             data-vote="dislike"
             data-variant={currentVariant}
             data-disabled={!isEditable}
@@ -66,7 +66,7 @@ const isEditable = currentFeedback.status === 'editing';
             👎 Gefällt mir nicht
           </button>
           <button
-            class="vote-button favorite-btn px-4 py-2 rounded-lg transition-colors"
+            class="vote-button px-4 py-2 rounded-lg font-semibold transition-all bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             data-vote="favorite"
             data-variant={currentVariant}
             data-disabled={!isEditable}
@@ -193,21 +193,10 @@ const isEditable = currentFeedback.status === 'editing';
 </div>
 
 <style>
-  .vote-button {
-    @apply px-4 py-2 rounded-lg font-semibold transition-all;
-    @apply bg-gray-800 text-gray-300 border border-gray-700;
-  }
-
-  .vote-button:not([data-disabled='true']):hover {
-    @apply bg-gray-700 border-gray-600;
-  }
-
   .vote-button[data-active='true'] {
-    @apply bg-blue-600 text-white border-blue-500;
-  }
-
-  .vote-button[data-disabled='true'] {
-    @apply opacity-50 cursor-not-allowed;
+    background-color: rgb(37, 99, 235);
+    color: rgb(255, 255, 255);
+    border-color: rgb(59, 130, 246);
   }
 </style>
 
