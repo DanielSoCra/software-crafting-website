@@ -362,4 +362,55 @@ const isEditable = currentFeedback.status === 'editing';
       alert('Fehler beim Freigeben');
     }
   });
+
+  // Realtime listener for status changes
+  if (typeof window !== 'undefined') {
+    const isAdmin = document.querySelector('.mood-board-feedback [id="unlock-feedback-btn"]') !== null;
+
+    if (!isAdmin) {
+      const setupRealtime = async () => {
+        try {
+          const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+
+          const supabaseUrl = document.querySelector('meta[name="supabase-url"]')?.getAttribute('content') || '';
+          const supabaseAnonKey = document.querySelector('meta[name="supabase-anon-key"]')?.getAttribute('content') || '';
+
+          if (!supabaseUrl || !supabaseAnonKey) {
+            console.warn('Supabase credentials not found in meta tags');
+            return;
+          }
+
+          const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+          const subscription = supabase
+            .channel(`mood_board_feedback:${deliverableId}`)
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'mood_board_feedback',
+                filter: `deliverable_id=eq.${deliverableId}`,
+              },
+              (payload) => {
+                console.log('Feedback updated:', payload);
+                if (payload.new.status === 'editing') {
+                  location.reload();
+                }
+              }
+            )
+            .subscribe();
+
+          // Cleanup on unload
+          window.addEventListener('unload', () => {
+            subscription.unsubscribe();
+          });
+        } catch (err) {
+          console.error('Realtime setup failed:', err);
+        }
+      };
+
+      setupRealtime();
+    }
+  }
 </script>
