@@ -141,9 +141,9 @@ if (!requestedPath) {
         return `src="${embedAsset(assetPath)}"`;
       });
 
-      // Embed background-image URLs (both single and double quotes)
-      html = html.replace(/background-image:\s*url\(['"]?(assets\/[^'")]+)['"]?\)/g, (_match, assetPath) => {
-        return `background-image: url('${embedAsset(assetPath)}')`;
+      // Embed background: and background-image: URLs (both single and double quotes, with variations)
+      html = html.replace(/background(?:-image)?:\s*url\(['"]?(assets\/[^'")]+)['"]?\)/g, (_match, assetPath) => {
+        return `background: url('${embedAsset(assetPath)}')`;
       });
 
       variantData[variant.replace('.html', '')] = html;
