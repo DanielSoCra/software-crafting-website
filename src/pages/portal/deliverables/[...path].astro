@@ -113,18 +113,40 @@ if (!requestedPath) {
     Astro.locals.renderMode = 'srcdoc';
     Astro.locals.srcdocHtml = html;
   } else if (deliverableType === 'mood-board') {
-    // Variant switcher like website-preview: load first variant and set up switcher
+    // Variant switcher like website-preview: load all variants with embedded assets
     const variants = files.filter(f => f.endsWith('.html')).sort();
     if (variants.length === 0) {
       return new Response('Keine Varianten gefunden', { status: 404 });
     }
-    const firstVariant = variants[0];
-    const variantHtml = readDeliverableFile(slug, `mood-board/${firstVariant}`);
-    if (!variantHtml) return new Response('Variante nicht gefunden', { status: 404 });
+
+    // Load and embed all variants
+    const variantData: Record<string, string> = {};
+    for (const variant of variants) {
+      const variantHtml = readDeliverableFile(slug, `mood-board/${variant}`);
+      if (!variantHtml) continue; // Skip variants that can't be loaded
+
+      let html = variantHtml.toString('utf-8');
+      // Embed assets as data URIs
+      html = html.replace(/src="(assets\/[^"]+)"/g, (_match, assetPath) => {
+        const assetContent = readDeliverableFile(slug, `mood-board/${assetPath}`);
+        if (!assetContent) return `src="${assetPath}"`;
+        const ext = assetPath.split('.').pop()?.toLowerCase();
+        const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'svg' ? 'image/svg+xml' : ext === 'webp' ? 'image/webp' : 'application/octet-stream';
+        return `src="data:${mime};base64,${assetContent.toString('base64')}"`;
+      });
+      variantData[variant.replace('.html', '')] = html;
+    }
+
+    if (Object.keys(variantData).length === 0) {
+      return new Response('Keine Varianten gefunden', { status: 404 });
+    }
+
+    const firstVariantName = variants[0].replace('.html', '');
     Astro.locals.renderMode = 'mood-board';
-    Astro.locals.variants = variants;
-    Astro.locals.srcdocHtml = variantHtml.toString('utf-8');
-    Astro.locals.activeVariant = firstVariant.replace('.html', '');
+    Astro.locals.variants = Object.keys(variantData);
+    Astro.locals.variantData = variantData;
+    Astro.locals.srcdocHtml = variantData[firstVariantName];
+    Astro.locals.activeVariant = firstVariantName;
   } else if (deliverableType === 'analysis') {
     Astro.locals.renderMode = 'filelist';
     Astro.locals.fileList = files.map(f => ({
@@ -303,16 +325,15 @@ const title = DELIVERABLE_LABELS[deliverableType] ?? deliverableType;
           style="width: 100%; min-height: 80vh;"
         />
       </div>
-      <script>
+      <script define:vars={{ variantData: (Astro.locals as any).variantData }}>
         const buttons = document.querySelectorAll('[data-variant]');
         const iframe = document.getElementById('mood-board-iframe') as HTMLIFrameElement;
 
         buttons.forEach(btn => {
-          btn.addEventListener('click', async () => {
+          btn.addEventListener('click', () => {
             const variant = btn.getAttribute('data-variant');
-            const response = await fetch(`/portal/deliverables/mood-board/${variant}.html?raw=true`);
-            if (response.ok) {
-              const html = await response.text();
+            const html = variantData[variant];
+            if (html) {
               iframe.srcdoc = html;
               buttons.forEach(b => b.classList.remove('bg-teal-600', 'text-white', 'border-teal-600'));
               buttons.forEach(b => b.classList.add('bg-white', 'border-gray-200', 'text-gray-700'));
