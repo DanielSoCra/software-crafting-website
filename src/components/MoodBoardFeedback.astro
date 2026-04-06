@@ -1,0 +1,212 @@
+---
+import type { MoodBoardFeedback } from '../lib/types';
+
+interface Props {
+  deliverableId: string;
+  variants: string[];
+  isAdmin: boolean;
+  currentVariant: string;
+  feedbackData?: MoodBoardFeedback[];
+}
+
+const { deliverableId, variants, isAdmin, currentVariant, feedbackData = [] } = Astro.props;
+
+// Build a map of variant -> feedback
+const feedbackMap = new Map<string, MoodBoardFeedback>();
+feedbackData.forEach(f => {
+  feedbackMap.set(f.variant_name, f);
+});
+
+// Get current feedback or empty state
+const currentFeedback = feedbackMap.get(currentVariant) || {
+  variant_name: currentVariant,
+  vote: null,
+  is_favorite: false,
+  comment_negative: null,
+  comment_positive: null,
+  comment_very_good: null,
+  status: 'editing',
+  id: '',
+  deliverable_id: '',
+  client_id: '',
+  submitted_at: null,
+  created_at: '',
+  updated_at: '',
+};
+
+const isSubmitted = currentFeedback.status === 'submitted';
+const isEditable = currentFeedback.status === 'editing';
+---
+
+<div class="mood-board-feedback mt-8 pt-8 border-t border-gray-700">
+  {!isAdmin && (
+    <div class="space-y-6">
+      {/* Voting Buttons */}
+      <div class="space-y-2">
+        <label class="block text-sm font-semibold text-gray-100">Deine Bewertung</label>
+        <div class="flex gap-3">
+          <button
+            class="vote-button like-btn px-4 py-2 rounded-lg transition-colors"
+            data-vote="like"
+            data-variant={currentVariant}
+            data-disabled={!isEditable}
+            data-active={currentFeedback.vote === 'like'}
+            disabled={!isEditable}
+          >
+            ❤️ Gefällt mir
+          </button>
+          <button
+            class="vote-button dislike-btn px-4 py-2 rounded-lg transition-colors"
+            data-vote="dislike"
+            data-variant={currentVariant}
+            data-disabled={!isEditable}
+            data-active={currentFeedback.vote === 'dislike'}
+            disabled={!isEditable}
+          >
+            👎 Gefällt mir nicht
+          </button>
+          <button
+            class="vote-button favorite-btn px-4 py-2 rounded-lg transition-colors"
+            data-vote="favorite"
+            data-variant={currentVariant}
+            data-disabled={!isEditable}
+            data-active={currentFeedback.is_favorite}
+            disabled={!isEditable}
+          >
+            ⭐ Favorit
+          </button>
+        </div>
+      </div>
+
+      {/* Comment Fields */}
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-100 mb-1">Was gefällt dir nicht?</label>
+          <textarea
+            class="comment-input w-full px-3 py-2 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 placeholder-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            data-field="comment_negative"
+            data-variant={currentVariant}
+            placeholder="Deine Gedanken..."
+            maxlength="500"
+            disabled={!isEditable}
+          >{currentFeedback.comment_negative || ''}</textarea>
+          <p class="text-xs text-gray-500 mt-1">Max. 500 Zeichen</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-100 mb-1">Was ist gut?</label>
+          <textarea
+            class="comment-input w-full px-3 py-2 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 placeholder-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            data-field="comment_positive"
+            data-variant={currentVariant}
+            placeholder="Deine Gedanken..."
+            maxlength="500"
+            disabled={!isEditable}
+          >{currentFeedback.comment_positive || ''}</textarea>
+          <p class="text-xs text-gray-500 mt-1">Max. 500 Zeichen</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-100 mb-1">Was ist sehr gut?</label>
+          <textarea
+            class="comment-input w-full px-3 py-2 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 placeholder-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            data-field="comment_very_good"
+            data-variant={currentVariant}
+            placeholder="Deine Gedanken..."
+            maxlength="500"
+            disabled={!isEditable}
+          >{currentFeedback.comment_very_good || ''}</textarea>
+          <p class="text-xs text-gray-500 mt-1">Max. 500 Zeichen</p>
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      {!isSubmitted && (
+        <button
+          id="submit-feedback-btn"
+          class="w-full px-4 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+          data-deliverable-id={deliverableId}
+          data-variants={variants.join(',')}
+        >
+          Feedback abgesendet
+        </button>
+      )}
+
+      {isSubmitted && (
+        <div class="px-4 py-3 rounded-lg bg-green-900 text-green-100 text-center font-semibold">
+          ✓ Feedback erhalten, danke!
+        </div>
+      )}
+    </div>
+  )}
+
+  {isAdmin && (
+    <div class="space-y-6">
+      <div class="px-4 py-3 rounded-lg bg-gray-800 border border-gray-700">
+        <p class="text-sm text-gray-300 mb-4">
+          {isSubmitted ? (
+            <>
+              <strong>Status: Feedback abgesendet</strong>
+              <button
+                id="unlock-feedback-btn"
+                class="ml-4 px-3 py-1 rounded bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
+                data-feedback-ids={feedbackData.map(f => f.id).join(',')}
+              >
+                Zum Bearbeiten freigeben
+              </button>
+            </>
+          ) : (
+            <strong>Status: Kunde bearbeitet noch</strong>
+          )}
+        </p>
+      </div>
+
+      {/* Read-only display of feedback */}
+      <div class="space-y-4 opacity-75">
+        <div>
+          <p class="text-sm font-semibold text-gray-300 mb-1">Bewertung: {currentFeedback.vote === 'like' ? '❤️ Gefällt mir' : currentFeedback.vote === 'dislike' ? '👎 Gefällt mir nicht' : currentFeedback.is_favorite ? '⭐ Favorit' : 'Keine Bewertung'}</p>
+        </div>
+
+        {currentFeedback.comment_negative && (
+          <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-1">Was gefällt nicht:</label>
+            <p class="text-gray-400">{currentFeedback.comment_negative}</p>
+          </div>
+        )}
+
+        {currentFeedback.comment_positive && (
+          <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-1">Was ist gut:</label>
+            <p class="text-gray-400">{currentFeedback.comment_positive}</p>
+          </div>
+        )}
+
+        {currentFeedback.comment_very_good && (
+          <div>
+            <label class="block text-sm font-semibold text-gray-300 mb-1">Was ist sehr gut:</label>
+            <p class="text-gray-400">{currentFeedback.comment_very_good}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .vote-button {
+    @apply px-4 py-2 rounded-lg font-semibold transition-all;
+    @apply bg-gray-800 text-gray-300 border border-gray-700;
+  }
+
+  .vote-button:not([data-disabled='true']):hover {
+    @apply bg-gray-700 border-gray-600;
+  }
+
+  .vote-button[data-active='true'] {
+    @apply bg-blue-600 text-white border-blue-500;
+  }
+
+  .vote-button[data-disabled='true'] {
+    @apply opacity-50 cursor-not-allowed;
+  }
+</style>
