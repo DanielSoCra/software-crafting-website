@@ -6,6 +6,13 @@ const aussageItemSchema = z.object({
   escape: z.string().optional(),
 });
 
+const empfehlungItemSchema = z.object({
+  type: z.literal('empfehlung'),
+  value: z.string(),
+  text: z.string(),
+  escape: z.string().optional(),
+});
+
 const frageItemSchema = z.object({
   type: z.literal('frage'),
   key: z.string(),
@@ -24,7 +31,7 @@ const frageItemSchema = z.object({
   { message: 'options required for select/radio/checkbox fields' }
 );
 
-const formItemSchema = z.union([aussageItemSchema, frageItemSchema]);
+const formItemSchema = z.union([aussageItemSchema, empfehlungItemSchema, frageItemSchema]);
 
 const formSectionSchema = z.object({
   key: z.string(),

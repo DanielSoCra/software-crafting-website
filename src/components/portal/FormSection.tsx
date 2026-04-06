@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { FormSection as FormSectionType, AussageItem, FrageItem } from '../../lib/types';
+import type { FormSection as FormSectionType, AussageItem, EmpfehlungItem, FrageItem } from '../../lib/types';
 
 const colorMap: Record<string, { border: string; bg: string; heading: string }> = {
   teal:   { border: 'border-teal-600',   bg: 'bg-teal-50',    heading: 'text-teal-600' },
@@ -163,6 +163,19 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
               <p>{aussage.text}</p>
               {aussage.escape && (
                 <p className="mt-2 text-gray-500 italic text-sm">{aussage.escape}</p>
+              )}
+            </div>
+          );
+        }
+
+        if (item.type === 'empfehlung') {
+          const emp = item as EmpfehlungItem;
+          return (
+            <div key={i} className={`${colors.bg} rounded-lg p-4 mb-4 text-sm leading-relaxed`}>
+              <p className="italic text-gray-500 mb-2">{emp.value}</p>
+              <p>{emp.text}</p>
+              {emp.escape && (
+                <p className="mt-2 text-gray-500 italic text-sm">{emp.escape}</p>
               )}
             </div>
           );

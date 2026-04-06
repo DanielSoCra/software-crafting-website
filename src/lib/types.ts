@@ -47,10 +47,17 @@ export interface FormSection {
   items: FormItem[];
 }
 
-export type FormItem = AussageItem | FrageItem;
+export type FormItem = AussageItem | EmpfehlungItem | FrageItem;
 
 export interface AussageItem {
   type: 'aussage';
+  text: string;
+  escape?: string;
+}
+
+export interface EmpfehlungItem {
+  type: 'empfehlung';
+  value: string;
   text: string;
   escape?: string;
 }
