@@ -10,7 +10,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:unit": "vitest",
+    "test:unit:ui": "vitest --ui"
   },
   "dependencies": {
     "@astrojs/node": "^10.0.4",
@@ -41,6 +45,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.1",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^2.1.8"
   }
 }
