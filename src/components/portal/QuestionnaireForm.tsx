@@ -10,6 +10,7 @@ interface Props {
 export default function QuestionnaireForm({ form }: Props) {
   const schema = form.schema as FormSchema;
   const isCompleted = form.status === 'completed';
+  const isReadOnly = form.status === 'completed' || form.status === 'published';
   const totalSteps = schema.sections.length + 1; // +1 for built-in final step
 
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
@@ -30,7 +31,7 @@ export default function QuestionnaireForm({ form }: Props) {
   // --- Draft persistence ---
 
   const saveDraft = useCallback(async (draft: Record<string, string | string[]>) => {
-    if (isCompleted) return;
+    if (isReadOnly) return;
     setSaveStatus('saving');
 
     const newStatus = currentStatus === 'sent' ? 'in_progress' : currentStatus;
@@ -46,10 +47,10 @@ export default function QuestionnaireForm({ form }: Props) {
 
     if (currentStatus === 'sent') setCurrentStatus('in_progress');
     setSaveStatus('saved');
-  }, [form.id, currentStatus, isCompleted, supabase]);
+  }, [form.id, currentStatus, isReadOnly, supabase]);
 
   function handleChange(key: string, value: string | string[]) {
-    if (isCompleted) return;
+    if (isReadOnly) return;
     const updated = { ...answers, [key]: value };
     setAnswers(updated);
     setSaveStatus('unsaved');
@@ -180,7 +181,7 @@ export default function QuestionnaireForm({ form }: Props) {
   // --- Submit ---
 
   async function handleSubmit() {
-    if (isCompleted) return;
+    if (isReadOnly) return;
 
     // Validate all sections
     for (let i = 0; i < schema.sections.length; i++) {
@@ -252,7 +253,7 @@ export default function QuestionnaireForm({ form }: Props) {
       </div>
 
       {/* Progress */}
-      {!isCompleted && (
+      {!isReadOnly && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500">
@@ -280,14 +281,14 @@ export default function QuestionnaireForm({ form }: Props) {
           onChange={handleChange}
           onMultiUpload={handleMultiFileUpload}
           uploadStates={uploadStates}
-          readOnly={isCompleted}
+          readOnly={isReadOnly}
         />
       ) : (
         <FormSection
           section={schema.sections[currentStep]}
           answers={answers}
           onChange={handleChange}
-          readOnly={isCompleted}
+          readOnly={isReadOnly}
           errors={errors}
           onFileUpload={handleFileUpload}
           uploadStates={uploadStates}
@@ -300,7 +301,7 @@ export default function QuestionnaireForm({ form }: Props) {
       )}
 
       {/* Navigation */}
-      {!isCompleted && (
+      {!isReadOnly && (
         <div className="flex items-center justify-between mt-6">
           {currentStep > 0 ? (
             <button
@@ -342,7 +343,7 @@ export default function QuestionnaireForm({ form }: Props) {
       )}
 
       {/* Hint */}
-      {!isCompleted && (
+      {!isReadOnly && (
         <p className="text-center text-xs text-gray-400 mt-4">
           {schema.formality === 'sie'
             ? 'Sie können jederzeit zurückkommen und Ihre Antworten ändern, solange der Fragebogen offen ist.'
