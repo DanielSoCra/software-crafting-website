@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('PORTAL_URL') || 'https://software-crafting.de',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -81,6 +81,27 @@ export default async (req: Request) => {
 
       if (!deliverable_id || !variant_name) {
         return new Response(JSON.stringify({ error: 'deliverable_id and variant_name required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Validate comment field lengths (500 char max)
+      const MAX_COMMENT_LENGTH = 500;
+      if (comment_negative && comment_negative.length > MAX_COMMENT_LENGTH) {
+        return new Response(JSON.stringify({ error: `comment_negative exceeds ${MAX_COMMENT_LENGTH} characters` }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (comment_positive && comment_positive.length > MAX_COMMENT_LENGTH) {
+        return new Response(JSON.stringify({ error: `comment_positive exceeds ${MAX_COMMENT_LENGTH} characters` }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (comment_very_good && comment_very_good.length > MAX_COMMENT_LENGTH) {
+        return new Response(JSON.stringify({ error: `comment_very_good exceeds ${MAX_COMMENT_LENGTH} characters` }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -254,6 +275,7 @@ export default async (req: Request) => {
         .from('mood_board_feedback')
         .update({
           status: 'editing',
+          submitted_at: null, // Clear submission timestamp when reopening for editing
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)

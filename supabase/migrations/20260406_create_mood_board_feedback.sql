@@ -67,3 +67,6 @@ WITH CHECK (
 -- Index for queries
 CREATE INDEX idx_mood_board_deliverable ON mood_board_feedback(deliverable_id);
 CREATE INDEX idx_mood_board_client ON mood_board_feedback(client_id);
+
+-- Enable Supabase Realtime for unlock notifications
+ALTER PUBLICATION "supabase_realtime" ADD TABLE mood_board_feedback;

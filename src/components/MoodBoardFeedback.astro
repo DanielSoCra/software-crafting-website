@@ -128,7 +128,7 @@ const isEditable = currentFeedback.status === 'editing';
           data-deliverable-id={deliverableId}
           data-variants={variants.join(',')}
         >
-          Feedback abgesendet
+          Jetzt absenden
         </button>
       )}
 
@@ -337,7 +337,7 @@ const isEditable = currentFeedback.status === 'editing';
         )
       );
 
-      submitBtn.textContent = '✓ Feedback erhalten, danke!';
+      submitBtn.textContent = '✓ Danke für dein Feedback!';
       submitBtn.disabled = true;
       submitBtn.classList.add('bg-green-900', 'text-green-100', 'cursor-not-allowed', 'opacity-75');
 
@@ -438,14 +438,66 @@ const isEditable = currentFeedback.status === 'editing';
   }
 
   // Listen for variant changes from mood board buttons
+  // Instead of reloading (which loses unsaved drafts), update component state client-side
   document.addEventListener('mood-board-variant-changed', (e) => {
     const newVariant = e.detail.variant;
+
     // Update URL with variant param to preserve selection across reloads
     const url = new URL(window.location);
     url.searchParams.set('variant', newVariant);
     window.history.replaceState({}, '', url);
-    // Reload the page to display feedback for the new variant
-    // This ensures the component props are updated with the new currentVariant
-    location.reload();
+
+    // Update feedback display for new variant without reloading
+    // This preserves any unsaved drafts in other variants
+    const newFeedback = feedbackMap.get(newVariant) || {
+      variant_name: newVariant,
+      vote: null,
+      is_favorite: false,
+      comment_negative: null,
+      comment_positive: null,
+      comment_very_good: null,
+      status: 'editing',
+      id: '',
+      deliverable_id: '',
+      client_id: '',
+      submitted_at: null,
+      created_at: '',
+      updated_at: '',
+    };
+
+    // Update all vote buttons
+    voteButtons.forEach(b => {
+      if (b.getAttribute('data-variant') === newVariant) {
+        if (b.getAttribute('data-vote') === 'favorite') {
+          b.setAttribute('data-active', (newFeedback.is_favorite || false).toString());
+        } else if (b.getAttribute('data-vote') === newFeedback.vote) {
+          b.setAttribute('data-active', 'true');
+        } else {
+          b.setAttribute('data-active', 'false');
+        }
+      }
+    });
+
+    // Update all comment fields
+    commentInputs.forEach(input => {
+      if (input.getAttribute('data-variant') === newVariant) {
+        const field = input.getAttribute('data-field');
+        input.value = newFeedback[field] || '';
+      }
+    });
+
+    // Update button disabled state
+    const isEditable = newFeedback.status === 'editing';
+    voteButtons.forEach(b => {
+      if (b.getAttribute('data-variant') === newVariant) {
+        b.disabled = !isEditable;
+        b.setAttribute('data-disabled', (!isEditable).toString());
+      }
+    });
+    commentInputs.forEach(input => {
+      if (input.getAttribute('data-variant') === newVariant) {
+        input.disabled = !isEditable;
+      }
+    });
   });
 </script>
