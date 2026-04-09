@@ -8,12 +8,14 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 
+// All color variants collapse to the same brand primary in dark mode.
+// Using semantic tokens directly instead of relying on .portal-page overrides.
 const colorMap: Record<string, { border: string; bg: string; heading: string }> = {
-  teal:   { border: 'border-teal-600',   bg: 'bg-teal-50',    heading: 'text-teal-600' },
-  indigo: { border: 'border-indigo-600', bg: 'bg-indigo-50',  heading: 'text-indigo-600' },
-  purple: { border: 'border-purple-600', bg: 'bg-purple-50',  heading: 'text-purple-600' },
-  gray:   { border: 'border-gray-500',   bg: 'bg-gray-50',    heading: 'text-gray-600' },
-  pink:   { border: 'border-pink-500',   bg: 'bg-pink-50',    heading: 'text-pink-500' },
+  teal:   { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
+  indigo: { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
+  purple: { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
+  gray:   { border: 'border-border',    bg: 'bg-muted',        heading: 'text-muted-foreground' },
+  pink:   { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
 };
 
 interface Props {
@@ -147,7 +149,7 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
   const colors = colorMap[section.color] ?? colorMap.gray;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+    <div className="bg-card border border-border rounded-xl p-6 mb-6">
       <h3 className={`text-base font-semibold mb-4 pb-2 border-b-2 ${colors.border} ${colors.heading}`}>
         {section.title}
       </h3>
