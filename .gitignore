@@ -1,5 +1,7 @@
 # build output
 dist/
+packages/portal/.next/
+packages/portal/out/
 # generated types
 .astro/
 

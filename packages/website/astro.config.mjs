@@ -11,6 +11,7 @@ export default defineConfig({
   adapter: node({ mode: 'standalone' }),
   integrations: [react(), sitemap()],
   vite: {
+    envDir: fileURLToPath(new URL('../..', import.meta.url)),
     plugins: [tailwindcss()],
     resolve: {
       alias: {

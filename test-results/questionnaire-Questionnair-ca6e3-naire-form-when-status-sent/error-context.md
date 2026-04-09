@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - link "Software Crafting Kundenportal" [ref=e4] [cursor=pointer]:
+        - /url: /portal
+      - link "Abmelden" [ref=e6] [cursor=pointer]:
+        - /url: /portal/login?logout=true
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - heading "Kundenportal" [level=1] [ref=e9]
+      - paragraph [ref=e10]: Gib deine E-Mail-Adresse ein — wir senden dir einen Zugangslink.
+      - generic [ref=e12]:
+        - paragraph [ref=e13]: "Zugangslink senden an:"
+        - paragraph [ref=e14]: info@larinyamar.de
+        - generic [ref=e15]:
+          - button "Zurück" [ref=e16]
+          - button "Ja, Link senden" [ref=e17]
+  - contentinfo [ref=e18]:
+    - generic [ref=e19]:
+      - paragraph [ref=e20]: Software Crafting · Inh. Daniel Eberl
+      - generic [ref=e21]:
+        - link "Datenschutz" [ref=e22] [cursor=pointer]:
+          - /url: /datenschutz
+        - link "Impressum" [ref=e23] [cursor=pointer]:
+          - /url: /impressum
+  - generic [ref=e26]:
+    - button "Menu" [ref=e27]:
+      - img [ref=e29]
+      - generic: Menu
+    - button "Inspect" [ref=e33]:
+      - img [ref=e35]
+      - generic: Inspect
+    - button "Audit" [ref=e37]:
+      - img [ref=e39]
+      - generic: Audit
+    - button "Settings" [ref=e42]:
+      - img [ref=e44]
+      - generic: Settings
+```

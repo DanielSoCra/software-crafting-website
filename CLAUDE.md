@@ -2,16 +2,25 @@
 
 ## What This Is
 
-Portal + public website for software-crafting.de. Astro 6 SSR with Supabase Auth, deployed to Hetzner via GitHub Actions CI/CD.
+Portal + public website for software-crafting.de. pnpm monorepo with two apps: Astro public website and Next.js client portal. Deployed to Hetzner via GitHub Actions CI/CD.
 
 ## Architecture
 
-- **Framework:** Astro 6.1 SSR with `@astrojs/node` adapter
+**Monorepo structure (pnpm workspaces):**
+
+```
+packages/
+├── website/       # @portal/website — Astro 6 SSR public site (port 4321)
+└── portal/        # @portal/portal — Next.js 15 client portal (port 4322)
+```
+
+- **Public website:** Astro 6.1 SSR with `@astrojs/node` adapter
+- **Client portal:** Next.js 15 App Router with `output: 'standalone'`, basePath `/portal`
 - **Auth:** Supabase Auth via `@supabase/ssr` (cookie-based, large cookies ~3.5KB)
-- **Styling:** Tailwind CSS v4 with OKLCH design tokens
-- **Portal theme:** Always dark — `.portal-page` class on body remaps standard Tailwind classes (e.g. `bg-white` → dark card, `text-teal-700` → purple accent). Write portal components using standard Tailwind classes, NOT dark: variants.
-- **React components:** Portal interactive components are `.tsx` React files
+- **Styling:** Tailwind CSS v4 — website uses OKLCH design tokens, portal uses dark theme
+- **Portal theme:** Always dark. Portal components use standard Tailwind classes.
 - **DB:** Supabase (tables: `clients`, `deliverables`, `forms`, `responses`, `user_roles`)
+- **Routing:** nginx routes `/portal/*` to Next.js (port 4322), everything else to Astro (port 4321)
 
 ## Portal: Client Dashboard
 
@@ -85,44 +94,72 @@ Website previews use `srcdoc` with base64-inlined assets to avoid nested auth is
 ### CI/CD (GitHub Actions)
 
 Push to `main` triggers `.github/workflows/deploy.yml`:
-1. Build with pnpm
-2. rsync to both `/var/www/software-crafting/` and `/var/www/software-crafting-preview/`
-3. PM2 restart both processes
-4. Health check (curl localhost)
+1. Build Astro website: `pnpm --filter @portal/website build`
+2. Build Next.js portal: `pnpm --filter @portal/portal build`
+3. rsync Astro to `/var/www/software-crafting/dist/` (with `--exclude='client/preview/'`)
+4. rsync Next.js standalone to `/var/www/software-crafting-portal/`
+5. rsync Next.js static assets to `/var/www/software-crafting-portal/.next/static/`
+6. PM2 restart both processes
+7. Health check both endpoints
 
-**CRITICAL:** rsync uses `--exclude='client/preview/'` to preserve client preview symlinks.
+**CRITICAL:** Astro rsync uses `--exclude='client/preview/'` to preserve client preview symlinks.
 
 ### Server
 
 - **Host:** Hetzner CAX11, 178.104.50.249
 - **SSH:** `deploy` user, key `~/.ssh/software-crafting-deploy`
-- **PM2 processes:** `software-crafting` (port 4321), `software-crafting-preview` (port 4322)
-- **nginx:** proxies to `http://[::1]:4321` (IPv6!), `large_client_header_buffers 4 32k` for Supabase cookies
-- **Preview symlinks:** `/var/www/software-crafting-preview/dist/client/preview/{slug}` → `/var/www/portal-assets/{slug}/website-preview/`
+- **PM2 processes:**
+  - `software-crafting` (port 4321) — Astro public website at `/var/www/software-crafting/`
+  - `software-crafting-portal` (port 4322) — Next.js portal at `/var/www/software-crafting-portal/`
+- **nginx:** routes `/portal/*` to `http://[::1]:4322`, everything else to `http://[::1]:4321`. `large_client_header_buffers 4 32k` for Supabase cookies. See `docs/nginx-portal.conf` for portal-specific blocks.
+- **Portal assets:** `/var/www/portal-assets/{slug}/` — deliverable files served by the portal
 
 ### Manual Deploy
 
 ```bash
-rsync -avz --delete --exclude='client/preview/' dist/ deploy@178.104.50.249:/var/www/software-crafting-preview/dist/ -e "ssh -i ~/.ssh/software-crafting-deploy"
-ssh -i ~/.ssh/software-crafting-deploy deploy@178.104.50.249 "cd /var/www/software-crafting-preview && pm2 restart software-crafting"
+# Astro website
+rsync -avz --delete --exclude='client/preview/' packages/website/dist/ deploy@178.104.50.249:/var/www/software-crafting/dist/ -e "ssh -i ~/.ssh/software-crafting-deploy"
+ssh -i ~/.ssh/software-crafting-deploy deploy@178.104.50.249 "cd /var/www/software-crafting && pm2 restart software-crafting"
+
+# Next.js portal
+rsync -avz --delete packages/portal/.next/standalone/ deploy@178.104.50.249:/var/www/software-crafting-portal/ -e "ssh -i ~/.ssh/software-crafting-deploy"
+rsync -avz --delete packages/portal/.next/static/ deploy@178.104.50.249:/var/www/software-crafting-portal/.next/static/ -e "ssh -i ~/.ssh/software-crafting-deploy"
+ssh -i ~/.ssh/software-crafting-deploy deploy@178.104.50.249 "cd /var/www/software-crafting-portal && pm2 restart software-crafting-portal"
 ```
 
 ## Key Files
 
+### Public Website (`packages/website/`)
+
 | File | Purpose |
 |------|---------|
-| `src/pages/portal/dashboard.astro` | Dashboard page (admin overview + client view routing) |
-| `src/components/portal/Dashboard.tsx` | Client timeline component |
-| `src/components/portal/AdminDashboard.tsx` | Admin overview component |
-| `src/lib/types.ts` | Deliverable, Form, Client types + constants |
-| `src/lib/deliverables.ts` | File reading from portal-assets directory |
-| `src/pages/portal/deliverables/[...path].astro` | Deliverable viewer (markdown, PDF, iframe, srcdoc) |
-| `src/styles/global.css` | OKLCH design tokens + .portal-page dark theme overrides |
-| `src/layouts/PortalLayout.astro` | Portal layout (applies portal-page class) |
+| `src/styles/global.css` | OKLCH design tokens |
+
+### Portal (`packages/portal/`)
+
+| File | Purpose |
+|------|---------|
+| `src/app/layout.tsx` | Root layout |
+| `src/app/login/page.tsx` | Login page (magic link auth) |
+| `src/app/dashboard/page.tsx` | Dashboard (admin overview + client timeline) |
+| `src/app/deliverables/[...path]/page.tsx` | Deliverable viewer (markdown, PDF, iframe, srcdoc) |
+| `src/app/questionnaire/[formId]/page.tsx` | Client questionnaire form |
+| `src/app/api/mood-board-feedback/route.ts` | Mood board feedback API |
+| `ecosystem.config.cjs` | PM2 config for production |
+
+### Shared
+
+| File | Purpose |
+|------|---------|
+| `docs/nginx-portal.conf` | nginx config reference for portal reverse proxy |
+| `.github/workflows/deploy.yml` | CI/CD: build + deploy both apps |
 
 ## Known Gotchas
 
 - **Astro on Linux binds IPv6:** `host: 'localhost'` → `[::1]:4321`, not `127.0.0.1`. nginx proxy_pass must use `http://[::1]:4321`
+- **Next.js standalone also binds IPv6:** `HOSTNAME: '::1'` in PM2 config. nginx proxy_pass must use `http://[::1]:4322`
 - **Supabase cookies are large:** ~3.5KB base64. nginx needs `large_client_header_buffers 4 32k`
-- **rsync --delete kills symlinks:** ALWAYS use `--exclude='client/preview/'` when deploying
+- **rsync --delete kills symlinks:** ALWAYS use `--exclude='client/preview/'` when deploying the Astro website
+- **Next.js standalone needs static assets:** After rsync of `.next/standalone/`, must also rsync `.next/static/` into the standalone dir
 - **iframe auth issues:** Don't use iframe `src` for auth-protected content. Use `srcdoc` with inlined base64 assets instead
+- **Portal basePath:** Next.js is configured with `basePath: '/portal'` — all routes are under `/portal/*`

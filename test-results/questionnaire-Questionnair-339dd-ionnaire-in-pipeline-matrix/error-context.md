@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - link "Software Crafting Kundenportal" [ref=e4] [cursor=pointer]:
+        - /url: /portal
+      - link "Abmelden" [ref=e6] [cursor=pointer]:
+        - /url: /portal/login?logout=true
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - heading "Kundenportal" [level=1] [ref=e9]
+      - paragraph [ref=e10]: Gib deine E-Mail-Adresse ein — wir senden dir einen Zugangslink.
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: E-Mail-Adresse
+          - textbox "E-Mail-Adresse" [ref=e15]:
+            - /placeholder: name@beispiel.de
+        - button "Weiter" [ref=e16]
+  - contentinfo [ref=e17]:
+    - generic [ref=e18]:
+      - paragraph [ref=e19]: Software Crafting · Inh. Daniel Eberl
+      - generic [ref=e20]:
+        - link "Datenschutz" [ref=e21] [cursor=pointer]:
+          - /url: /datenschutz
+        - link "Impressum" [ref=e22] [cursor=pointer]:
+          - /url: /impressum
+  - generic [ref=e25]:
+    - button "Menu" [ref=e26]:
+      - img [ref=e28]
+      - generic: Menu
+    - button "Inspect" [ref=e32]:
+      - img [ref=e34]
+      - generic: Inspect
+    - button "Audit" [ref=e36]:
+      - img [ref=e38]
+      - generic: Audit
+    - button "Settings" [ref=e41]:
+      - img [ref=e43]
+      - generic: Settings
+```
