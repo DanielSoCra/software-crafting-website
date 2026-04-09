@@ -27,7 +27,7 @@ export default function LoginForm() {
 
     if (!access_token || !refresh_token) {
       setStep('error');
-      setErrorMsg('Ungültiger Zugangslink.');
+      setErrorMsg('Der Link war leider ungültig. Bitte fordere unten einen neuen an.');
       return;
     }
 
@@ -38,7 +38,7 @@ export default function LoginForm() {
         window.location.href = '/portal/dashboard';
       } else {
         setStep('error');
-        setErrorMsg('Anmeldung fehlgeschlagen. Bitte fordere einen neuen Link an.');
+        setErrorMsg('Die Anmeldung hat leider nicht geklappt. Bitte fordere einen neuen Link an.');
       }
     });
   }, []);
@@ -68,9 +68,8 @@ export default function LoginForm() {
     }
 
     if (error) {
-      // Only surface genuine errors (rate limit, network, etc.)
       setStep('error');
-      setErrorMsg('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.');
+      setErrorMsg('Etwas ist schiefgelaufen. Bitte versuche es in ein paar Minuten nochmal.');
       return;
     }
 
@@ -86,7 +85,7 @@ export default function LoginForm() {
   if (step === 'callback') {
     return (
       <div className="text-center py-8">
-        <FieldDescription>Anmeldung wird verarbeitet…</FieldDescription>
+        <FieldDescription>Du wirst angemeldet&hellip;</FieldDescription>
       </div>
     );
   }
@@ -95,19 +94,28 @@ export default function LoginForm() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Link gesendet!</CardTitle>
+          <CardTitle>E-Mail ist unterwegs!</CardTitle>
         </CardHeader>
         <CardContent>
           <FieldGroup>
-            <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="text-4xl">&#9993;</div>
               <FieldDescription>
-                Wir haben einen Zugangslink an <strong>{email}</strong> gesendet.
-                Bitte prüfe dein Postfach.
+                Wir haben eine E-Mail an <strong>{email}</strong> geschickt.
+              </FieldDescription>
+              <div className="text-sm text-muted-foreground space-y-2">
+                <p><strong>So geht&apos;s weiter:</strong></p>
+                <p>1. Schau in dein E-Mail-Postfach</p>
+                <p>2. Klicke auf den Link in der E-Mail</p>
+                <p>3. Du wirst automatisch angemeldet</p>
+              </div>
+              <FieldDescription className="text-xs">
+                Keine E-Mail erhalten? Schau auch im Spam-Ordner nach.
               </FieldDescription>
             </div>
             <Field>
               <Button variant="link" onClick={reset} className="w-full">
-                Andere E-Mail verwenden
+                Andere E-Mail-Adresse verwenden
               </Button>
             </Field>
           </FieldGroup>
@@ -120,17 +128,17 @@ export default function LoginForm() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Kundenportal</CardTitle>
+          <CardTitle>Stimmt die Adresse?</CardTitle>
         </CardHeader>
         <CardContent>
           <FieldGroup>
             <div className="flex flex-col items-center gap-2 text-center">
-              <FieldDescription>Zugangslink senden an:</FieldDescription>
+              <FieldDescription>Wir schicken den Anmelde-Link an:</FieldDescription>
               <p className="font-medium text-lg">{email}</p>
             </div>
             {step === 'sending' ? (
               <div className="text-center py-2">
-                <FieldDescription>Wird gesendet…</FieldDescription>
+                <FieldDescription>Wird gesendet&hellip;</FieldDescription>
               </div>
             ) : (
               <Field orientation="horizontal">
@@ -159,16 +167,22 @@ export default function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Kundenportal</CardTitle>
+        <CardTitle>Willkommen!</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleEmailSubmit}>
           <FieldGroup>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <FieldDescription>Gib deine E-Mail-Adresse ein, um einen Zugangslink zu erhalten.</FieldDescription>
+            <div className="flex flex-col items-center gap-3 text-center">
+              <FieldDescription>
+                Hier kannst du den Fortschritt deines Website-Projekts verfolgen,
+                Fragen beantworten und Entwürfe ansehen.
+              </FieldDescription>
+              <FieldDescription className="text-xs text-muted-foreground">
+                Kein Passwort nötig — du bekommst einen persönlichen Link per E-Mail.
+              </FieldDescription>
             </div>
             <Field>
-              <FieldLabel htmlFor="email">E-Mail-Adresse</FieldLabel>
+              <FieldLabel htmlFor="email">Deine E-Mail-Adresse</FieldLabel>
               <Input
                 id="email"
                 type="email"
@@ -183,7 +197,7 @@ export default function LoginForm() {
             )}
             <Field>
               <Button type="submit" variant="gradient" className="w-full">
-                Weiter
+                Anmelde-Link anfordern
               </Button>
             </Field>
           </FieldGroup>

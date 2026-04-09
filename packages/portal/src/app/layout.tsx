@@ -41,17 +41,17 @@ export default async function RootLayout({
                 Kundenportal
               </span>
             </a>
-            <div className="flex items-center gap-4 text-sm font-light">
-              {user?.email && (
+            {user && (
+              <div className="flex items-center gap-4 text-sm font-light">
                 <span className="text-muted-foreground">{user.email}</span>
-              )}
-              <a
-                href="/portal/login?logout=true"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Abmelden
-              </a>
-            </div>
+                <a
+                  href="/portal/login?logout=true"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Abmelden
+                </a>
+              </div>
+            )}
           </nav>
         </header>
 

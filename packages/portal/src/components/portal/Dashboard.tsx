@@ -42,55 +42,55 @@ const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string
     icon: '📋',
     cta: 'Fragebogen öffnen',
     desc: {
-      ready: 'Erzählen Sie uns von Ihrem Unternehmen und Ihren Zielen — so können wir Ihre Website genau auf Sie zuschneiden.',
-      resume: 'Sie haben bereits begonnen. Nehmen Sie sich die Zeit, die Sie brauchen.',
-      completed: 'Vielen Dank für Ihre Antworten!',
-      in_progress: 'Wird gerade für Sie vorbereitet.',
+      ready: 'Ein paar kurze Fragen zu dir und deinem Projekt — damit wir deine Website genau passend gestalten können.',
+      resume: 'Du hast schon angefangen. Nimm dir die Zeit, die du brauchst.',
+      completed: 'Danke für deine Antworten!',
+      in_progress: 'Wird gerade für dich vorbereitet.',
     },
   },
   analysis: {
     icon: '🔍',
     cta: 'Analyse ansehen',
     desc: {
-      ready: 'Ihre Branchen- und Wettbewerbsanalyse ist fertig.',
+      ready: 'Deine Branchen- und Wettbewerbsanalyse ist fertig.',
       completed: 'Analyse abgeschlossen.',
-      in_progress: 'Wir analysieren Ihre Branche und Wettbewerber.',
+      in_progress: 'Wir schauen uns deine Branche und deine Mitbewerber an.',
     },
   },
   'mood-board': {
     icon: '🎨',
     cta: 'Designvorschläge ansehen',
     desc: {
-      ready: 'Wählen Sie Ihre Lieblingsrichtung aus unseren Designvorschlägen.',
+      ready: 'Verschiedene Designrichtungen für dich — welche gefällt dir am besten?',
       completed: 'Designrichtung gewählt.',
-      in_progress: 'Wir erstellen Designvorschläge für Sie.',
+      in_progress: 'Wir arbeiten an Designvorschlägen für dich.',
     },
   },
   'brand-guide': {
     icon: '🎯',
     cta: 'Brand Guide ansehen',
     desc: {
-      ready: 'Farben, Schriften und Stil — Ihr einheitlicher Markenauftritt.',
+      ready: 'Farben, Schriften und Stil — dein einheitlicher Markenauftritt.',
       completed: 'Markenauftritt definiert.',
-      in_progress: 'Ihr Brand Guide wird erstellt.',
+      in_progress: 'Dein Brand Guide wird gerade erstellt.',
     },
   },
   'website-preview': {
     icon: '🌐',
     cta: 'Vorschau ansehen',
     desc: {
-      ready: 'So wird Ihre neue Website aussehen.',
+      ready: 'So wird deine neue Website aussehen!',
       completed: 'Vorschau angesehen.',
-      in_progress: 'Wir bauen Ihre Website-Vorschau.',
+      in_progress: 'Wir bauen deine Website-Vorschau.',
     },
   },
   proposal: {
     icon: '📄',
     cta: 'Angebot ansehen',
     desc: {
-      ready: 'Ihr individuelles Angebot mit allen besprochenen Leistungen.',
+      ready: 'Dein persönliches Angebot mit allen besprochenen Leistungen.',
       completed: 'Angebot erhalten.',
-      in_progress: 'Ihr Angebot wird erstellt.',
+      in_progress: 'Dein Angebot wird erstellt.',
     },
   },
 };
@@ -319,11 +319,21 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
     hiddenCount = steps.length - showUpTo;
   }
 
+  const isFirstVisit = completedCount === 0 && !hasReadyOrInProgress;
+  const hasAction = steps.some(s => s.status === 'ready');
+
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground">{company}</h1>
-        <p className="text-muted-foreground text-sm mt-1">Projektübersicht</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          {isFirstVisit
+            ? 'Schön, dass du da bist! Wir bereiten gerade alles für dein Projekt vor.'
+            : hasAction
+              ? 'Es gibt Neuigkeiten — schau mal, was bereitliegt.'
+              : 'Hier siehst du, wie es mit deiner Website vorangeht.'
+          }
+        </p>
 
         {completedCount > 0 && (
           <div className="mt-4 flex items-center gap-3">
