@@ -33,6 +33,7 @@ function hoursAgo(dateStr: string): number {
 
 function relativeDays(dateStr: string): string {
   const days = Math.floor(hoursAgo(dateStr) / 24);
+  if (days === 0) return 'seit heute';
   if (days === 1) return 'seit 1 Tag';
   if (days < 7) return `seit ${days} Tagen`;
   const weeks = Math.floor(days / 7);

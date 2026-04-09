@@ -11,15 +11,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldGroup, FieldLabel, FieldError } from '@/components/ui/field';
 import { Card, CardContent } from '@/components/ui/card';
 
-// All color variants collapse to the same brand primary in dark mode.
-// Using semantic tokens directly instead of relying on .portal-page overrides.
+// All color variants render identically in dark mode.
+// Using a single default + gray differentiation.
 const colorMap: Record<string, { border: string; bg: string; heading: string }> = {
-  teal:   { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
-  indigo: { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
-  purple: { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
-  gray:   { border: 'border-border',    bg: 'bg-muted',        heading: 'text-muted-foreground' },
-  pink:   { border: 'border-primary',   bg: 'bg-primary/5',    heading: 'text-primary' },
+  gray: { border: 'border-border', bg: 'bg-muted', heading: 'text-muted-foreground' },
 };
+const defaultColor = { border: 'border-primary', bg: 'bg-primary/5', heading: 'text-primary' };
 
 interface Props {
   section: FormSectionType;
@@ -149,7 +146,7 @@ function FileUploadField({
 }
 
 export default function FormSection({ section, answers, onChange, readOnly, errors, onFileUpload, uploadStates }: Props) {
-  const colors = colorMap[section.color] ?? colorMap.gray;
+  const colors = colorMap[section.color] ?? defaultColor;
 
   return (
     <Card className="rounded-xl mb-6">

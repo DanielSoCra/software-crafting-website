@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient, isUserAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import Dashboard from '@/components/portal/Dashboard';
 import AdminDashboard from '@/components/portal/AdminDashboard';
@@ -17,17 +17,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (!user) redirect('/login');
 
   // Check if user is admin
-  const { data: adminRole, error: adminRoleError } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('role', 'admin')
-    .single();
-
-  if (adminRoleError && adminRoleError.code !== 'PGRST116') {
-    throw new Error('Ein Fehler ist aufgetreten.');
-  }
-  const isAdmin = !!adminRole;
+  const isAdmin = await isUserAdmin(supabase, user.id);
   const clientParam = params.client;
 
   // Admin without ?client= → admin overview

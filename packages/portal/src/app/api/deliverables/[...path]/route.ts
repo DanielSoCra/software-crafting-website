@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient, isUserAdmin, resolveClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveDeliverablePath, readDeliverableFile, getMimeType } from '@/lib/deliverables';
 import { DELIVERABLE_TYPES } from '@/lib/types';
@@ -24,17 +24,9 @@ export async function GET(
 
   // Resolve client
   const clientParam = request.nextUrl.searchParams.get('client');
-  const { data: adminRole } = await supabase
-    .from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').single();
-  const isAdmin = !!adminRole;
+  const isAdmin = await isUserAdmin(supabase, user.id);
 
-  let clientQuery = supabase.from('clients').select('id, slug');
-  if (isAdmin && clientParam) {
-    clientQuery = clientQuery.eq('slug', clientParam);
-  } else {
-    clientQuery = clientQuery.eq('user_id', user.id);
-  }
-  const { data: client } = await clientQuery.single();
+  const { data: client } = await resolveClient(supabase, user.id, clientParam, isAdmin);
   if (!client) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }

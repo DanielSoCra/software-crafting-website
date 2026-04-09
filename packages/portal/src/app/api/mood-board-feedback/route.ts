@@ -62,6 +62,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (variant_name.length > 100) {
+      return NextResponse.json({ error: 'variant_name too long' }, { status: 400 });
+    }
+
+    // Validate vote value
+    if (vote !== undefined && vote !== null && !['like', 'dislike'].includes(vote)) {
+      return NextResponse.json({ error: 'Invalid vote value' }, { status: 400 });
+    }
+
     // Validate comment field lengths
     if (comment_negative && comment_negative.length > MAX_COMMENT_LENGTH) {
       return NextResponse.json(

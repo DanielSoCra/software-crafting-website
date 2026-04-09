@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient, isUserAdmin, resolveClient } from '@/lib/supabase-server';
 import { redirect, notFound } from 'next/navigation';
 import { resolveDeliverablePath, readDeliverableFile, listDeliverableFiles, getMimeType } from '@/lib/deliverables';
 import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '@/lib/types';
@@ -20,6 +20,14 @@ function renderMarkdown(mdText: string): string {
   });
 }
 
+function embedAssetAsDataUri(slug: string, basePath: string, assetPath: string): string {
+  const content = readDeliverableFile(slug, `${basePath}/${assetPath}`);
+  if (!content) return assetPath;
+  const ext = assetPath.split('.').pop()?.toLowerCase();
+  const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'svg' ? 'image/svg+xml' : ext === 'webp' ? 'image/webp' : 'application/octet-stream';
+  return `data:${mime};base64,${content.toString('base64')}`;
+}
+
 export default async function DeliverablesPage({ params, searchParams }: Props) {
   const pathSegments = (await params).path || [];
   const queryParams = await searchParams;
@@ -36,18 +44,10 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
 
   // Check admin
   const clientParam = queryParams.client;
-  const { data: adminRole } = await supabase
-    .from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').single();
-  const isAdmin = !!adminRole;
+  const isAdmin = await isUserAdmin(supabase, user.id);
 
   // Get client
-  let clientQuery = supabase.from('clients').select('id, slug, company');
-  if (isAdmin && clientParam) {
-    clientQuery = clientQuery.eq('slug', clientParam);
-  } else {
-    clientQuery = clientQuery.eq('user_id', user.id);
-  }
-  const { data: client, error: clientError } = await clientQuery.single();
+  const { data: client, error: clientError } = await resolveClient(supabase, user.id, clientParam, isAdmin);
   if (clientError && clientError.code !== 'PGRST116') throw new Error('Ein Fehler ist aufgetreten.');
   if (!client) notFound();
 
@@ -102,11 +102,7 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
       if (!previewHtml) notFound();
       let html = previewHtml.toString('utf-8');
       html = html.replace(/src="(assets\/[^"]+)"/g, (_match, assetPath) => {
-        const assetContent = readDeliverableFile(slug, `website-preview/${assetPath}`);
-        if (!assetContent) return `src="${assetPath}"`;
-        const ext = assetPath.split('.').pop()?.toLowerCase();
-        const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'svg' ? 'image/svg+xml' : ext === 'webp' ? 'image/webp' : 'application/octet-stream';
-        return `src="data:${mime};base64,${assetContent.toString('base64')}"`;
+        return `src="${embedAssetAsDataUri(slug, 'website-preview', assetPath)}"`;
       });
       renderMode = 'srcdoc';
       srcdocHtml = html;
@@ -120,16 +116,8 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
         if (!variantHtml) continue;
         let html = variantHtml.toString('utf-8');
 
-        const embedAsset = (assetPath: string): string => {
-          const assetContent = readDeliverableFile(slug, `mood-board/${assetPath}`);
-          if (!assetContent) return assetPath;
-          const ext = assetPath.split('.').pop()?.toLowerCase();
-          const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'svg' ? 'image/svg+xml' : ext === 'webp' ? 'image/webp' : 'application/octet-stream';
-          return `data:${mime};base64,${assetContent.toString('base64')}`;
-        };
-
-        html = html.replace(/src="(assets\/[^"]+)"/g, (_m, p) => `src="${embedAsset(p)}"`);
-        html = html.replace(/background(?:-image)?:\s*url\(['"]?(assets\/[^'")]+)['"]?\)/g, (_m, p) => `background: url('${embedAsset(p)}')`);
+        html = html.replace(/src="(assets\/[^"]+)"/g, (_m, p) => `src="${embedAssetAsDataUri(slug, 'mood-board', p)}"`);
+        html = html.replace(/background(?:-image)?:\s*url\(['"]?(assets\/[^'")]+)['"]?\)/g, (_m, p) => `background: url('${embedAssetAsDataUri(slug, 'mood-board', p)}')`);
 
         variantData[variant.replace('.html', '')] = html;
       }
@@ -183,7 +171,8 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
     }
   }
 
-  // Get auth token for MoodBoardFeedback
+  // getUser() already verified above — getSession() here is only to extract
+  // the access_token for the client component. Safe because middleware validated.
   const { data: { session } } = await supabase.auth.getSession();
   const authToken = session?.access_token || '';
 
@@ -208,7 +197,7 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
       {renderMode === 'iframe' && (
         <iframe
           src={iframeSrc}
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts"
           className="w-full border border-border rounded-lg"
           style={{ minHeight: '80vh' }}
         />

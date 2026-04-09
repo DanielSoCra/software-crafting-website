@@ -96,10 +96,3 @@ export function getMimeType(filePath: string): string {
   };
   return mimeMap[ext] ?? 'application/octet-stream';
 }
-
-/**
- * Build the X-Accel-Redirect path for nginx internal redirect.
- */
-export function buildAccelRedirectPath(clientSlug: string, filePath: string): string {
-  return `/internal-assets/${clientSlug}/${filePath}`;
-}

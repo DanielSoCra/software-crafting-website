@@ -25,3 +25,31 @@ export async function createSupabaseServerClient() {
     }
   );
 }
+
+export async function isUserAdmin(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .single();
+  return !!data;
+}
+
+export async function resolveClient(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  clientParam: string | null | undefined,
+  isAdmin: boolean
+) {
+  let query = supabase.from('clients').select('id, slug, company');
+  if (isAdmin && clientParam) {
+    query = query.eq('slug', clientParam);
+  } else {
+    query = query.eq('user_id', userId);
+  }
+  return query.single();
+}
