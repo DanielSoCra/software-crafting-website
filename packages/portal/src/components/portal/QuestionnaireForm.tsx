@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError } from '@/components/ui/field';
 
 interface Props {
   form: Form;
@@ -299,12 +299,12 @@ export default function QuestionnaireForm({ form }: Props) {
 
       {/* Submit error */}
       {errors._submit && (
-        <p className="text-sm text-destructive mb-4">{errors._submit}</p>
+        <FieldError className="mb-4">{errors._submit}</FieldError>
       )}
 
       {/* Navigation */}
       {!isReadOnly && (
-        <div className="flex items-center justify-between mt-6">
+        <Field orientation="horizontal" className="mt-6 justify-between">
           {currentStep > 0 ? (
             <Button type="button" variant="ghost" size="sm" onClick={goBack} className="gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -328,16 +328,16 @@ export default function QuestionnaireForm({ form }: Props) {
               </svg>
             </Button>
           )}
-        </div>
+        </Field>
       )}
 
       {/* Hint */}
       {!isReadOnly && (
-        <p className="text-center text-xs text-muted-foreground mt-4">
+        <FieldDescription className="text-center text-xs mt-4">
           {schema.formality === 'sie'
             ? 'Sie können jederzeit zurückkommen und Ihre Antworten ändern, solange der Fragebogen offen ist.'
             : 'Du kannst jederzeit zurückkommen und deine Antworten ändern, solange der Fragebogen offen ist.'}
-        </p>
+        </FieldDescription>
       )}
     </div>
   );
@@ -376,13 +376,14 @@ function FinalStep({
         Noch etwas?
       </h3>
 
+      <FieldGroup>
       {/* Free text */}
-      <div className="mb-6">
-        <Label className="block mb-1">
+      <Field>
+        <FieldLabel>
           {sie
             ? 'Gibt es sonst noch etwas, das Sie uns mitteilen möchten?'
             : 'Gibt es sonst noch etwas, das du uns mitteilen möchtest?'}
-        </Label>
+        </FieldLabel>
         <Textarea
           value={notesValue}
           onChange={(e) => onChange('_notes', e.target.value)}
@@ -391,15 +392,15 @@ function FinalStep({
           rows={4}
           className={readOnly ? 'bg-muted/50' : ''}
         />
-      </div>
+      </Field>
 
       {/* Multi-file upload */}
-      <div>
-        <Label className="block mb-1">
+      <Field>
+        <FieldLabel>
           {sie
             ? 'Möchten Sie uns Dateien schicken? (z.B. Logo, Fotos, Dokumente)'
             : 'Möchtest du uns Dateien schicken? (z.B. Logo, Fotos, Dokumente)'}
-        </Label>
+        </FieldLabel>
 
         {!readOnly && (
           <div className="mt-2">
@@ -459,7 +460,8 @@ function FinalStep({
             })}
           </ul>
         )}
-      </div>
+      </Field>
+      </FieldGroup>
       </CardContent>
     </Card>
   );

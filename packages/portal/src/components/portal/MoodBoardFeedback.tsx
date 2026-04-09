@@ -5,7 +5,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase-client';
 import type { MoodBoardFeedback as MoodBoardFeedbackType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Field, FieldGroup, FieldLabel, FieldDescription } from '@/components/ui/field';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface VariantFeedback {
@@ -301,27 +301,27 @@ export default function MoodBoardFeedback({
 
             {fb.comment_negative && (
               <div>
-                <Label className="block text-sm font-semibold text-muted-foreground mb-1">
+                <FieldLabel className="text-muted-foreground mb-1">
                   Was gefällt nicht:
-                </Label>
+                </FieldLabel>
                 <p className="text-muted-foreground">{fb.comment_negative}</p>
               </div>
             )}
 
             {fb.comment_positive && (
               <div>
-                <Label className="block text-sm font-semibold text-muted-foreground mb-1">
+                <FieldLabel className="text-muted-foreground mb-1">
                   Was ist gut:
-                </Label>
+                </FieldLabel>
                 <p className="text-muted-foreground">{fb.comment_positive}</p>
               </div>
             )}
 
             {fb.comment_very_good && (
               <div>
-                <Label className="block text-sm font-semibold text-muted-foreground mb-1">
+                <FieldLabel className="text-muted-foreground mb-1">
                   Was ist sehr gut:
-                </Label>
+                </FieldLabel>
                 <p className="text-muted-foreground">{fb.comment_very_good}</p>
               </div>
             )}
@@ -337,37 +337,39 @@ export default function MoodBoardFeedback({
     <div className="mt-8 pt-8 border-t border-border">
       <div className="space-y-6">
         {/* Voting */}
-        <div className="space-y-2">
-          <Label className="block text-sm font-semibold">Deine Bewertung</Label>
-          <div className="flex gap-3">
-            <Button
-              variant={fb.vote === 'like' ? 'default' : 'outline'}
-              onClick={() => handleVote('like')}
-              disabled={isSubmitted}
-            >
-              ❤️ Gefällt mir
-            </Button>
-            <Button
-              variant={fb.vote === 'dislike' ? 'default' : 'outline'}
-              onClick={() => handleVote('dislike')}
-              disabled={isSubmitted}
-            >
-              👎 Gefällt mir nicht
-            </Button>
-            <Button
-              variant={fb.is_favorite ? 'default' : 'outline'}
-              onClick={() => handleVote('favorite')}
-              disabled={isSubmitted}
-            >
-              ⭐ Favorit
-            </Button>
-          </div>
-        </div>
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Deine Bewertung</FieldLabel>
+            <div className="flex gap-3">
+              <Button
+                variant={fb.vote === 'like' ? 'default' : 'outline'}
+                onClick={() => handleVote('like')}
+                disabled={isSubmitted}
+              >
+                ❤️ Gefällt mir
+              </Button>
+              <Button
+                variant={fb.vote === 'dislike' ? 'default' : 'outline'}
+                onClick={() => handleVote('dislike')}
+                disabled={isSubmitted}
+              >
+                👎 Gefällt mir nicht
+              </Button>
+              <Button
+                variant={fb.is_favorite ? 'default' : 'outline'}
+                onClick={() => handleVote('favorite')}
+                disabled={isSubmitted}
+              >
+                ⭐ Favorit
+              </Button>
+            </div>
+          </Field>
+        </FieldGroup>
 
         {/* Comments */}
-        <div className="space-y-4">
-          <div>
-            <Label className="block text-sm font-semibold mb-1">Was gefällt dir nicht?</Label>
+        <FieldGroup>
+          <Field>
+            <FieldLabel>Was gefällt dir nicht?</FieldLabel>
             <Textarea
               value={fb.comment_negative}
               onChange={(e) => handleCommentChange('comment_negative', e.target.value)}
@@ -376,11 +378,11 @@ export default function MoodBoardFeedback({
               maxLength={500}
               disabled={isSubmitted}
             />
-            <p className="text-xs text-muted-foreground mt-1">Max. 500 Zeichen</p>
-          </div>
+            <FieldDescription>Max. 500 Zeichen</FieldDescription>
+          </Field>
 
-          <div>
-            <Label className="block text-sm font-semibold mb-1">Was ist gut?</Label>
+          <Field>
+            <FieldLabel>Was ist gut?</FieldLabel>
             <Textarea
               value={fb.comment_positive}
               onChange={(e) => handleCommentChange('comment_positive', e.target.value)}
@@ -389,11 +391,11 @@ export default function MoodBoardFeedback({
               maxLength={500}
               disabled={isSubmitted}
             />
-            <p className="text-xs text-muted-foreground mt-1">Max. 500 Zeichen</p>
-          </div>
+            <FieldDescription>Max. 500 Zeichen</FieldDescription>
+          </Field>
 
-          <div>
-            <Label className="block text-sm font-semibold mb-1">Was ist sehr gut?</Label>
+          <Field>
+            <FieldLabel>Was ist sehr gut?</FieldLabel>
             <Textarea
               value={fb.comment_very_good}
               onChange={(e) => handleCommentChange('comment_very_good', e.target.value)}
@@ -402,9 +404,9 @@ export default function MoodBoardFeedback({
               maxLength={500}
               disabled={isSubmitted}
             />
-            <p className="text-xs text-muted-foreground mt-1">Max. 500 Zeichen</p>
-          </div>
-        </div>
+            <FieldDescription>Max. 500 Zeichen</FieldDescription>
+          </Field>
+        </FieldGroup>
 
         {/* Submit */}
         {!isSubmitted ? (
