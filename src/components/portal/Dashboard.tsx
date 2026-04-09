@@ -195,21 +195,21 @@ function buildSteps(
 }
 
 const DOT_STYLES: Record<StepStatus, string> = {
-  completed: 'bg-[var(--primary)]/10 border-[var(--primary)]/40',
-  ready: 'bg-[var(--primary)]/10 border-[var(--primary)]/40',
-  in_progress: 'bg-card border-[var(--border)]',
-  upcoming: 'bg-muted border-[var(--border)]',
+  completed: 'bg-primary/10 border-primary/40',
+  ready: 'bg-primary/10 border-primary/40',
+  in_progress: 'bg-card border-border',
+  upcoming: 'bg-muted border-border',
 };
 
 function StepDot({ status, icon, isActive }: { status: StepStatus; icon: string; isActive: boolean }) {
-  const ring = status === 'ready' && isActive ? ' ring-4 ring-[var(--primary)]/20' : '';
+  const ring = status === 'ready' && isActive ? ' ring-4 ring-primary/20' : '';
   const inner =
     status === 'completed' ? (
-      <svg className="w-3.5 h-3.5 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+      <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
     ) : status === 'upcoming' ? (
-      <div className="w-2 h-2 rounded-full bg-[var(--border)]" />
+      <div className="w-2 h-2 rounded-full bg-border" />
     ) : (
       <span className="text-xs leading-none">{icon}</span>
     );
@@ -223,11 +223,11 @@ function StepDot({ status, icon, isActive }: { status: StepStatus; icon: string;
 
 function ReadyCard({ step }: { step: ProjectStep }) {
   return (
-    <Card className="border-[var(--primary)]/30 bg-[var(--primary)]/5">
+    <Card className="border-primary/30 bg-primary/5">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <h3 className="font-semibold text-foreground">{step.label}</h3>
-          <Badge variant="outline" className="border-[var(--primary)]/50 text-[var(--primary)]">Bereit</Badge>
+          <Badge variant="outline" className="border-primary/50 text-primary">Bereit</Badge>
         </div>
         {step.description && <p className="text-sm text-muted-foreground mb-3">{step.description}</p>}
         {step.href && (
@@ -250,7 +250,7 @@ function CompletedRow({ step }: { step: ProjectStep }) {
     <div className="flex items-center gap-2 py-1">
       <span className="text-sm font-medium text-muted-foreground">{step.label}</span>
       {step.href && (
-        <a href={step.href} className="text-xs text-[var(--primary)] hover:underline ml-auto">
+        <a href={step.href} className="text-xs text-primary hover:underline ml-auto">
           nochmal ansehen
         </a>
       )}
@@ -349,7 +349,7 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
                 {showLine && (
                   <div
                     className={`w-px flex-1 min-h-6 ${
-                      step.status === 'completed' ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'
+                      step.status === 'completed' ? 'bg-primary' : 'bg-border'
                     }`}
                   />
                 )}

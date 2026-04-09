@@ -259,7 +259,7 @@ export default function MoodBoardFeedback({
 
   if (isAdmin) {
     return (
-      <div className="mt-8 pt-8 border-t border-[var(--border)]">
+      <div className="mt-8 pt-8 border-t border-border">
         <div className="space-y-6">
           <Card>
             <CardContent className="p-4">
@@ -332,7 +332,7 @@ export default function MoodBoardFeedback({
   // --- Render: Client view ---
 
   return (
-    <div className="mt-8 pt-8 border-t border-[var(--border)]">
+    <div className="mt-8 pt-8 border-t border-border">
       <div className="space-y-6">
         {/* Voting */}
         <div className="space-y-2">

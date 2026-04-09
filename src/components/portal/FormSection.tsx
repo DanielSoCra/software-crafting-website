@@ -116,8 +116,8 @@ function FileUploadField({
           {uploadState === 'uploading' && (
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary)] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--primary)]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
               Wird hochgeladen...
             </span>
@@ -133,7 +133,7 @@ function FileUploadField({
 
       {fileName && (
         <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-          <svg className="w-4 h-4 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           {fileName}

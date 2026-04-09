@@ -370,7 +370,7 @@ function FinalStep({
   return (
     <Card className="mb-6">
       <CardContent className="p-6">
-      <h3 className="text-base font-semibold mb-4 pb-2 border-b-2 border-[var(--primary)] text-[var(--primary)]">
+      <h3 className="text-base font-semibold mb-4 pb-2 border-b-2 border-primary text-primary">
         Noch etwas?
       </h3>
 
@@ -443,11 +443,11 @@ function FinalStep({
                 <li key={path} className="flex items-center gap-2 text-sm text-muted-foreground">
                   {state === 'uploading' ? (
                     <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary)] opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--primary)]" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
                     </span>
                   ) : (
-                    <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
