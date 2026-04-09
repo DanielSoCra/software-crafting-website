@@ -6,7 +6,9 @@ settings:
 
 importers:
 
-  .:
+  .: {}
+
+  packages/website:
     dependencies:
       '@astrojs/node':
         specifier: ^10.0.4
