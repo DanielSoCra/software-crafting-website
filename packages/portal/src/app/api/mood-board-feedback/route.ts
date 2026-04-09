@@ -1,32 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
-}
-
-async function getAuthUser(req: NextRequest) {
-  const authHeader = req.headers.get('Authorization') || '';
-  const token = authHeader.replace('Bearer ', '');
-  const supabase = getSupabaseAdmin();
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return null;
-  return user;
-}
-
-async function getClientForUser(userId: string) {
-  const supabase = getSupabaseAdmin();
-  const { data: client, error } = await supabase
-    .from('clients')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
-  if (error || !client) return null;
-  return client;
-}
+import { getSupabaseAdmin, getAuthUser, getClientForUser } from '@/lib/supabase-admin';
 
 const MAX_COMMENT_LENGTH = 500;
 
