@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSupabaseBrowserClient } from '../../lib/supabase-client';
 import FormSection from './FormSection';
 import type { Form, FormSchema, FrageItem } from '../../lib/types';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface Props {
   form: Form;
@@ -232,7 +237,7 @@ export default function QuestionnaireForm({ form }: Props) {
       <div className="text-center py-12">
         <div className="text-4xl mb-4">&#10003;</div>
         <h2 className="text-xl font-semibold mb-2">Vielen Dank!</h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {sie
             ? 'Ihre Antworten wurden gespeichert. Daniel meldet sich bei Ihnen mit dem nächsten Schritt.'
             : 'Deine Antworten wurden gespeichert. Daniel meldet sich bei dir mit dem nächsten Schritt.'}
@@ -249,27 +254,22 @@ export default function QuestionnaireForm({ form }: Props) {
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold">{form.title ?? 'Kurze Rückfragen'}</h2>
-        <p className="text-gray-600 mt-1">{schema.intro}</p>
+        <p className="text-muted-foreground mt-1">{schema.intro}</p>
       </div>
 
       {/* Progress */}
       {!isReadOnly && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               Schritt {currentStep + 1} von {totalSteps}
             </span>
-            {saveStatus === 'saving' && <span className="text-xs text-gray-400">Wird gespeichert...</span>}
-            {saveStatus === 'saved' && <span className="text-xs text-gray-400">Gespeichert</span>}
-            {saveStatus === 'unsaved' && <span className="text-xs text-gray-500">Ungespeichert</span>}
-            {saveStatus === 'error' && <span className="text-xs text-red-500">Speichern fehlgeschlagen</span>}
+            {saveStatus === 'saving' && <span className="text-xs text-muted-foreground">Wird gespeichert...</span>}
+            {saveStatus === 'saved' && <span className="text-xs text-muted-foreground">Gespeichert</span>}
+            {saveStatus === 'unsaved' && <span className="text-xs text-muted-foreground">Ungespeichert</span>}
+            {saveStatus === 'error' && <span className="text-xs text-destructive">Speichern fehlgeschlagen</span>}
           </div>
-          <div className="h-1.5 rounded-full bg-gray-50 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-teal-600 transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          <Progress value={progressPercent} className="h-1.5" />
         </div>
       )}
 
@@ -297,54 +297,41 @@ export default function QuestionnaireForm({ form }: Props) {
 
       {/* Submit error */}
       {errors._submit && (
-        <p className="text-sm text-red-500 mb-4">{errors._submit}</p>
+        <p className="text-sm text-destructive mb-4">{errors._submit}</p>
       )}
 
       {/* Navigation */}
       {!isReadOnly && (
         <div className="flex items-center justify-between mt-6">
           {currentStep > 0 ? (
-            <button
-              type="button"
-              onClick={goBack}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={goBack} className="gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
               Zurück
-            </button>
+            </Button>
           ) : (
             <div />
           )}
 
           {isFinalStep ? (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="px-6 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors"
-            >
+            <Button type="button" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Wird gesendet...' : 'Antworten absenden'}
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
-              onClick={goNext}
-              className="flex items-center gap-1.5 px-6 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors"
-            >
+            <Button type="button" onClick={goNext} className="gap-1.5">
               Weiter
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
-            </button>
+            </Button>
           )}
         </div>
       )}
 
       {/* Hint */}
       {!isReadOnly && (
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-muted-foreground mt-4">
           {schema.formality === 'sie'
             ? 'Sie können jederzeit zurückkommen und Ihre Antworten ändern, solange der Fragebogen offen ist.'
             : 'Du kannst jederzeit zurückkommen und deine Antworten ändern, solange der Fragebogen offen ist.'}
@@ -381,35 +368,36 @@ function FinalStep({
   );
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-      <h3 className="text-base font-semibold mb-4 pb-2 border-b-2 border-teal-600 text-teal-600">
+    <Card className="mb-6">
+      <CardContent className="p-6">
+      <h3 className="text-base font-semibold mb-4 pb-2 border-b-2 border-[var(--primary)] text-[var(--primary)]">
         Noch etwas?
       </h3>
 
       {/* Free text */}
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-1">
+        <Label className="block mb-1">
           {sie
             ? 'Gibt es sonst noch etwas, das Sie uns mitteilen möchten?'
             : 'Gibt es sonst noch etwas, das du uns mitteilen möchtest?'}
-        </label>
-        <textarea
+        </Label>
+        <Textarea
           value={notesValue}
           onChange={(e) => onChange('_notes', e.target.value)}
           placeholder={sie ? 'Ihre Nachricht (optional)...' : 'Deine Nachricht (optional)...'}
           readOnly={readOnly}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-teal-500 read-only:bg-gray-50"
+          className={readOnly ? 'bg-muted/50' : ''}
         />
       </div>
 
       {/* Multi-file upload */}
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <Label className="block mb-1">
           {sie
             ? 'Möchten Sie uns Dateien schicken? (z.B. Logo, Fotos, Dokumente)'
             : 'Möchtest du uns Dateien schicken? (z.B. Logo, Fotos, Dokumente)'}
-        </label>
+        </Label>
 
         {!readOnly && (
           <div className="mt-2">
@@ -432,14 +420,15 @@ function FinalStep({
                 }
               }}
             />
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={hasActiveUpload}
-              className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               {hasActiveUpload ? 'Wird hochgeladen...' : 'Dateien auswählen'}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -451,14 +440,14 @@ function FinalStep({
               const uploadKey = `_attachment_${name}`;
               const state = uploadStates[uploadKey];
               return (
-                <li key={path} className="flex items-center gap-2 text-sm text-gray-600">
+                <li key={path} className="flex items-center gap-2 text-sm text-muted-foreground">
                   {state === 'uploading' ? (
                     <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-600 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-600" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary)] opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--primary)]" />
                     </span>
                   ) : (
-                    <svg className="w-4 h-4 text-teal-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-4 h-4 text-[var(--primary)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
@@ -469,6 +458,7 @@ function FinalStep({
           </ul>
         )}
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
