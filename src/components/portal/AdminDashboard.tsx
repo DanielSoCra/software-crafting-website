@@ -1,5 +1,7 @@
 import type { AdminClient, AdminDeliverable, AdminForm, DeliverableType } from '../../lib/types';
 import { DELIVERABLE_LABELS } from '../../lib/types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 interface Props {
   clients: AdminClient[];
@@ -10,10 +12,10 @@ interface Props {
 type DotState = 'viewed' | 'published' | 'waiting' | 'none';
 
 const DOT_COLORS: Record<DotState, string> = {
-  viewed: '#238636',
-  published: '#1f6feb',
-  waiting: '#f0883e',
-  none: '#30363d',
+  viewed: 'var(--color-success)',
+  published: 'var(--primary)',
+  waiting: 'var(--destructive)',
+  none: 'var(--border)',
 };
 
 const PIPELINE_COLUMNS: Array<{ label: string; type: DeliverableType | 'form' }> = [
@@ -126,21 +128,27 @@ export default function AdminDashboard({ clients, deliverables, forms }: Props) 
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
-          <p className="text-gray-500 text-sm">Admin-Übersicht</p>
+          <p className="text-muted-foreground text-sm">Admin-Übersicht</p>
         </div>
-        <div className="flex gap-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold" style={{ color: '#58a6ff' }}>{clients.length}</div>
-            <div className="text-xs text-gray-500">Clients</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold" style={{ color: '#f0883e' }}>{alerts.length}</div>
-            <div className="text-xs text-gray-500">Warten</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold" style={{ color: '#238636' }}>{viewedCount}</div>
-            <div className="text-xs text-gray-500">Gesehen</div>
-          </div>
+        <div className="flex gap-4">
+          <Card className="flex-1">
+            <CardContent className="text-center p-4">
+              <div className="text-2xl font-bold" style={{ color: 'var(--color-primary-light)' }}>{clients.length}</div>
+              <div className="text-xs text-muted-foreground">Clients</div>
+            </CardContent>
+          </Card>
+          <Card className="flex-1">
+            <CardContent className="text-center p-4">
+              <div className="text-2xl font-bold" style={{ color: 'var(--destructive)' }}>{alerts.length}</div>
+              <div className="text-xs text-muted-foreground">Warten</div>
+            </CardContent>
+          </Card>
+          <Card className="flex-1">
+            <CardContent className="text-center p-4">
+              <div className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>{viewedCount}</div>
+              <div className="text-xs text-muted-foreground">Gesehen</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -149,23 +157,22 @@ export default function AdminDashboard({ clients, deliverables, forms }: Props) 
         <div className="mb-8">
           <div
             className="text-xs font-semibold uppercase tracking-wider mb-3"
-            style={{ color: '#f0883e' }}
+            style={{ color: 'var(--destructive)' }}
           >
             ⚡ Aktion nötig
           </div>
           <div className="flex flex-col gap-2">
             {alerts.map((alert, i) => (
-              <a
-                key={i}
-                href={alert.href}
-                className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center justify-between hover:shadow-md transition-shadow"
-                style={{ borderLeftWidth: '3px', borderLeftColor: '#f0883e', textDecoration: 'none' }}
-              >
-                <div>
-                  <span className="font-semibold text-sm">{alert.clientName}</span>
-                  <span className="text-gray-500 text-sm"> — {alert.description}</span>
-                </div>
-                <span style={{ color: '#58a6ff' }} className="text-sm">→</span>
+              <a key={i} href={alert.href} className="block" style={{ textDecoration: 'none' }}>
+                <Card className="border-l-4 hover:shadow-md transition-shadow" style={{ borderLeftColor: 'var(--color-accent)' }}>
+                  <CardContent className="px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <span className="font-semibold text-sm">{alert.clientName}</span>
+                      <span className="text-muted-foreground text-sm"> — {alert.description}</span>
+                    </div>
+                    <span style={{ color: 'var(--primary)' }} className="text-sm">→</span>
+                  </CardContent>
+                </Card>
               </a>
             ))}
           </div>
@@ -174,68 +181,55 @@ export default function AdminDashboard({ clients, deliverables, forms }: Props) 
 
       {/* Dot-Matrix Pipeline */}
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Pipeline
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: '600px' }}>
-            <thead>
-              <tr>
-                <th className="text-left font-normal text-xs text-gray-500 pb-2 pr-4" style={{ width: '200px' }}>Client</th>
-                {PIPELINE_COLUMNS.map((col) => (
-                  <th key={col.label} className="font-normal text-xs text-gray-500 pb-2 text-center" style={{ width: '80px' }}>
-                    {col.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {clients.map((client) => (
-                <tr key={client.id} className="border-t border-gray-200">
-                  <td className="py-2 pr-4">
-                    <a
-                      href={`/portal/dashboard?client=${client.slug}`}
-                      className="font-semibold text-sm hover:underline"
-                      style={{ color: 'var(--color-text)', textDecoration: 'none' }}
-                    >
-                      {client.company}
-                    </a>
-                    {client.industry_key && (
-                      <span className="text-xs text-gray-500 ml-2">{client.industry_key}</span>
-                    )}
-                  </td>
-                  {PIPELINE_COLUMNS.map((col) => {
-                    const state = col.type === 'form'
-                      ? getFormDot(forms, client.id)
-                      : getDeliverableDot(deliverables, client.id, col.type);
+        <Table style={{ minWidth: '600px' }}>
+          <TableHeader>
+            <TableRow>
+              <TableHead style={{ width: '200px' }}>Client</TableHead>
+              {PIPELINE_COLUMNS.map((col) => (
+                <TableHead key={col.label} className="text-center" style={{ width: '80px' }}>
+                  {col.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {clients.map((client) => (
+              <TableRow key={client.id}>
+                <TableCell className="pr-4">
+                  <a
+                    href={`/portal/dashboard?client=${client.slug}`}
+                    className="font-semibold text-sm hover:underline"
+                    style={{ color: 'var(--color-text)', textDecoration: 'none' }}
+                  >
+                    {client.company}
+                  </a>
+                  {client.industry_key && (
+                    <span className="text-xs text-muted-foreground ml-2">{client.industry_key}</span>
+                  )}
+                </TableCell>
+                {PIPELINE_COLUMNS.map((col) => {
+                  const state = col.type === 'form'
+                    ? getFormDot(forms, client.id)
+                    : getDeliverableDot(deliverables, client.id, col.type);
 
-                    const isClickable = state !== 'none';
-                    let href = '#';
-                    if (isClickable) {
-                      if (col.type === 'form') {
-                        const form = forms.find((f) => f.client_id === client.id);
-                        href = form ? `/portal/questionnaire/${form.id}?client=${client.slug}` : '#';
-                      } else {
-                        href = `/portal/deliverables/${col.type}?client=${client.slug}`;
-                      }
+                  const isClickable = state !== 'none';
+                  let href = '#';
+                  if (isClickable) {
+                    if (col.type === 'form') {
+                      const form = forms.find((f) => f.client_id === client.id);
+                      href = form ? `/portal/questionnaire/${form.id}?client=${client.slug}` : '#';
+                    } else {
+                      href = `/portal/deliverables/${col.type}?client=${client.slug}`;
                     }
+                  }
 
-                    return (
-                      <td key={col.label} className="py-2 text-center">
-                        {isClickable ? (
-                          <a href={href} className="inline-block">
-                            <div
-                              style={{
-                                width: '10px',
-                                height: '10px',
-                                borderRadius: '2px',
-                                backgroundColor: DOT_COLORS[state],
-                                margin: '0 auto',
-                              }}
-                              title={`${col.label}: ${state}`}
-                            />
-                          </a>
-                        ) : (
+                  return (
+                    <TableCell key={col.label} className="text-center">
+                      {isClickable ? (
+                        <a href={href} className="inline-block">
                           <div
                             style={{
                               width: '10px',
@@ -244,20 +238,31 @@ export default function AdminDashboard({ clients, deliverables, forms }: Props) 
                               backgroundColor: DOT_COLORS[state],
                               margin: '0 auto',
                             }}
-                            title={`${col.label}: nicht erstellt`}
+                            title={`${col.label}: ${state}`}
                           />
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        </a>
+                      ) : (
+                        <div
+                          style={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '2px',
+                            backgroundColor: DOT_COLORS[state],
+                            margin: '0 auto',
+                          }}
+                          title={`${col.label}: nicht erstellt`}
+                        />
+                      )}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
         {clients.length === 0 && (
-          <p className="text-gray-400 text-sm mt-4">Noch keine Clients angelegt.</p>
+          <p className="text-muted-foreground text-sm mt-4">Noch keine Clients angelegt.</p>
         )}
       </div>
     </div>
