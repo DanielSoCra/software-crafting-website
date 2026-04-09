@@ -14,7 +14,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) redirect('/portal/login');
+  if (!user) redirect('/login');
 
   // Check if user is admin
   const { data: adminRole, error: adminRoleError } = await supabase
@@ -80,7 +80,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   if (!clientData) {
     // Admin with bad slug → back to overview; non-admin → login
-    redirect(isAdmin ? '/portal/dashboard' : '/portal/login');
+    redirect(isAdmin ? '/dashboard' : '/login');
   }
 
   const client = clientData as { id: string; company: string; slug: string; metadata: { project_plan?: PlanStep[] } };

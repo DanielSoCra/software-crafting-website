@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: Props) {
   // Handle logout
   if (params.logout === 'true') {
     await supabase.auth.signOut();
-    redirect('/portal/login');
+    redirect('/login');
   }
 
   // Handle PKCE code exchange
@@ -21,10 +21,8 @@ export default async function LoginPage({ searchParams }: Props) {
   if (params.code) {
     const { error } = await supabase.auth.exchangeCodeForSession(params.code);
     if (!error) {
-      // Validate redirect target — only allow /portal/* paths
-      const next = params.next ?? '';
-      const safeNext = next.startsWith('/portal/') ? next : '/portal/dashboard';
-      redirect(safeNext);
+      // basePath auto-prepends /portal, so use paths without it
+      redirect('/dashboard');
     }
     exchangeFailed = true;
   }

@@ -13,7 +13,7 @@ export default async function QuestionnairePage({ params }: Props) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) redirect('/portal/login');
+  if (!user) redirect('/login');
 
   // Fetch form
   const { data: form, error } = await supabase

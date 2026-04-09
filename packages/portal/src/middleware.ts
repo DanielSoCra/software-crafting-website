@@ -37,18 +37,19 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isPublicRoute = pathname === '/login' || pathname === '/datenschutz';
 
+  // Build external URL from proxy headers (not internal server address)
+  const proto = request.headers.get('x-forwarded-proto') || 'https';
+  const host = request.headers.get('host') || 'software-crafting.de';
+  const origin = `${proto}://${host}`;
+
   // Redirect unauthenticated users to login
   if (!user && !isPublicRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL('/portal/login', origin));
   }
 
-  // Redirect authenticated users away from login
-  if (user && pathname === '/login' && !request.nextUrl.searchParams.has('logout')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+  // Redirect authenticated users away from login (but not during code exchange or logout)
+  if (user && pathname === '/login' && !request.nextUrl.searchParams.has('logout') && !request.nextUrl.searchParams.has('code')) {
+    return NextResponse.redirect(new URL('/portal/dashboard', origin));
   }
 
   return supabaseResponse;

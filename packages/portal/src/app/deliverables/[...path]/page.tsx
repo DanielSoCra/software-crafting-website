@@ -32,7 +32,7 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
 
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/portal/login');
+  if (!user) redirect('/login');
 
   // Check admin
   const clientParam = queryParams.client;
@@ -179,7 +179,7 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
       markdownHtml = renderMarkdown(content.toString('utf-8'));
     } else {
       // Binary file -- redirect to API route
-      redirect(`/portal/api/deliverables/${deliverableType}/${requestedPath}${clientSuffix}`);
+      redirect(`/api/deliverables/${deliverableType}/${requestedPath}${clientSuffix}`);
     }
   }
 
