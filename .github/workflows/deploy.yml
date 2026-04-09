@@ -41,43 +41,37 @@ jobs:
       - name: Deploy Astro website
         run: |
           RSYNC="rsync -avz --delete -e 'ssh -i ~/.ssh/deploy_key'"
-          # --exclude preserves client preview symlinks that point to /var/www/portal-assets/
           eval $RSYNC --exclude='client/preview/' packages/website/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/dist/
 
       - name: Deploy Next.js portal
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          SUPABASE_URL_VAL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_VAL: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SRK_VAL: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          SSH="ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
+          SSH="ssh -i ~/.ssh/deploy_key ${DEPLOY_USER}@${DEPLOY_HOST}"
           RSYNC="rsync -avz --delete -e 'ssh -i ~/.ssh/deploy_key'"
           PORTAL_DIR=/var/www/software-crafting-preview
 
-          # Deploy standalone server (--exclude preserves .env and ecosystem config)
+          # Deploy standalone server (preserve .env and ecosystem config)
           eval $RSYNC --exclude='.env' --exclude='ecosystem.config.cjs' \
             packages/portal/.next/standalone/ \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$PORTAL_DIR/
+            ${DEPLOY_USER}@${DEPLOY_HOST}:${PORTAL_DIR}/
 
           # Deploy static assets to nested path (Next.js standalone monorepo structure)
           eval $RSYNC \
             packages/portal/.next/static/ \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$PORTAL_DIR/packages/portal/.next/static/
+            ${DEPLOY_USER}@${DEPLOY_HOST}:${PORTAL_DIR}/packages/portal/.next/static/
 
-          # Ensure .env exists with correct values (idempotent)
-          $SSH "cat > $PORTAL_DIR/.env << 'ENVEOF'
-NEXT_PUBLIC_SUPABASE_URL=${{ secrets.PUBLIC_SUPABASE_URL }}
-NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
-SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-ENVEOF
-          cp $PORTAL_DIR/.env $PORTAL_DIR/packages/portal/.env"
+          # Write .env with secrets
+          $SSH "printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
+            '${SUPABASE_URL_VAL}' '${SUPABASE_ANON_VAL}' '${SUPABASE_SRK_VAL}' \
+            > ${PORTAL_DIR}/.env && cp ${PORTAL_DIR}/.env ${PORTAL_DIR}/packages/portal/.env"
 
-          # Ensure ecosystem config exists
-          $SSH "cat > $PORTAL_DIR/ecosystem.config.cjs << 'PMEOF'
-module.exports = {
-  apps: [{
-    name: 'software-crafting-portal',
-    script: 'packages/portal/server.js',
-    env: { NODE_ENV: 'production', PORT: 4322, HOSTNAME: '::1' },
-  }],
-};
-PMEOF"
+          # Write ecosystem config
+          $SSH "printf 'module.exports = { apps: [{ name: \"software-crafting-portal\", script: \"packages/portal/server.js\", env: { NODE_ENV: \"production\", PORT: 4322, HOSTNAME: \"::1\" } }] };\n' > ${PORTAL_DIR}/ecosystem.config.cjs"
 
       - name: Restart PM2 processes
         run: |
