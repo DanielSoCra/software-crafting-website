@@ -192,7 +192,7 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
     <>
       <div className="mb-4">
         <a href={`/portal/dashboard${clientSuffix}`} className="text-sm text-muted-foreground hover:text-foreground">
-          &larr; Zur\u00fcck zum Dashboard
+          &larr; Zurück zum Dashboard
         </a>
       </div>
       <h1 className="text-xl font-bold mb-6">{title}</h1>
