@@ -208,7 +208,7 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
               />
             ) : frage.field === 'select' ? (
               <Select
-                value={typeof value === 'string' ? value : ''}
+                value={typeof value === 'string' && value !== '' ? value : undefined}
                 onValueChange={(v) => onChange(frage.key, v)}
                 disabled={readOnly}
               >

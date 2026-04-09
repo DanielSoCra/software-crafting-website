@@ -90,7 +90,6 @@
   --color-shadcn-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-success: oklch(0.65 0.15 145);
 }
 
 /* Public page dark theme */

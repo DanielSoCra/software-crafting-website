@@ -47,6 +47,7 @@ export default function MoodBoardFeedback({
     const map: Record<string, VariantFeedback> = {};
     for (const fb of feedbackData) {
       map[fb.variant_name] = {
+        // 'favorite' in MoodBoardVote is a legacy value — favorite is tracked via is_favorite boolean
         vote: fb.vote === 'favorite' ? null : (fb.vote as 'like' | 'dislike' | null),
         is_favorite: fb.is_favorite,
         comment_negative: fb.comment_negative || '',
@@ -100,9 +101,11 @@ export default function MoodBoardFeedback({
     if (voteType === 'favorite') {
       updated = { ...current, is_favorite: !current.is_favorite };
     } else {
+      // Reset is_favorite when voting like/dislike (matches original behavior)
       updated = {
         ...current,
         vote: current.vote === voteType ? null : voteType,
+        is_favorite: false,
       };
     }
 
