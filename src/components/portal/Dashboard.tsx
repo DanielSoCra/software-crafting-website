@@ -1,6 +1,10 @@
 import React from 'react';
 import type { Deliverable, DeliverableType, Form } from '../../lib/types';
 import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '../../lib/types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 
 /** Per-client project plan step, stored in client.metadata.project_plan */
 export interface PlanStep {
@@ -191,21 +195,21 @@ function buildSteps(
 }
 
 const DOT_STYLES: Record<StepStatus, string> = {
-  completed: 'bg-teal-50 border-teal-300',
-  ready: 'bg-teal-50 border-teal-300',
-  in_progress: 'bg-white border-gray-200',
-  upcoming: 'bg-gray-50 border-gray-200',
+  completed: 'bg-[var(--primary)]/10 border-[var(--primary)]/40',
+  ready: 'bg-[var(--primary)]/10 border-[var(--primary)]/40',
+  in_progress: 'bg-card border-[var(--border)]',
+  upcoming: 'bg-muted border-[var(--border)]',
 };
 
 function StepDot({ status, icon, isActive }: { status: StepStatus; icon: string; isActive: boolean }) {
-  const ring = status === 'ready' && isActive ? ' ring-4 ring-teal-300/20' : '';
+  const ring = status === 'ready' && isActive ? ' ring-4 ring-[var(--primary)]/20' : '';
   const inner =
     status === 'completed' ? (
-      <svg className="w-3.5 h-3.5 text-teal-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+      <svg className="w-3.5 h-3.5 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
     ) : status === 'upcoming' ? (
-      <div className="w-2 h-2 rounded-full bg-gray-200" />
+      <div className="w-2 h-2 rounded-full bg-[var(--border)]" />
     ) : (
       <span className="text-xs leading-none">{icon}</span>
     );
@@ -219,35 +223,34 @@ function StepDot({ status, icon, isActive }: { status: StepStatus; icon: string;
 
 function ReadyCard({ step }: { step: ProjectStep }) {
   return (
-    <div className="rounded-xl border bg-teal-50 border-teal-300 p-4">
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <h3 className="font-semibold text-gray-900">{step.label}</h3>
-        <span className="text-xs font-medium text-teal-700 border border-teal-300 rounded-full px-2 py-0.5 whitespace-nowrap">
-          Bereit
-        </span>
-      </div>
-      {step.description && <p className="text-sm text-gray-600 mb-3">{step.description}</p>}
-      {step.href && (
-        <a
-          href={step.href}
-          className="inline-flex items-center gap-1.5 bg-teal-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
-        >
-          {step.ctaLabel}
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-        </a>
-      )}
-    </div>
+    <Card className="border-[var(--primary)]/30 bg-[var(--primary)]/5">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <h3 className="font-semibold text-foreground">{step.label}</h3>
+          <Badge variant="outline" className="border-[var(--primary)]/50 text-[var(--primary)]">Bereit</Badge>
+        </div>
+        {step.description && <p className="text-sm text-muted-foreground mb-3">{step.description}</p>}
+        {step.href && (
+          <Button asChild variant="default" size="sm">
+            <a href={step.href} className="inline-flex items-center gap-1.5">
+              {step.ctaLabel}
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </a>
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 function CompletedRow({ step }: { step: ProjectStep }) {
   return (
     <div className="flex items-center gap-2 py-1">
-      <span className="text-sm font-medium text-gray-600">{step.label}</span>
+      <span className="text-sm font-medium text-muted-foreground">{step.label}</span>
       {step.href && (
-        <a href={step.href} className="text-xs text-teal-600 hover:underline ml-auto">
+        <a href={step.href} className="text-xs text-[var(--primary)] hover:underline ml-auto">
           nochmal ansehen
         </a>
       )}
@@ -257,26 +260,28 @@ function CompletedRow({ step }: { step: ProjectStep }) {
 
 function InProgressCard({ step }: { step: ProjectStep }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <h3 className="font-medium text-gray-700">{step.label}</h3>
-        <span className="flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'oklch(0.8 0.15 85)' }} />
-            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: 'oklch(0.8 0.15 85)' }} />
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="font-medium text-foreground">{step.label}</h3>
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--color-accent)' }} />
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: 'var(--color-accent)' }} />
+            </span>
+            In Bearbeitung
           </span>
-          In Bearbeitung
-        </span>
-      </div>
-      {step.description && <p className="text-sm text-gray-500">{step.description}</p>}
-    </div>
+        </div>
+        {step.description && <p className="text-sm text-muted-foreground">{step.description}</p>}
+      </CardContent>
+    </Card>
   );
 }
 
 function UpcomingRow({ step }: { step: ProjectStep }) {
   return (
     <div className="py-1">
-      <span className="text-sm text-gray-400">{step.label}</span>
+      <span className="text-sm text-muted-foreground">{step.label}</span>
     </div>
   );
 }
@@ -317,18 +322,13 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{company}</h1>
-        <p className="text-gray-500 text-sm mt-1">Projektübersicht</p>
+        <h1 className="text-2xl font-bold text-foreground">{company}</h1>
+        <p className="text-muted-foreground text-sm mt-1">Projektübersicht</p>
 
         {completedCount > 0 && (
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex-1 h-1.5 rounded-full bg-gray-50 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-teal-600 transition-all duration-700"
-                style={{ width: `${(completedCount / steps.length) * 100}%` }}
-              />
-            </div>
-            <span className="text-xs text-gray-500 tabular-nums">
+            <Progress value={(completedCount / steps.length) * 100} className="flex-1 h-1.5" />
+            <span className="text-xs text-muted-foreground tabular-nums">
               {completedCount}/{steps.length}
             </span>
           </div>
@@ -340,7 +340,7 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
           const isActive = i === activeIndex;
           const isLastVisible = i === visibleSteps.length - 1;
           const showLine = !isLastVisible || hiddenCount > 0;
-          const Card = STEP_CARD[step.status] ?? UpcomingRow;
+          const StepCard = STEP_CARD[step.status] ?? UpcomingRow;
 
           return (
             <div key={step.id} className="relative flex gap-4">
@@ -349,13 +349,13 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
                 {showLine && (
                   <div
                     className={`w-px flex-1 min-h-6 ${
-                      step.status === 'completed' ? 'bg-teal-600' : 'bg-gray-200'
+                      step.status === 'completed' ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'
                     }`}
                   />
                 )}
               </div>
               <div className={`flex-1 -mt-1 ${showLine ? 'pb-4' : ''}`}>
-                <Card step={step} />
+                <StepCard step={step} />
               </div>
             </div>
           );
@@ -364,9 +364,9 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
         {hiddenCount > 0 && (
           <div className="flex gap-4 mt-1">
             <div className="w-7 flex-shrink-0 flex justify-center">
-              <span className="text-gray-400 text-lg leading-none">&#x22EE;</span>
+              <span className="text-muted-foreground text-lg leading-none">&#x22EE;</span>
             </div>
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-muted-foreground">
               … und {hiddenCount} weitere {hiddenCount === 1 ? 'Schritt' : 'Schritte'}
             </div>
           </div>
