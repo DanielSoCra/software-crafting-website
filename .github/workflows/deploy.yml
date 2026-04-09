@@ -41,7 +41,10 @@ jobs:
       - name: Deploy Astro website
         run: |
           RSYNC="rsync -avz --delete -e 'ssh -i ~/.ssh/deploy_key'"
+          # Deploy dist (exclude client preview symlinks)
           eval $RSYNC --exclude='client/preview/' packages/website/dist/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/dist/
+          # Deploy node_modules for SSR runtime deps
+          eval $RSYNC packages/website/node_modules/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting/node_modules/
 
       - name: Deploy Next.js portal
         env:
