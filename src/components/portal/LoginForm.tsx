@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getSupabaseBrowserClient } from '../../lib/supabase-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Step = 'email' | 'confirm' | 'sending' | 'sent' | 'error' | 'callback';
 
@@ -80,92 +84,94 @@ export default function LoginForm() {
   if (step === 'callback') {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">Anmeldung wird verarbeitet…</p>
+        <p className="text-muted-foreground">Anmeldung wird verarbeitet…</p>
       </div>
     );
   }
 
   if (step === 'sent') {
     return (
-      <div className="text-center py-8">
-        <h2 className="text-xl font-semibold mb-2">Link gesendet!</h2>
-        <p className="text-gray-600">
-          Wir haben einen Zugangslink an <strong>{email}</strong> gesendet.
-          Bitte prüfe dein Postfach.
-        </p>
-        <button
-          onClick={reset}
-          className="mt-4 hover:underline text-sm"
-          style={{ color: 'var(--color-primary-light)' }}
-        >
-          Andere E-Mail verwenden
-        </button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Link gesendet!</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-muted-foreground">
+            Wir haben einen Zugangslink an <strong>{email}</strong> gesendet.
+            Bitte prüfe dein Postfach.
+          </p>
+          <Button variant="link" onClick={reset} className="mt-4">
+            Andere E-Mail verwenden
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   if (step === 'confirm' || step === 'sending') {
     return (
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600 text-center">
-          Zugangslink senden an:
-        </p>
-        <p className="text-center font-medium text-lg">{email}</p>
-        {step === 'sending' ? (
-          <div className="text-center py-2 text-sm text-gray-500">
-            Wird gesendet…
-          </div>
-        ) : (
-          <div className="flex gap-3">
-            <button
-              onClick={() => setStep('email')}
-              className="flex-1 py-2.5 rounded-lg font-medium text-sm transition-colors"
-              style={{
-                border: '1px solid var(--color-border)',
-                color: 'var(--color-text-muted)',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--color-primary)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
-            >
-              Zurück
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="flex-1 py-2.5 gradient-btn text-white rounded-lg font-medium"
-            >
-              Ja, Link senden
-            </button>
-          </div>
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Kundenportal</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground text-center">
+            Zugangslink senden an:
+          </p>
+          <p className="text-center font-medium text-lg">{email}</p>
+          {step === 'sending' ? (
+            <div className="text-center py-2 text-sm text-muted-foreground">
+              Wird gesendet…
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setStep('email')}
+              >
+                Zurück
+              </Button>
+              <Button
+                variant="gradient"
+                className="flex-1"
+                onClick={handleConfirm}
+              >
+                Ja, Link senden
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <form onSubmit={handleEmailSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium mb-1">
-          E-Mail-Adresse
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@beispiel.de"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-        />
-      </div>
-      {step === 'error' && (
-        <p className="text-sm" style={{ color: 'oklch(0.7 0.15 25)' }}>{errorMsg}</p>
-      )}
-      <button
-        type="submit"
-        className="w-full py-2.5 gradient-btn text-white rounded-lg font-medium"
-      >
-        Weiter
-      </button>
-    </form>
+    <Card>
+      <CardHeader>
+        <CardTitle>Kundenportal</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleEmailSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">E-Mail-Adresse</Label>
+            <Input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@beispiel.de"
+            />
+          </div>
+          {step === 'error' && (
+            <p className="text-sm text-destructive">{errorMsg}</p>
+          )}
+          <Button type="submit" variant="gradient" className="w-full">
+            Weiter
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
