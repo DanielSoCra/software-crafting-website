@@ -4,11 +4,12 @@ import { useRef, useState } from 'react';
 import type { FormSection as FormSectionType, AussageItem, EmpfehlungItem, FrageItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldGroup, FieldLabel, FieldError } from '@/components/ui/field';
+import { Card, CardContent } from '@/components/ui/card';
 
 // All color variants collapse to the same brand primary in dark mode.
 // Using semantic tokens directly instead of relying on .portal-page overrides.
@@ -40,10 +41,10 @@ function renderRadioField(frage: FrageItem, value: string | string[], onChange: 
       className="space-y-2"
     >
       {(frage.options ?? []).map((opt) => (
-        <div key={opt} className="flex items-center gap-2">
+        <Field key={opt} orientation="horizontal">
           <RadioGroupItem value={opt} id={`${frage.key}-${opt}`} />
-          <Label htmlFor={`${frage.key}-${opt}`} className="text-sm cursor-pointer font-normal">{opt}</Label>
-        </div>
+          <FieldLabel htmlFor={`${frage.key}-${opt}`} className="font-normal">{opt}</FieldLabel>
+        </Field>
       ))}
     </RadioGroup>
   );
@@ -54,7 +55,7 @@ function renderCheckboxField(frage: FrageItem, value: string | string[], onChang
   return (
     <div className="space-y-2">
       {(frage.options ?? []).map((opt) => (
-        <div key={opt} className="flex items-center gap-2">
+        <Field key={opt} orientation="horizontal">
           <Checkbox
             id={`${frage.key}-${opt}`}
             checked={selected.includes(opt)}
@@ -66,8 +67,8 @@ function renderCheckboxField(frage: FrageItem, value: string | string[], onChang
             }}
             disabled={readOnly}
           />
-          <Label htmlFor={`${frage.key}-${opt}`} className="text-sm cursor-pointer font-normal">{opt}</Label>
-        </div>
+          <FieldLabel htmlFor={`${frage.key}-${opt}`} className="font-normal">{opt}</FieldLabel>
+        </Field>
       ))}
     </div>
   );
@@ -151,99 +152,105 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
   const colors = colorMap[section.color] ?? colorMap.gray;
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 mb-6">
-      <h3 className={`text-base font-semibold mb-4 pb-2 border-b-2 ${colors.border} ${colors.heading}`}>
-        {section.title}
-      </h3>
+    <Card className="rounded-xl mb-6">
+      <CardContent className="p-6">
+        <h3 className={`text-base font-semibold mb-4 pb-2 border-b-2 ${colors.border} ${colors.heading}`}>
+          {section.title}
+        </h3>
 
-      {section.items.map((item, i) => {
-        if (item.type === 'aussage') {
-          const aussage = item as AussageItem;
-          return (
-            <div key={i} className={`${colors.bg} rounded-lg p-4 mb-4 text-sm leading-relaxed`}>
-              <p>{aussage.text}</p>
-              {aussage.escape && (
-                <p className="mt-2 text-muted-foreground italic text-sm">{aussage.escape}</p>
-              )}
-            </div>
-          );
-        }
+        <FieldGroup>
+          {section.items.map((item, i) => {
+            if (item.type === 'aussage') {
+              const aussage = item as AussageItem;
+              return (
+                <div key={i} className={`${colors.bg} rounded-lg p-4 text-sm leading-relaxed`}>
+                  <p>{aussage.text}</p>
+                  {aussage.escape && (
+                    <p className="mt-2 text-muted-foreground italic text-sm">{aussage.escape}</p>
+                  )}
+                </div>
+              );
+            }
 
-        if (item.type === 'empfehlung') {
-          const emp = item as EmpfehlungItem;
-          return (
-            <div key={i} className={`${colors.bg} rounded-lg p-4 mb-4 text-sm leading-relaxed`}>
-              <p className="italic text-muted-foreground mb-2">{emp.value}</p>
-              <p>{emp.text}</p>
-              {emp.escape && (
-                <p className="mt-2 text-muted-foreground italic text-sm">{emp.escape}</p>
-              )}
-            </div>
-          );
-        }
+            if (item.type === 'empfehlung') {
+              const emp = item as EmpfehlungItem;
+              return (
+                <div key={i} className={`${colors.bg} rounded-lg p-4 text-sm leading-relaxed`}>
+                  <p className="italic text-muted-foreground mb-2">{emp.value}</p>
+                  <p>{emp.text}</p>
+                  {emp.escape && (
+                    <p className="mt-2 text-muted-foreground italic text-sm">{emp.escape}</p>
+                  )}
+                </div>
+              );
+            }
 
-        const frage = item as FrageItem;
-        const value = answers[frage.key] ?? '';
-        const error = errors?.[frage.key];
+            const frage = item as FrageItem;
+            const value = answers[frage.key] ?? '';
+            const error = errors?.[frage.key];
 
-        return (
-          <div key={frage.key} className="mb-4">
-            <Label className="block mb-1">
-              {frage.label}
-              {frage.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
+            return (
+              <Field key={frage.key} data-invalid={!!error || undefined}>
+                <FieldLabel htmlFor={frage.key}>
+                  {frage.label}
+                  {frage.required && <span className="text-destructive ml-1">*</span>}
+                </FieldLabel>
 
-            {frage.field === 'file' ? (
-              <FileUploadField
-                frage={frage}
-                value={value}
-                readOnly={readOnly}
-                onFileUpload={onFileUpload}
-                uploadState={uploadStates?.[frage.key]}
-              />
-            ) : frage.field === 'textarea' ? (
-              <Textarea
-                value={typeof value === 'string' ? value : ''}
-                onChange={(e) => onChange(frage.key, e.target.value)}
-                placeholder={frage.placeholder}
-                readOnly={readOnly}
-                rows={3}
-                className={readOnly ? 'bg-muted/50' : error ? 'border-destructive' : ''}
-              />
-            ) : frage.field === 'select' ? (
-              <Select
-                value={typeof value === 'string' && value !== '' ? value : undefined}
-                onValueChange={(v) => onChange(frage.key, v)}
-                disabled={readOnly}
-              >
-                <SelectTrigger className={error ? 'border-destructive' : ''}>
-                  <SelectValue placeholder={frage.placeholder ?? 'Bitte wählen...'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(frage.options ?? []).map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : frage.field === 'radio' ? (
-              renderRadioField(frage, value, onChange, readOnly)
-            ) : frage.field === 'checkbox' ? (
-              renderCheckboxField(frage, value, onChange, readOnly)
-            ) : (
-              <Input
-                type={frage.field === 'email' ? 'email' : frage.field === 'url' ? 'url' : 'text'}
-                value={typeof value === 'string' ? value : ''}
-                onChange={(e) => onChange(frage.key, e.target.value)}
-                placeholder={frage.placeholder}
-                readOnly={readOnly}
-                className={readOnly ? 'bg-muted/50' : error ? 'border-destructive' : ''}
-              />
-            )}
+                {frage.field === 'file' ? (
+                  <FileUploadField
+                    frage={frage}
+                    value={value}
+                    readOnly={readOnly}
+                    onFileUpload={onFileUpload}
+                    uploadState={uploadStates?.[frage.key]}
+                  />
+                ) : frage.field === 'textarea' ? (
+                  <Textarea
+                    id={frage.key}
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(e) => onChange(frage.key, e.target.value)}
+                    placeholder={frage.placeholder}
+                    readOnly={readOnly}
+                    rows={3}
+                    className={readOnly ? 'bg-muted/50' : error ? 'border-destructive' : ''}
+                  />
+                ) : frage.field === 'select' ? (
+                  <Select
+                    value={typeof value === 'string' && value !== '' ? value : undefined}
+                    onValueChange={(v) => onChange(frage.key, v)}
+                    disabled={readOnly}
+                  >
+                    <SelectTrigger id={frage.key} className={error ? 'border-destructive' : ''}>
+                      <SelectValue placeholder={frage.placeholder ?? 'Bitte wählen...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(frage.options ?? []).map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : frage.field === 'radio' ? (
+                  renderRadioField(frage, value, onChange, readOnly)
+                ) : frage.field === 'checkbox' ? (
+                  renderCheckboxField(frage, value, onChange, readOnly)
+                ) : (
+                  <Input
+                    id={frage.key}
+                    type={frage.field === 'email' ? 'email' : frage.field === 'url' ? 'url' : 'text'}
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(e) => onChange(frage.key, e.target.value)}
+                    placeholder={frage.placeholder}
+                    readOnly={readOnly}
+                    className={readOnly ? 'bg-muted/50' : error ? 'border-destructive' : ''}
+                  />
+                )}
 
-            {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-          </div>
-        );
-      })}
-    </div>
+                {error && <FieldError>{error}</FieldError>}
+              </Field>
+            );
+          })}
+        </FieldGroup>
+      </CardContent>
+    </Card>
   );
 }
