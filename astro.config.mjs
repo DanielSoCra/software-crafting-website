@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { fileURLToPath } from 'url';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import node from '@astrojs/node';
@@ -11,6 +12,11 @@ export default defineConfig({
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
+    },
   },
   site: 'https://software-crafting.de',
 });
