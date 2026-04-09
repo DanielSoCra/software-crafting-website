@@ -1,5 +1,12 @@
 import { useRef, useState } from 'react';
 import type { FormSection as FormSectionType, AussageItem, EmpfehlungItem, FrageItem } from '../../lib/types';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const colorMap: Record<string, { border: string; bg: string; heading: string }> = {
   teal:   { border: 'border-teal-600',   bg: 'bg-teal-50',    heading: 'text-teal-600' },
@@ -22,22 +29,19 @@ interface Props {
 function renderRadioField(frage: FrageItem, value: string | string[], onChange: (key: string, value: string | string[]) => void, readOnly: boolean) {
   const selected = typeof value === 'string' ? value : '';
   return (
-    <div className="space-y-2">
+    <RadioGroup
+      value={selected}
+      onValueChange={(v) => onChange(frage.key, v)}
+      disabled={readOnly}
+      className="space-y-2"
+    >
       {(frage.options ?? []).map((opt) => (
-        <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
-          <input
-            type="radio"
-            name={frage.key}
-            value={opt}
-            checked={selected === opt}
-            onChange={() => onChange(frage.key, opt)}
-            disabled={readOnly}
-            className="accent-teal-600"
-          />
-          {opt}
-        </label>
+        <div key={opt} className="flex items-center gap-2">
+          <RadioGroupItem value={opt} id={`${frage.key}-${opt}`} />
+          <Label htmlFor={`${frage.key}-${opt}`} className="text-sm cursor-pointer font-normal">{opt}</Label>
+        </div>
       ))}
-    </div>
+    </RadioGroup>
   );
 }
 
@@ -46,22 +50,20 @@ function renderCheckboxField(frage: FrageItem, value: string | string[], onChang
   return (
     <div className="space-y-2">
       {(frage.options ?? []).map((opt) => (
-        <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
-          <input
-            type="checkbox"
-            value={opt}
+        <div key={opt} className="flex items-center gap-2">
+          <Checkbox
+            id={`${frage.key}-${opt}`}
             checked={selected.includes(opt)}
-            onChange={(e) => {
-              const next = e.target.checked
+            onCheckedChange={(checked) => {
+              const next = checked
                 ? [...selected, opt]
                 : selected.filter((s) => s !== opt);
               onChange(frage.key, next);
             }}
             disabled={readOnly}
-            className="accent-teal-600"
           />
-          {opt}
-        </label>
+          <Label htmlFor={`${frage.key}-${opt}`} className="text-sm cursor-pointer font-normal">{opt}</Label>
+        </div>
       ))}
     </div>
   );
@@ -98,7 +100,7 @@ function FileUploadField({
               const file = e.target.files?.[0];
               if (!file || !onFileUpload) return;
               if (file.size > 10 * 1024 * 1024) {
-                setSizeError('Datei zu groß (max. 10 MB)');
+                setSizeError('Datei zu gross (max. 10 MB)');
                 e.target.value = '';
                 return;
               }
@@ -107,36 +109,31 @@ function FileUploadField({
               e.target.value = ''; // allow re-selecting same file
             }}
           />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploadState === 'uploading'}
-            className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploadState === 'uploading'}>
             Datei auswählen
-          </button>
+          </Button>
 
           {uploadState === 'uploading' && (
-            <span className="text-sm text-gray-400 flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-600 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-600" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary)] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--primary)]" />
               </span>
               Wird hochgeladen...
             </span>
           )}
           {uploadState === 'error' && (
-            <span className="text-sm text-red-500">Hochladen fehlgeschlagen</span>
+            <span className="text-sm text-destructive">Hochladen fehlgeschlagen</span>
           )}
           {sizeError && (
-            <span className="text-sm text-red-500">{sizeError}</span>
+            <span className="text-sm text-destructive">{sizeError}</span>
           )}
         </div>
       )}
 
       {fileName && (
-        <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-          <svg className="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <svg className="w-4 h-4 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           {fileName}
@@ -162,7 +159,7 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
             <div key={i} className={`${colors.bg} rounded-lg p-4 mb-4 text-sm leading-relaxed`}>
               <p>{aussage.text}</p>
               {aussage.escape && (
-                <p className="mt-2 text-gray-500 italic text-sm">{aussage.escape}</p>
+                <p className="mt-2 text-muted-foreground italic text-sm">{aussage.escape}</p>
               )}
             </div>
           );
@@ -172,10 +169,10 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
           const emp = item as EmpfehlungItem;
           return (
             <div key={i} className={`${colors.bg} rounded-lg p-4 mb-4 text-sm leading-relaxed`}>
-              <p className="italic text-gray-500 mb-2">{emp.value}</p>
+              <p className="italic text-muted-foreground mb-2">{emp.value}</p>
               <p>{emp.text}</p>
               {emp.escape && (
-                <p className="mt-2 text-gray-500 italic text-sm">{emp.escape}</p>
+                <p className="mt-2 text-muted-foreground italic text-sm">{emp.escape}</p>
               )}
             </div>
           );
@@ -187,10 +184,10 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
 
         return (
           <div key={frage.key} className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+            <Label className="block mb-1">
               {frage.label}
-              {frage.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
+              {frage.required && <span className="text-destructive ml-1">*</span>}
+            </Label>
 
             {frage.field === 'file' ? (
               <FileUploadField
@@ -201,48 +198,45 @@ export default function FormSection({ section, answers, onChange, readOnly, erro
                 uploadState={uploadStates?.[frage.key]}
               />
             ) : frage.field === 'textarea' ? (
-              <textarea
+              <Textarea
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => onChange(frage.key, e.target.value)}
                 placeholder={frage.placeholder}
                 readOnly={readOnly}
                 rows={3}
-                className={`w-full px-3 py-2 border rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-teal-500 read-only:bg-gray-50 ${
-                  error ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={readOnly ? 'bg-muted/50' : error ? 'border-destructive' : ''}
               />
             ) : frage.field === 'select' ? (
-              <select
-                value={typeof value === 'string' ? value : ''}
-                onChange={(e) => onChange(frage.key, e.target.value)}
+              <Select
+                value={typeof value === 'string' && value !== '' ? value : undefined}
+                onValueChange={(v) => onChange(frage.key, v)}
                 disabled={readOnly}
-                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-                  error ? 'border-red-500' : 'border-gray-300'
-                }`}
               >
-                <option value="">{frage.placeholder ?? 'Bitte wählen...'}</option>
-                {(frage.options ?? []).map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+                <SelectTrigger className={error ? 'border-destructive' : ''}>
+                  <SelectValue placeholder={frage.placeholder ?? 'Bitte wählen...'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(frage.options ?? []).map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : frage.field === 'radio' ? (
               renderRadioField(frage, value, onChange, readOnly)
             ) : frage.field === 'checkbox' ? (
               renderCheckboxField(frage, value, onChange, readOnly)
             ) : (
-              <input
+              <Input
                 type={frage.field === 'email' ? 'email' : frage.field === 'url' ? 'url' : 'text'}
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => onChange(frage.key, e.target.value)}
                 placeholder={frage.placeholder}
                 readOnly={readOnly}
-                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 read-only:bg-gray-50 ${
-                  error ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={readOnly ? 'bg-muted/50' : error ? 'border-destructive' : ''}
               />
             )}
 
-            {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+            {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
           </div>
         );
       })}
