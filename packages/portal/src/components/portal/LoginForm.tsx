@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError } from '@/components/ui/field';
 
 type Step = 'email' | 'confirm' | 'sending' | 'sent' | 'error' | 'callback';
 
@@ -86,7 +86,7 @@ export default function LoginForm() {
   if (step === 'callback') {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Anmeldung wird verarbeitet…</p>
+        <FieldDescription>Anmeldung wird verarbeitet…</FieldDescription>
       </div>
     );
   }
@@ -97,14 +97,20 @@ export default function LoginForm() {
         <CardHeader>
           <CardTitle>Link gesendet!</CardTitle>
         </CardHeader>
-        <CardContent className="text-center">
-          <p className="text-muted-foreground">
-            Wir haben einen Zugangslink an <strong>{email}</strong> gesendet.
-            Bitte prüfe dein Postfach.
-          </p>
-          <Button variant="link" onClick={reset} className="mt-4">
-            Andere E-Mail verwenden
-          </Button>
+        <CardContent>
+          <FieldGroup>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <FieldDescription>
+                Wir haben einen Zugangslink an <strong>{email}</strong> gesendet.
+                Bitte prüfe dein Postfach.
+              </FieldDescription>
+            </div>
+            <Field>
+              <Button variant="link" onClick={reset} className="w-full">
+                Andere E-Mail verwenden
+              </Button>
+            </Field>
+          </FieldGroup>
         </CardContent>
       </Card>
     );
@@ -116,33 +122,35 @@ export default function LoginForm() {
         <CardHeader>
           <CardTitle>Kundenportal</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground text-center">
-            Zugangslink senden an:
-          </p>
-          <p className="text-center font-medium text-lg">{email}</p>
-          {step === 'sending' ? (
-            <div className="text-center py-2 text-sm text-muted-foreground">
-              Wird gesendet…
+        <CardContent>
+          <FieldGroup>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <FieldDescription>Zugangslink senden an:</FieldDescription>
+              <p className="font-medium text-lg">{email}</p>
             </div>
-          ) : (
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setStep('email')}
-              >
-                Zurück
-              </Button>
-              <Button
-                variant="gradient"
-                className="flex-1"
-                onClick={handleConfirm}
-              >
-                Ja, Link senden
-              </Button>
-            </div>
-          )}
+            {step === 'sending' ? (
+              <div className="text-center py-2">
+                <FieldDescription>Wird gesendet…</FieldDescription>
+              </div>
+            ) : (
+              <Field orientation="horizontal">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setStep('email')}
+                >
+                  Zurück
+                </Button>
+                <Button
+                  variant="gradient"
+                  className="flex-1"
+                  onClick={handleConfirm}
+                >
+                  Ja, Link senden
+                </Button>
+              </Field>
+            )}
+          </FieldGroup>
         </CardContent>
       </Card>
     );
@@ -154,24 +162,31 @@ export default function LoginForm() {
         <CardTitle>Kundenportal</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleEmailSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">E-Mail-Adresse</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@beispiel.de"
-            />
-          </div>
-          {step === 'error' && (
-            <p className="text-sm text-destructive">{errorMsg}</p>
-          )}
-          <Button type="submit" variant="gradient" className="w-full">
-            Weiter
-          </Button>
+        <form onSubmit={handleEmailSubmit}>
+          <FieldGroup>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <FieldDescription>Gib deine E-Mail-Adresse ein, um einen Zugangslink zu erhalten.</FieldDescription>
+            </div>
+            <Field>
+              <FieldLabel htmlFor="email">E-Mail-Adresse</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@beispiel.de"
+              />
+            </Field>
+            {step === 'error' && (
+              <FieldError>{errorMsg}</FieldError>
+            )}
+            <Field>
+              <Button type="submit" variant="gradient" className="w-full">
+                Weiter
+              </Button>
+            </Field>
+          </FieldGroup>
         </form>
       </CardContent>
     </Card>
