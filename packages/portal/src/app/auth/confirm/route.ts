@@ -13,9 +13,13 @@ export async function GET(request: NextRequest) {
   const host = request.headers.get('host') || 'software-crafting.de';
   const origin = `${proto}://${host}`;
 
+  console.log('[auth/confirm] token_hash:', token_hash?.slice(0, 20) + '...', 'type:', type);
+
   if (token_hash && type) {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash });
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash });
+
+    console.log('[auth/confirm] verifyOtp result:', error ? `ERROR: ${error.message}` : 'SUCCESS', 'session:', !!data?.session);
 
     if (!error) {
       // Successful verification — redirect to dashboard (or next param)
@@ -24,6 +28,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  console.log('[auth/confirm] FAILED — redirecting to login');
   // Verification failed — redirect to login with error
   return NextResponse.redirect(
     new URL('/portal/login?error=otp_error&error_description=Der+Zugangslink+ist+abgelaufen+oder+ungültig.', origin)
