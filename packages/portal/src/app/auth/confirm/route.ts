@@ -31,6 +31,6 @@ export async function GET(request: NextRequest) {
   console.log('[auth/confirm] FAILED — redirecting to login');
   // Verification failed — redirect to login with error
   return NextResponse.redirect(
-    new URL('/portal/login?error=otp_error&error_description=Der+Zugangslink+ist+abgelaufen+oder+ungültig.', origin)
+    new URL('/portal/login?error=otp_error&error_description=Der+Link+ist+leider+abgelaufen.+Fordere+einfach+unten+einen+neuen+an.', origin)
   );
 }
