@@ -2,7 +2,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 
-const PORTAL_ASSETS_BASE = '/var/www/portal-assets';
+const PORTAL_ASSETS_BASE = process.env.PORTAL_ASSETS_BASE || '/var/www/portal-assets';
 
 /**
  * Resolve a deliverable file path safely.

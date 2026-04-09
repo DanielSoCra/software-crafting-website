@@ -1,6 +1,7 @@
 import '@/styles/globals.css';
 import type { Metadata } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import ThemeToggle from '@/components/portal/ThemeToggle';
 
 export const metadata: Metadata = {
   title: {
@@ -8,6 +9,17 @@ export const metadata: Metadata = {
     template: '%s — Kundenportal',
   },
 };
+
+// Inline script to set theme before first paint (prevents flash)
+const themeScript = `
+(function(){
+  var t = localStorage.getItem('portal-theme') || 'system';
+  var d = t === 'system'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : t;
+  if (d === 'dark') document.documentElement.classList.add('dark');
+})();
+`;
 
 export default async function RootLayout({
   children,
@@ -18,22 +30,19 @@ export default async function RootLayout({
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <html lang="de" className="dark">
+    <html lang="de" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body
-        className="portal-page min-h-screen flex flex-col"
-        style={{
-          backgroundColor: 'var(--color-bg)',
-          color: 'var(--color-text)',
-          fontFamily: 'var(--font-sans)',
-        }}
+        className="portal-page min-h-screen flex flex-col bg-background text-foreground"
+        style={{ fontFamily: 'var(--font-sans)' }}
       >
-        <header className="border-b border-border/50 bg-bg-secondary/50 backdrop-blur-md">
+        <header className="border-b border-border/50 backdrop-blur-md bg-card/80">
           <nav className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/portal" className="font-display text-lg font-bold tracking-tight">
               Software <span className="text-primary">Crafting</span>
@@ -41,17 +50,20 @@ export default async function RootLayout({
                 Kundenportal
               </span>
             </a>
-            {user && (
-              <div className="flex items-center gap-4 text-sm font-light">
-                <span className="text-muted-foreground">{user.email}</span>
-                <a
-                  href="/portal/login?logout=true"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Abmelden
-                </a>
-              </div>
-            )}
+            <div className="flex items-center gap-4 text-sm font-light">
+              <ThemeToggle />
+              {user && (
+                <>
+                  <span className="text-muted-foreground hidden sm:inline">{user.email}</span>
+                  <a
+                    href="/portal/login?logout=true"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Abmelden
+                  </a>
+                </>
+              )}
+            </div>
           </nav>
         </header>
 
