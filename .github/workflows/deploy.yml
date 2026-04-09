@@ -46,21 +46,48 @@ jobs:
 
       - name: Deploy Next.js portal
         run: |
+          SSH="ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
           RSYNC="rsync -avz --delete -e 'ssh -i ~/.ssh/deploy_key'"
-          # Deploy standalone server
-          eval $RSYNC packages/portal/.next/standalone/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting-portal/
-          # Deploy static assets
-          eval $RSYNC packages/portal/.next/static/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/software-crafting-portal/.next/static/
+          PORTAL_DIR=/var/www/software-crafting-preview
+
+          # Deploy standalone server (--exclude preserves .env and ecosystem config)
+          eval $RSYNC --exclude='.env' --exclude='ecosystem.config.cjs' \
+            packages/portal/.next/standalone/ \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$PORTAL_DIR/
+
+          # Deploy static assets to nested path (Next.js standalone monorepo structure)
+          eval $RSYNC \
+            packages/portal/.next/static/ \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$PORTAL_DIR/packages/portal/.next/static/
+
+          # Ensure .env exists with correct values (idempotent)
+          $SSH "cat > $PORTAL_DIR/.env << 'ENVEOF'
+NEXT_PUBLIC_SUPABASE_URL=${{ secrets.PUBLIC_SUPABASE_URL }}
+NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+ENVEOF
+          cp $PORTAL_DIR/.env $PORTAL_DIR/packages/portal/.env"
+
+          # Ensure ecosystem config exists
+          $SSH "cat > $PORTAL_DIR/ecosystem.config.cjs << 'PMEOF'
+module.exports = {
+  apps: [{
+    name: 'software-crafting-portal',
+    script: 'packages/portal/server.js',
+    env: { NODE_ENV: 'production', PORT: 4322, HOSTNAME: '::1' },
+  }],
+};
+PMEOF"
 
       - name: Restart PM2 processes
         run: |
           SSH="ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
           $SSH "cd /var/www/software-crafting && pm2 startOrRestart ecosystem.config.cjs --update-env"
-          $SSH "cd /var/www/software-crafting-portal && pm2 startOrRestart ecosystem.config.cjs --update-env"
+          $SSH "cd /var/www/software-crafting-preview && pm2 startOrRestart ecosystem.config.cjs --update-env"
 
       - name: Health check
         run: |
           sleep 5
           SSH="ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
           $SSH "curl -sf --max-time 10 http://localhost:4321/ > /dev/null && echo 'Astro website OK' || (pm2 logs software-crafting --nostream --lines 20 && exit 1)"
-          $SSH "curl -sf --max-time 10 http://localhost:4322/portal/login > /dev/null && echo 'Next.js portal OK' || (pm2 logs software-crafting-portal --nostream --lines 20 && exit 1)"
+          $SSH "curl -sf --max-time 10 http://[::1]:4322/portal/login > /dev/null && echo 'Next.js portal OK' || (pm2 logs software-crafting-portal --nostream --lines 20 && exit 1)"
