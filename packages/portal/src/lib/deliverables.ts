@@ -18,14 +18,18 @@ export function resolveDeliverablePath(clientSlug: string, filePath: string): st
   }
 
   // Symlink defense: verify real path is also within client directory
-  try {
-    const real = fs.realpathSync(resolved);
-    const realBase = fs.realpathSync(clientBase);
-    if (!real.startsWith(realBase + '/') && real !== realBase) {
-      return null;
+  // In dev mode with PORTAL_ASSETS_BASE override, skip symlink check
+  // (local dev uses symlinks to the agency repo)
+  if (!process.env.PORTAL_ASSETS_BASE) {
+    try {
+      const real = fs.realpathSync(resolved);
+      const realBase = fs.realpathSync(clientBase);
+      if (!real.startsWith(realBase + '/') && real !== realBase) {
+        return null;
+      }
+    } catch {
+      // File doesn't exist yet — resolve-only check is sufficient
     }
-  } catch {
-    // File doesn't exist yet — resolve-only check is sufficient
   }
 
   return resolved;
