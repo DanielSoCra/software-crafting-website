@@ -1,12 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
+import type { Database } from './database.types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let adminClient: SupabaseClient<any, 'public', any> | null = null;
+let adminClient: SupabaseClient<Database, 'public'> | null = null;
 
 export function getSupabaseAdmin() {
   if (adminClient) return adminClient;
-  adminClient = createClient(
+  adminClient = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );

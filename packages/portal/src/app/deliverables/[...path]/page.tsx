@@ -138,7 +138,7 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
         variantData,
         activeVariant: activeVariantName,
         variants: Object.keys(variantData),
-        feedbackData: feedbackData || [],
+        feedbackData: (feedbackData || []) as unknown as MoodBoardFeedbackType[],
       };
     } else if (deliverableType === 'analysis') {
       renderMode = 'filelist';
