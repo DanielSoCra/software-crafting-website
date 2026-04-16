@@ -25,7 +25,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     const [clientsRes, deliverablesRes, formsRes] = await Promise.all([
       supabase.from('clients').select('id, company, slug, industry_key, contact_name').order('company'),
       supabase.from('deliverables').select('client_id, type, status, published_at, viewed_at'),
-      supabase.from('forms').select('client_id, id, status, created_at, updated_at').order('created_at', { ascending: false }).order('id', { ascending: false }),
+      supabase.from('forms').select('client_id, id, status, created_at, updated_at, sent_at').order('created_at', { ascending: false }).order('id', { ascending: false }),
     ]);
 
     if (clientsRes.error || deliverablesRes.error || formsRes.error) {

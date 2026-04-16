@@ -102,7 +102,7 @@ function FileUploadField({
               const file = e.target.files?.[0];
               if (!file || !onFileUpload) return;
               if (file.size > 10 * 1024 * 1024) {
-                setSizeError('Datei zu gross (max. 10 MB)');
+                setSizeError('Datei zu groß (max. 10 MB)');
                 e.target.value = '';
                 return;
               }

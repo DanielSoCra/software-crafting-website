@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient, isUserAdmin } from '@/lib/supabase-server';
 import { redirect, notFound } from 'next/navigation';
 import { formSchemaValidator } from '@/lib/form-schema';
 import QuestionnaireForm from '@/components/portal/QuestionnaireForm';
@@ -24,6 +24,20 @@ export default async function QuestionnairePage({ params }: Props) {
 
   if (error || !form) {
     notFound();
+  }
+
+  // Admin preview: admins viewing a form that doesn't belong to their own client
+  // must not mutate state (no autosave, no submit) — otherwise the admin dashboard
+  // alert "seit X Tagen unbeantwortet" disappears as soon as they open it.
+  const isAdmin = await isUserAdmin(supabase, user.id);
+  let isAdminPreview = false;
+  if (isAdmin) {
+    const { data: myClient } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    isAdminPreview = !myClient || myClient.id !== form.client_id;
   }
 
   // Validate form schema with Zod
@@ -52,5 +66,5 @@ export default async function QuestionnairePage({ params }: Props) {
     draft_answers: form.status === 'completed' ? submittedAnswers : (form.draft_answers ?? {}),
   } as Form;
 
-  return <QuestionnaireForm form={formForClient} />;
+  return <QuestionnaireForm form={formForClient} isAdminPreview={isAdminPreview} />;
 }

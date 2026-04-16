@@ -12,12 +12,14 @@ import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError } from '@/c
 
 interface Props {
   form: Form;
+  isAdminPreview?: boolean;
 }
 
-export default function QuestionnaireForm({ form }: Props) {
+export default function QuestionnaireForm({ form, isAdminPreview = false }: Props) {
   const schema = form.schema as FormSchema;
   const isCompleted = form.status === 'completed';
-  const isReadOnly = form.status === 'completed' || form.status === 'published';
+  const isReadOnly = form.status === 'completed' || form.status === 'published' || isAdminPreview;
+  const canNavigate = isAdminPreview || !isReadOnly;
   const totalSteps = schema.sections.length + 1; // +1 for built-in final step
 
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
@@ -33,6 +35,8 @@ export default function QuestionnaireForm({ form }: Props) {
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const answersRef = useRef(answers);
   answersRef.current = answers;
+  const pendingDraftRef = useRef<Record<string, string | string[]> | null>(null);
+  const saveDraftRef = useRef<(draft: Record<string, string | string[]>) => Promise<void>>(async () => {});
   const supabase = getSupabaseBrowserClient();
 
   // --- Draft persistence ---
@@ -52,9 +56,12 @@ export default function QuestionnaireForm({ form }: Props) {
       return;
     }
 
+    pendingDraftRef.current = null;
     if (currentStatus === 'sent') setCurrentStatus('in_progress');
     setSaveStatus('saved');
   }, [form.id, currentStatus, isReadOnly, supabase]);
+
+  saveDraftRef.current = saveDraft;
 
   function handleChange(key: string, value: string | string[]) {
     if (isReadOnly) return;
@@ -71,13 +78,41 @@ export default function QuestionnaireForm({ form }: Props) {
       });
     }
 
+    pendingDraftRef.current = updated;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => saveDraft(updated), 2000);
   }
 
   useEffect(() => {
+    // Flush any pending draft before the tab/page is torn down.
+    // Reliably covers: in-app navigation (unmount) and tab-hidden visibility
+    // changes where the document isn't actually discarded. Hard tab-close
+    // via `pagehide` is best-effort only — supabase-js uses plain fetch
+    // without keepalive, so the browser may cancel the request. For full
+    // coverage add a dedicated endpoint and use `navigator.sendBeacon`.
+    const flushPending = () => {
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      const pending = pendingDraftRef.current;
+      if (pending) {
+        pendingDraftRef.current = null;
+        void saveDraftRef.current(pending);
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushPending();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', flushPending);
+
     return () => {
-      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', flushPending);
+      flushPending();
     };
   }, []);
 
@@ -135,6 +170,7 @@ export default function QuestionnaireForm({ form }: Props) {
     // Save immediately with the computed value (ref may lag one render)
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     if (updatedAnswers) {
+      pendingDraftRef.current = updatedAnswers;
       autosaveTimer.current = setTimeout(() => saveDraft(updatedAnswers!), 2000);
     }
   }
@@ -168,7 +204,7 @@ export default function QuestionnaireForm({ form }: Props) {
   // --- Navigation ---
 
   async function goNext() {
-    if (!validateStep(currentStep)) return;
+    if (!isAdminPreview && !validateStep(currentStep)) return;
 
     // Flush pending autosave immediately
     if (autosaveTimer.current) {
@@ -259,17 +295,23 @@ export default function QuestionnaireForm({ form }: Props) {
         <p className="text-muted-foreground mt-1">{schema.intro}</p>
       </div>
 
+      {isAdminPreview && (
+        <div className="mb-6 rounded-md border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent-foreground">
+          Admin-Vorschau. Navigation möglich, Eingaben werden nicht gespeichert.
+        </div>
+      )}
+
       {/* Progress */}
-      {!isReadOnly && (
+      {canNavigate && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-muted-foreground">
               Schritt {currentStep + 1} von {totalSteps}
             </span>
-            {saveStatus === 'saving' && <span className="text-xs text-muted-foreground">Wird gespeichert...</span>}
-            {saveStatus === 'saved' && <span className="text-xs text-muted-foreground">Gespeichert</span>}
-            {saveStatus === 'unsaved' && <span className="text-xs text-muted-foreground">Ungespeichert</span>}
-            {saveStatus === 'error' && <span className="text-xs text-destructive">Speichern fehlgeschlagen</span>}
+            {!isAdminPreview && saveStatus === 'saving' && <span className="text-xs text-muted-foreground">Wird gespeichert...</span>}
+            {!isAdminPreview && saveStatus === 'saved' && <span className="text-xs text-muted-foreground">Gespeichert</span>}
+            {!isAdminPreview && saveStatus === 'unsaved' && <span className="text-xs text-muted-foreground">Ungespeichert</span>}
+            {!isAdminPreview && saveStatus === 'error' && <span className="text-xs text-destructive">Speichern fehlgeschlagen</span>}
           </div>
           <Progress value={progressPercent} className="h-1.5" />
         </div>
@@ -303,7 +345,7 @@ export default function QuestionnaireForm({ form }: Props) {
       )}
 
       {/* Navigation */}
-      {!isReadOnly && (
+      {canNavigate && (
         <Field orientation="horizontal" className="mt-6 justify-between">
           {currentStep > 0 ? (
             <Button type="button" variant="ghost" size="sm" onClick={goBack} className="gap-1.5">
@@ -317,7 +359,7 @@ export default function QuestionnaireForm({ form }: Props) {
           )}
 
           {isFinalStep ? (
-            <Button type="button" onClick={handleSubmit} disabled={submitting}>
+            <Button type="button" onClick={handleSubmit} disabled={submitting || isAdminPreview}>
               {submitting ? 'Wird gesendet...' : 'Antworten absenden'}
             </Button>
           ) : (

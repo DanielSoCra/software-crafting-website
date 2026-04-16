@@ -12,7 +12,6 @@ interface Props {
   variants: string[];
   isAdmin: boolean;
   feedbackData: MoodBoardFeedbackType[];
-  authToken: string;
 }
 
 export default function MoodBoardViewer({
@@ -22,7 +21,6 @@ export default function MoodBoardViewer({
   variants,
   isAdmin,
   feedbackData,
-  authToken,
 }: Props) {
   const [activeVariant, setActiveVariant] = useState(initialVariant);
 
@@ -68,7 +66,6 @@ export default function MoodBoardViewer({
         isAdmin={isAdmin}
         currentVariant={activeVariant}
         feedbackData={feedbackData}
-        authToken={authToken}
       />
     </div>
   );

@@ -36,14 +36,19 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isPublicRoute = pathname === '/login' || pathname === '/datenschutz';
+  const isApiRoute = pathname.startsWith('/api/');
 
   // Build external URL from proxy headers (not internal server address)
   const proto = request.headers.get('x-forwarded-proto') || 'https';
   const host = request.headers.get('host') || 'software-crafting.de';
   const origin = `${proto}://${host}`;
 
-  // Redirect unauthenticated users to login
+  // Unauthenticated callers: JSON 401 for API routes, redirect for pages.
+  // Each API route still performs its own auth check — middleware is the safety net.
   if (!user && !isPublicRoute) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.redirect(new URL('/portal/login', origin));
   }
 
@@ -57,6 +62,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/|auth/).*)',
+    // Exclude only Next.js internals, static assets, and the auth callback
+    // (cookie confirmation flow). API routes are guarded by this middleware.
+    '/((?!_next/static|_next/image|favicon.ico|auth/).*)',
   ],
 };

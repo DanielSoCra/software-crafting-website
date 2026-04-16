@@ -3,6 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 const PORTAL_ASSETS_BASE = process.env.PORTAL_ASSETS_BASE || '/var/www/portal-assets';
+const PORTAL_DEV_MODE = process.env.PORTAL_DEV_MODE === 'true';
 
 /**
  * Resolve a deliverable file path safely.
@@ -17,10 +18,10 @@ export function resolveDeliverablePath(clientSlug: string, filePath: string): st
     return null;
   }
 
-  // Symlink defense: verify real path is also within client directory
-  // In dev mode with PORTAL_ASSETS_BASE override, skip symlink check
-  // (local dev uses symlinks to the agency repo)
-  if (!process.env.PORTAL_ASSETS_BASE) {
+  // Symlink defense: verify real path is also within client directory.
+  // Skip only when explicitly opted into dev mode — local dev uses symlinks
+  // to the agency repo. A stray PORTAL_ASSETS_BASE in prod must NOT disable this.
+  if (!PORTAL_DEV_MODE) {
     try {
       const real = fs.realpathSync(resolved);
       const realBase = fs.realpathSync(clientBase);

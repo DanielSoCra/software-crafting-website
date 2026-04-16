@@ -26,14 +26,20 @@ export async function GET(
   const clientParam = request.nextUrl.searchParams.get('client');
   const isAdmin = await isUserAdmin(supabase, user.id);
 
-  const { data: client } = await resolveClient(supabase, user.id, clientParam, isAdmin);
+  const { data: client, error: clientError } = await resolveClient(supabase, user.id, clientParam, isAdmin);
+  if (clientError && clientError.code !== 'PGRST116') {
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   if (!client) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   // Verify deliverable published
-  const { data: deliverable } = await supabase
+  const { data: deliverable, error: delError } = await supabase
     .from('deliverables').select('id').eq('client_id', client.id).eq('type', deliverableType).single();
+  if (delError && delError.code !== 'PGRST116') {
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   if (!deliverable) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }

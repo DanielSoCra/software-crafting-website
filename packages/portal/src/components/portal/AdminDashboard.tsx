@@ -49,7 +49,7 @@ function getFormDot(forms: AdminForm[], clientId: string): DotState {
   const f = forms.find((x) => x.client_id === clientId);
   if (!f) return 'none';
   if (f.status === 'completed') return 'viewed';
-  if (f.status === 'sent' || f.status === 'published') return 'waiting';
+  if (f.status === 'sent') return 'waiting';
   return 'published';
 }
 
@@ -77,11 +77,11 @@ function buildAlerts(
       }
     }
 
-    // Forms unanswered > 48h
+    // Forms unanswered > 48h (only sent forms count — published = drafted but not sent to client)
     for (const f of forms.filter(
-      (x) => x.client_id === client.id && (x.status === 'sent' || x.status === 'published'),
+      (x) => x.client_id === client.id && x.status === 'sent',
     )) {
-      const sentAt = new Date(f.created_at).getTime();
+      const sentAt = new Date(f.sent_at ?? f.created_at).getTime();
       if (now - sentAt > TWO_DAYS) {
         const days = Math.floor((now - sentAt) / (24 * 60 * 60 * 1000));
         alerts.push({

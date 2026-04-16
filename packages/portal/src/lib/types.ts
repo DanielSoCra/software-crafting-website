@@ -124,6 +124,7 @@ export interface AdminForm {
   status: 'draft' | 'published' | 'sent' | 'in_progress' | 'completed';
   created_at: string;
   updated_at: string;
+  sent_at: string | null;
 }
 
 // Mood Board Feedback Types

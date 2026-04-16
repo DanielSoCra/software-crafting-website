@@ -49,7 +49,11 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
   // Get client
   const { data: client, error: clientError } = await resolveClient(supabase, user.id, clientParam, isAdmin);
   if (clientError && clientError.code !== 'PGRST116') throw new Error('Ein Fehler ist aufgetreten.');
-  if (!client) notFound();
+  if (!client) {
+    // Admin viewing deliverables without a selected client → send them to the admin overview
+    if (isAdmin && !clientParam) redirect('/portal/dashboard');
+    notFound();
+  }
 
   // Verify deliverable published
   const { data: deliverable, error: delError } = await supabase
@@ -171,11 +175,6 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
     }
   }
 
-  // getUser() already verified above — getSession() here is only to extract
-  // the access_token for the client component. Safe because middleware validated.
-  const { data: { session } } = await supabase.auth.getSession();
-  const authToken = session?.access_token || '';
-
   // --- Render ---
   return (
     <>
@@ -217,7 +216,6 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
           variants={moodBoardData.variants}
           isAdmin={isAdmin}
           feedbackData={moodBoardData.feedbackData}
-          authToken={authToken}
         />
       )}
 

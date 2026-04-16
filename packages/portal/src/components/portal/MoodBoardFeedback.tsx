@@ -22,7 +22,6 @@ interface Props {
   isAdmin: boolean;
   currentVariant: string;
   feedbackData: MoodBoardFeedbackType[];
-  authToken: string;
 }
 
 function getEmptyFeedback(): VariantFeedback {
@@ -43,7 +42,6 @@ export default function MoodBoardFeedback({
   isAdmin,
   currentVariant,
   feedbackData,
-  authToken,
 }: Props) {
   const [feedbackByVariant, setFeedbackByVariant] = useState<Record<string, VariantFeedback>>(() => {
     const map: Record<string, VariantFeedback> = {};
@@ -76,10 +74,8 @@ export default function MoodBoardFeedback({
     try {
       const response = await fetch(FUNCTION_URL, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           deliverable_id: deliverableId,
           variant_name: variantName,
@@ -92,7 +88,7 @@ export default function MoodBoardFeedback({
       console.error('Failed to save feedback:', err);
       alert('Fehler beim Speichern');
     }
-  }, [authToken, deliverableId]);
+  }, [deliverableId]);
 
   // --- Vote logic ---
 
@@ -111,8 +107,32 @@ export default function MoodBoardFeedback({
       };
     }
 
-    setFeedbackByVariant(prev => ({ ...prev, [activeVariant]: updated }));
-    saveFeedback(activeVariant, { vote: updated.vote, is_favorite: updated.is_favorite });
+    // A partial unique index enforces at most one is_favorite per
+    // (deliverable_id, client_id). If we're turning favorite ON, clear it
+    // on any other variant first — otherwise the upsert hits a unique violation.
+    const priorFavorite = updated.is_favorite
+      ? Object.entries(feedbackByVariant).find(
+          ([name, vfb]) => name !== activeVariant && vfb.is_favorite,
+        )
+      : null;
+
+    setFeedbackByVariant(prev => {
+      const next = { ...prev, [activeVariant]: updated };
+      if (priorFavorite) {
+        next[priorFavorite[0]] = { ...priorFavorite[1], is_favorite: false };
+      }
+      return next;
+    });
+
+    if (priorFavorite) {
+      // Save the demotion first so the server's unique index is free when
+      // the new favorite upsert arrives.
+      void saveFeedback(priorFavorite[0], { is_favorite: false }).then(() =>
+        saveFeedback(activeVariant, { vote: updated.vote, is_favorite: updated.is_favorite }),
+      );
+    } else {
+      saveFeedback(activeVariant, { vote: updated.vote, is_favorite: updated.is_favorite });
+    }
   }
 
   // --- Comment handlers ---
@@ -143,10 +163,8 @@ export default function MoodBoardFeedback({
       for (const variant of variants) {
         const createResponse = await fetch(FUNCTION_URL, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json',
-          },
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             deliverable_id: deliverableId,
             variant_name: variant,
@@ -160,7 +178,7 @@ export default function MoodBoardFeedback({
 
       // 2. Fetch all feedback rows
       const response = await fetch(`${FUNCTION_URL}?deliverable_id=${deliverableId}`, {
-        headers: { 'Authorization': `Bearer ${authToken}` },
+        credentials: 'same-origin',
       });
       const allFeedback = await response.json();
       const feedbackIds = allFeedback.map((f: MoodBoardFeedbackType) => f.id);
@@ -170,10 +188,8 @@ export default function MoodBoardFeedback({
         feedbackIds.map((id: string) =>
           fetch(`${FUNCTION_URL}/${id}/submit`, {
             method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-              'Content-Type': 'application/json',
-            },
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
           })
         )
       );
@@ -194,19 +210,17 @@ export default function MoodBoardFeedback({
     try {
       // Fetch all feedback IDs for this deliverable
       const response = await fetch(`${FUNCTION_URL}?deliverable_id=${deliverableId}`, {
-        headers: { 'Authorization': `Bearer ${authToken}` },
+        credentials: 'same-origin',
       });
       const allFeedback = await response.json();
       const feedbackIds = allFeedback.map((f: MoodBoardFeedbackType) => f.id);
 
       await Promise.all(
         feedbackIds.map((id: string) =>
-          fetch(`${FUNCTION_URL}/${id}/unlock`, {
+          fetch(`${FUNCTION_URL}/${id}/unlock?deliverable_id=${deliverableId}`, {
             method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-              'Content-Type': 'application/json',
-            },
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
           })
         )
       );
@@ -286,45 +300,65 @@ export default function MoodBoardFeedback({
             </CardContent>
           </Card>
 
-          {/* Read-only feedback display */}
-          <div className="space-y-4 opacity-75">
-            <p className="text-sm font-semibold text-muted-foreground">
-              Bewertung:{' '}
-              {fb.vote === 'like'
-                ? '❤️ Gefällt mir'
-                : fb.vote === 'dislike'
-                  ? '👎 Gefällt mir nicht'
-                  : fb.is_favorite
-                    ? '⭐ Favorit'
-                    : 'Keine Bewertung'}
-            </p>
+          {/* Read-only feedback display — all variants at once so admin can't
+              miss feedback left on a non-active tab. */}
+          <div className="space-y-6">
+            {variants.map((variant) => {
+              const vfb = feedbackByVariant[variant] ?? getEmptyFeedback();
+              const hasAnyContent =
+                vfb.vote !== null ||
+                vfb.is_favorite ||
+                vfb.comment_negative ||
+                vfb.comment_positive ||
+                vfb.comment_very_good;
 
-            {fb.comment_negative && (
-              <div>
-                <FieldLabel className="text-muted-foreground mb-1">
-                  Was gefällt nicht:
-                </FieldLabel>
-                <p className="text-muted-foreground">{fb.comment_negative}</p>
-              </div>
-            )}
+              return (
+                <Card key={variant}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h3 className="text-sm font-semibold text-foreground">{variant}</h3>
+                      <div className="flex gap-2 text-xs text-muted-foreground">
+                        {vfb.vote === 'like' && <span>❤️ Gefällt mir</span>}
+                        {vfb.vote === 'dislike' && <span>👎 Gefällt mir nicht</span>}
+                        {vfb.is_favorite && <span>⭐ Favorit</span>}
+                        {vfb.vote === null && !vfb.is_favorite && <span>Keine Bewertung</span>}
+                      </div>
+                    </div>
 
-            {fb.comment_positive && (
-              <div>
-                <FieldLabel className="text-muted-foreground mb-1">
-                  Was ist gut:
-                </FieldLabel>
-                <p className="text-muted-foreground">{fb.comment_positive}</p>
-              </div>
-            )}
+                    {!hasAnyContent && (
+                      <p className="text-xs text-muted-foreground italic">Kein Feedback.</p>
+                    )}
 
-            {fb.comment_very_good && (
-              <div>
-                <FieldLabel className="text-muted-foreground mb-1">
-                  Was ist sehr gut:
-                </FieldLabel>
-                <p className="text-muted-foreground">{fb.comment_very_good}</p>
-              </div>
-            )}
+                    {vfb.comment_negative && (
+                      <div>
+                        <FieldLabel className="text-muted-foreground mb-1">
+                          Was gefällt nicht:
+                        </FieldLabel>
+                        <p className="text-sm text-muted-foreground">{vfb.comment_negative}</p>
+                      </div>
+                    )}
+
+                    {vfb.comment_positive && (
+                      <div>
+                        <FieldLabel className="text-muted-foreground mb-1">
+                          Was ist gut:
+                        </FieldLabel>
+                        <p className="text-sm text-muted-foreground">{vfb.comment_positive}</p>
+                      </div>
+                    )}
+
+                    {vfb.comment_very_good && (
+                      <div>
+                        <FieldLabel className="text-muted-foreground mb-1">
+                          Was ist sehr gut:
+                        </FieldLabel>
+                        <p className="text-sm text-muted-foreground">{vfb.comment_very_good}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -344,21 +378,21 @@ export default function MoodBoardFeedback({
               <Button
                 variant={fb.vote === 'like' ? 'default' : 'outline'}
                 onClick={() => handleVote('like')}
-                disabled={isSubmitted}
+                disabled={isSubmitted || submitting}
               >
                 ❤️ Gefällt mir
               </Button>
               <Button
                 variant={fb.vote === 'dislike' ? 'default' : 'outline'}
                 onClick={() => handleVote('dislike')}
-                disabled={isSubmitted}
+                disabled={isSubmitted || submitting}
               >
                 👎 Gefällt mir nicht
               </Button>
               <Button
                 variant={fb.is_favorite ? 'default' : 'outline'}
                 onClick={() => handleVote('favorite')}
-                disabled={isSubmitted}
+                disabled={isSubmitted || submitting}
               >
                 ⭐ Favorit
               </Button>
@@ -376,7 +410,7 @@ export default function MoodBoardFeedback({
               onBlur={() => handleCommentBlur('comment_negative')}
               placeholder="Deine Gedanken..."
               maxLength={500}
-              disabled={isSubmitted}
+              disabled={isSubmitted || submitting}
             />
             <FieldDescription>Max. 500 Zeichen</FieldDescription>
           </Field>
@@ -389,7 +423,7 @@ export default function MoodBoardFeedback({
               onBlur={() => handleCommentBlur('comment_positive')}
               placeholder="Deine Gedanken..."
               maxLength={500}
-              disabled={isSubmitted}
+              disabled={isSubmitted || submitting}
             />
             <FieldDescription>Max. 500 Zeichen</FieldDescription>
           </Field>
@@ -402,7 +436,7 @@ export default function MoodBoardFeedback({
               onBlur={() => handleCommentBlur('comment_very_good')}
               placeholder="Deine Gedanken..."
               maxLength={500}
-              disabled={isSubmitted}
+              disabled={isSubmitted || submitting}
             />
             <FieldDescription>Max. 500 Zeichen</FieldDescription>
           </Field>
