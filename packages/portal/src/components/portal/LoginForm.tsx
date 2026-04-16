@@ -151,7 +151,7 @@ export default function LoginForm() {
                   Zurück
                 </Button>
                 <Button
-                  variant="gradient"
+                  variant="default"
                   className="flex-1"
                   onClick={handleConfirm}
                 >
@@ -197,7 +197,7 @@ export default function LoginForm() {
               <FieldError>{errorMsg}</FieldError>
             )}
             <Field>
-              <Button type="submit" variant="gradient" className="w-full">
+              <Button type="submit" variant="default" className="w-full">
                 Anmelde-Link anfordern
               </Button>
             </Field>
