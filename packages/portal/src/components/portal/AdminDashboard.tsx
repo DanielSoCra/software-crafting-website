@@ -202,8 +202,7 @@ export default function AdminDashboard({ clients, deliverables, forms }: Props) 
                 <TableCell className="pr-4">
                   <a
                     href={`/portal/dashboard?client=${client.slug}`}
-                    className="font-semibold text-sm hover:underline"
-                    style={{ color: 'var(--color-text)', textDecoration: 'none' }}
+                    className="font-semibold text-sm text-foreground hover:underline"
                   >
                     {client.company}
                   </a>
