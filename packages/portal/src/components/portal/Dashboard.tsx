@@ -26,6 +26,7 @@ interface Props {
 }
 
 type StepStatus = 'completed' | 'ready' | 'in_progress' | 'upcoming';
+type StepOwner = 'agency' | 'client' | 'both';
 
 interface ProjectStep {
   id: string;
@@ -35,12 +36,27 @@ interface ProjectStep {
   description: string;
   href?: string;
   ctaLabel: string;
+  owner: StepOwner;
+  duration?: string;
+  summary: string;  // Always-visible short description regardless of status
 }
 
-const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string, string> }> = {
+interface StepMeta {
+  icon: string;
+  cta: string;
+  owner: StepOwner;
+  duration?: string;
+  summary: string;  // What this step is about (always shown)
+  desc: Record<string, string>;  // Status-specific description
+}
+
+const STEP_META: Record<string, StepMeta> = {
   questionnaire: {
     icon: '📋',
     cta: 'Fragebogen öffnen',
+    owner: 'client',
+    duration: 'ca. 10 Minuten',
+    summary: 'Kurze Fragen zu deinem Projekt, damit wir alles Wichtige wissen.',
     desc: {
       ready: 'Ein paar kurze Fragen zu dir und deinem Projekt — damit wir deine Website genau passend gestalten können.',
       resume: 'Du hast schon angefangen. Nimm dir die Zeit, die du brauchst.',
@@ -51,6 +67,9 @@ const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string
   analysis: {
     icon: '🔍',
     cta: 'Analyse ansehen',
+    owner: 'agency',
+    duration: 'ca. 2-3 Tage',
+    summary: 'Wir analysieren deine Branche, Mitbewerber und Zielgruppe.',
     desc: {
       ready: 'Deine Branchen- und Wettbewerbsanalyse ist fertig.',
       completed: 'Analyse abgeschlossen.',
@@ -60,6 +79,9 @@ const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string
   'mood-board': {
     icon: '🎨',
     cta: 'Designvorschläge ansehen',
+    owner: 'both',
+    duration: 'ca. 3-5 Tage',
+    summary: 'Verschiedene Designrichtungen — du wählst den Stil, der zu dir passt.',
     desc: {
       ready: 'Verschiedene Designrichtungen für dich — welche gefällt dir am besten?',
       completed: 'Designrichtung gewählt.',
@@ -69,6 +91,9 @@ const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string
   'brand-guide': {
     icon: '🎯',
     cta: 'Brand Guide ansehen',
+    owner: 'agency',
+    duration: 'ca. 2-3 Tage',
+    summary: 'Farben, Schriften und Stil-Regeln für einen einheitlichen Auftritt.',
     desc: {
       ready: 'Farben, Schriften und Stil — dein einheitlicher Markenauftritt.',
       completed: 'Markenauftritt definiert.',
@@ -78,6 +103,9 @@ const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string
   'website-preview': {
     icon: '🌐',
     cta: 'Vorschau ansehen',
+    owner: 'agency',
+    duration: 'ca. 1-2 Wochen',
+    summary: 'Eine erste lauffähige Version deiner Website zum Anschauen.',
     desc: {
       ready: 'So wird deine neue Website aussehen!',
       completed: 'Vorschau angesehen.',
@@ -87,6 +115,9 @@ const STEP_META: Record<string, { icon: string; cta: string; desc: Record<string
   proposal: {
     icon: '📄',
     cta: 'Angebot ansehen',
+    owner: 'agency',
+    duration: 'ca. 1-2 Tage',
+    summary: 'Ein verbindliches Angebot mit allen Leistungen und Preisen.',
     desc: {
       ready: 'Dein persönliches Angebot mit allen besprochenen Leistungen.',
       completed: 'Angebot erhalten.',
@@ -128,6 +159,9 @@ function buildSteps(
 
     const label = resolveLabel(entry, isQuestionnaire, isStandardDeliverable);
     const icon = entry.icon ?? meta?.icon ?? '📌';
+    const owner: StepOwner = meta?.owner ?? 'agency';
+    const duration = meta?.duration;
+    const summary = meta?.summary ?? '';
     let ctaLabel = meta?.cta ?? 'Ansehen';
     let status: StepStatus;
     let description = '';
@@ -174,7 +208,7 @@ function buildSteps(
 
     if (entry.description) description = entry.description;
 
-    steps.push({ id: entry.key, label, icon, status, description, href, ctaLabel });
+    steps.push({ id: entry.key, label, icon, status, description, href, ctaLabel, owner, duration, summary });
   }
 
   // Auto-infer first "in_progress": the first 'upcoming' after a completed step
@@ -194,160 +228,259 @@ function buildSteps(
   return steps;
 }
 
-const DOT_STYLES: Record<StepStatus, string> = {
-  completed: 'bg-primary/10 border-primary/40',
-  ready: 'bg-primary/10 border-primary/40',
-  in_progress: 'bg-card border-border',
-  upcoming: 'bg-muted border-border',
+const OWNER_LABEL: Record<StepOwner, string> = {
+  agency: 'Wir machen das',
+  client: 'Du bist dran',
+  both: 'Gemeinsam',
 };
 
-function StepDot({ status, icon, isActive }: { status: StepStatus; icon: string; isActive: boolean }) {
-  const ring = status === 'ready' && isActive ? ' ring-4 ring-primary/20' : '';
-  const inner =
-    status === 'completed' ? (
-      <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-    ) : status === 'upcoming' ? (
-      <div className="w-2 h-2 rounded-full bg-border" />
-    ) : (
-      <span className="text-xs leading-none">{icon}</span>
-    );
+const OWNER_STYLES: Record<StepOwner, string> = {
+  agency: 'bg-muted text-muted-foreground border-border',
+  client: 'bg-primary/10 text-primary border-primary/30',
+  both: 'bg-accent/20 text-accent-foreground border-accent/40',
+};
 
+function OwnerBadge({ owner }: { owner: StepOwner }) {
   return (
-    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${DOT_STYLES[status]}${ring}`}>
-      {inner}
+    <span className={`inline-flex items-center text-[11px] px-1.5 py-0.5 rounded border ${OWNER_STYLES[owner]}`}>
+      {OWNER_LABEL[owner]}
+    </span>
+  );
+}
+
+function StepDot({ status }: { status: StepStatus }) {
+  if (status === 'completed') {
+    return (
+      <div className="w-7 h-7 rounded-full bg-primary/10 border-2 border-primary/40 flex items-center justify-center">
+        <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+    );
+  }
+  if (status === 'ready') {
+    return (
+      <div className="w-7 h-7 rounded-full bg-primary/10 border-2 border-primary ring-4 ring-primary/15 flex items-center justify-center">
+        <div className="w-2 h-2 rounded-full bg-primary" />
+      </div>
+    );
+  }
+  if (status === 'in_progress') {
+    return (
+      <div className="w-7 h-7 rounded-full bg-card border-2 border-border flex items-center justify-center relative">
+        <span className="animate-ping absolute w-3 h-3 rounded-full bg-primary/40" />
+        <span className="relative w-2 h-2 rounded-full bg-primary" />
+      </div>
+    );
+  }
+  return (
+    <div className="w-7 h-7 rounded-full bg-muted border-2 border-border flex items-center justify-center">
+      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
     </div>
   );
 }
 
-function ReadyCard({ step }: { step: ProjectStep }) {
-  return (
-    <Card className="border-primary/30 bg-primary/5">
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h3 className="font-semibold text-foreground">{step.label}</h3>
-          <Badge variant="outline" className="border-primary/50 text-primary">Bereit</Badge>
-        </div>
-        {step.description && <p className="text-sm text-muted-foreground mb-3">{step.description}</p>}
-        {step.href && (
-          <Button asChild variant="default" className="h-11 px-5 text-sm">
-            <a href={step.href} className="inline-flex items-center gap-1.5">
-              {step.ctaLabel}
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </a>
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
+function StatusPill({ status }: { status: StepStatus }) {
+  if (status === 'completed') {
+    return <Badge variant="outline" className="text-xs border-success/50 text-success">Fertig</Badge>;
+  }
+  if (status === 'ready') {
+    return <Badge variant="outline" className="text-xs border-primary text-primary bg-primary/5">Jetzt dran</Badge>;
+  }
+  if (status === 'in_progress') {
+    return (
+      <Badge variant="outline" className="text-xs border-border text-muted-foreground">
+        <span className="relative flex h-1.5 w-1.5 mr-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+        </span>
+        Läuft gerade
+      </Badge>
+    );
+  }
+  return <Badge variant="outline" className="text-xs border-border/60 text-muted-foreground/70">Bald</Badge>;
 }
 
-function CompletedRow({ step }: { step: ProjectStep }) {
+function StepRow({ step }: { step: ProjectStep }) {
+  const isActive = step.status === 'ready' || step.status === 'in_progress';
+
+  // Ready = emphasized card with CTA
+  if (step.status === 'ready') {
+    return (
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start justify-between gap-2 mb-1.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-foreground">{step.label}</h3>
+              <OwnerBadge owner={step.owner} />
+            </div>
+            <StatusPill status={step.status} />
+          </div>
+          {step.description && <p className="text-sm text-muted-foreground mb-3">{step.description}</p>}
+          {step.duration && (
+            <p className="text-xs text-muted-foreground mb-3">
+              {step.owner === 'client' ? 'Zeitaufwand für dich' : 'Dauert in der Regel'}: {step.duration}
+            </p>
+          )}
+          {step.href && (
+            <Button asChild variant="default" className="h-11 px-5 text-sm">
+              <a href={step.href} className="inline-flex items-center gap-1.5">
+                {step.ctaLabel}
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </a>
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // In-progress = neutral card
+  if (step.status === 'in_progress') {
+    return (
+      <Card>
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start justify-between gap-2 mb-1.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-medium text-foreground">{step.label}</h3>
+              <OwnerBadge owner={step.owner} />
+            </div>
+            <StatusPill status={step.status} />
+          </div>
+          {step.description && <p className="text-sm text-muted-foreground">{step.description}</p>}
+          {step.duration && (
+            <p className="text-xs text-muted-foreground mt-2">Dauert in der Regel: {step.duration}</p>
+          )}
+          {step.owner === 'agency' && (
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              Hier musst du nichts tun — wir melden uns, sobald es weitergeht.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Completed = quiet row with optional "nochmal ansehen"
+  if (step.status === 'completed') {
+    return (
+      <div className="py-2 flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-foreground">{step.label}</span>
+        <span className="text-xs text-muted-foreground">— fertig</span>
+        {step.href && (
+          <a href={step.href} className="text-xs text-primary hover:underline ml-auto">
+            nochmal ansehen →
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // Upcoming = muted but readable row with summary (not hidden!)
   return (
-    <div className="flex items-center gap-2 py-1">
-      <span className="text-sm font-medium text-muted-foreground">{step.label}</span>
-      {step.href && (
-        <a href={step.href} className="text-xs text-primary hover:underline ml-auto">
-          nochmal ansehen
-        </a>
+    <div className="py-2">
+      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+        <span className="text-sm font-medium text-foreground/80">{step.label}</span>
+        <OwnerBadge owner={step.owner} />
+        <StatusPill status={step.status} />
+      </div>
+      {step.summary && (
+        <p className="text-xs text-muted-foreground">{step.summary}</p>
+      )}
+      {step.duration && (
+        <p className="text-xs text-muted-foreground/70 mt-0.5">Dauert in der Regel: {step.duration}</p>
       )}
     </div>
   );
 }
 
-function InProgressCard({ step }: { step: ProjectStep }) {
+function StatusSummary({
+  steps,
+  completedCount,
+  isFirstVisit,
+}: {
+  steps: ProjectStep[];
+  completedCount: number;
+  isFirstVisit: boolean;
+}) {
+  if (isFirstVisit) {
+    return (
+      <Card className="bg-muted/40 border-border/60">
+        <CardContent className="p-4">
+          <p className="text-sm text-foreground font-medium mb-1">Herzlich willkommen!</p>
+          <p className="text-sm text-muted-foreground">
+            Wir bereiten gerade alles für dein Projekt vor. Unten siehst du alle Schritte,
+            die wir gemeinsam gehen werden.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const readySteps = steps.filter(s => s.status === 'ready');
+  const inProgressSteps = steps.filter(s => s.status === 'in_progress');
+
   return (
-    <Card>
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-medium text-foreground">{step.label}</h3>
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-            In Bearbeitung
+    <Card className="bg-muted/40 border-border/60">
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Stand heute
           </span>
         </div>
-        {step.description && <p className="text-sm text-muted-foreground">{step.description}</p>}
-        <p className="text-xs text-muted-foreground/70 mt-2">Hier musst du nichts tun — wir melden uns, sobald es weitergeht.</p>
+        <div className="space-y-1.5 text-sm">
+          {readySteps.length > 0 && (
+            <p className="text-foreground">
+              <span className="font-semibold text-primary">Für dich bereit:</span>{' '}
+              {readySteps.map(s => s.label).join(', ')}
+            </p>
+          )}
+          {inProgressSteps.length > 0 && (
+            <p className="text-muted-foreground">
+              <span className="font-medium text-foreground">Wir arbeiten an:</span>{' '}
+              {inProgressSteps.map(s => s.label).join(', ')}
+            </p>
+          )}
+          {readySteps.length === 0 && inProgressSteps.length === 0 && (
+            <p className="text-muted-foreground">
+              Alle Schritte abgeschlossen. Gute Arbeit!
+            </p>
+          )}
+          {completedCount > 0 && (
+            <p className="text-xs text-muted-foreground pt-1">
+              {completedCount} von {steps.length} Schritten erledigt
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-function UpcomingRow({ step }: { step: ProjectStep }) {
-  return (
-    <div className="py-1">
-      <span className="text-sm text-muted-foreground">{step.label}</span>
-    </div>
-  );
-}
-
-const STEP_CARD: Record<StepStatus, (props: { step: ProjectStep }) => React.ReactElement> = {
-  ready: ReadyCard,
-  completed: CompletedRow,
-  in_progress: InProgressCard,
-  upcoming: UpcomingRow,
-};
-
 export default function Dashboard({ company, deliverables, questionnaireFormId, questionnaireStatus, clientSlug, projectPlan }: Props) {
   const queryParam = clientSlug ? `?client=${clientSlug}` : '';
   const steps = buildSteps(projectPlan, deliverables, questionnaireFormId, questionnaireStatus, queryParam);
 
-  // Single pass to derive all needed values
-  let activeIndex = -1;
   let completedCount = 0;
   let hasReadyOrInProgress = false;
-  for (let i = 0; i < steps.length; i++) {
-    const s = steps[i].status;
-    if (s === 'completed') completedCount++;
-    if (s !== 'completed' && activeIndex === -1) activeIndex = i;
-    if (s === 'ready' || s === 'in_progress') hasReadyOrInProgress = true;
-  }
-
-  let visibleSteps: ProjectStep[];
-  let hiddenCount: number;
-  if (completedCount > 0 || !hasReadyOrInProgress) {
-    visibleSteps = steps;
-    hiddenCount = 0;
-  } else {
-    const showUpTo = Math.min((activeIndex < 0 ? 0 : activeIndex) + 3, steps.length);
-    visibleSteps = steps.slice(0, showUpTo);
-    hiddenCount = steps.length - showUpTo;
+  for (const step of steps) {
+    if (step.status === 'completed') completedCount++;
+    if (step.status === 'ready' || step.status === 'in_progress') hasReadyOrInProgress = true;
   }
 
   const isFirstVisit = completedCount === 0 && !hasReadyOrInProgress;
-  const hasAction = steps.some(s => s.status === 'ready');
 
   return (
     <div className="max-w-2xl">
-      <div className="mb-6 sm:mb-8">
+      {/* Header */}
+      <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">{company}</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {isFirstVisit
-            ? 'Schön, dass du da bist! Wir bereiten gerade alles für dein Projekt vor.'
-            : hasAction
-              ? 'Es gibt Neuigkeiten — schau mal, was bereitliegt.'
-              : 'Hier siehst du, wie es mit deiner Website vorangeht.'
-          }
-        </p>
-
-        {isFirstVisit && (
-          <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border/50">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Auf dieser Seite siehst du alle Schritte für dein Website-Projekt.
-              Wenn etwas für dich bereitliegt, bekommst du einen blauen Button zum Anklicken.
-              Du kannst jederzeit hierher zurückkommen.
-            </p>
-          </div>
-        )}
+        <p className="text-muted-foreground text-sm mt-1">Dein Website-Projekt</p>
 
         {completedCount > 0 && (
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-3 flex items-center gap-3">
             <Progress value={(completedCount / steps.length) * 100} className="flex-1 h-1.5" />
             <span className="text-xs text-muted-foreground tabular-nums">
               {completedCount}/{steps.length}
@@ -356,42 +489,45 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
         )}
       </div>
 
-      <div className="relative ml-1">
-        {visibleSteps.map((step, i) => {
-          const isActive = i === activeIndex;
-          const isLastVisible = i === visibleSteps.length - 1;
-          const showLine = !isLastVisible || hiddenCount > 0;
-          const StepCard = STEP_CARD[step.status] ?? UpcomingRow;
+      {/* Status summary card */}
+      <div className="mb-6">
+        <StatusSummary steps={steps} completedCount={completedCount} isFirstVisit={isFirstVisit} />
+      </div>
+
+      {/* Full timeline — ALL steps visible */}
+      <div className="relative">
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Alle Schritte
+        </div>
+        {steps.map((step, i) => {
+          const isLast = i === steps.length - 1;
 
           return (
-            <div key={step.id} className="relative flex gap-4">
+            <div key={step.id} className="relative flex gap-3 sm:gap-4">
               <div className="flex flex-col items-center w-7 flex-shrink-0">
-                <StepDot status={step.status} icon={step.icon} isActive={isActive} />
-                {showLine && (
+                <StepDot status={step.status} />
+                {!isLast && (
                   <div
                     className={`w-px flex-1 min-h-6 ${
-                      step.status === 'completed' ? 'bg-primary' : 'bg-border'
+                      step.status === 'completed' ? 'bg-primary/60' : 'bg-border'
                     }`}
                   />
                 )}
               </div>
-              <div className={`flex-1 -mt-1 ${showLine ? 'pb-4' : ''}`}>
-                <StepCard step={step} />
+              <div className={`flex-1 -mt-1 ${!isLast ? 'pb-4' : ''} min-w-0`}>
+                <StepRow step={step} />
               </div>
             </div>
           );
         })}
+      </div>
 
-        {hiddenCount > 0 && (
-          <div className="flex gap-4 mt-1">
-            <div className="w-7 flex-shrink-0 flex justify-center">
-              <span className="text-muted-foreground text-lg leading-none">&#x22EE;</span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              … und {hiddenCount} weitere {hiddenCount === 1 ? 'Schritt' : 'Schritte'}
-            </div>
-          </div>
-        )}
+      {/* Closing help text */}
+      <div className="mt-6 p-3 rounded-lg bg-muted/40 border border-border/50">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <strong className="text-foreground">Fragen?</strong> Schreib einfach Daniel direkt —
+          das Portal ist zum Mitlesen, nicht zum Alleine-lassen. Wir melden uns bei jedem neuen Schritt.
+        </p>
       </div>
     </div>
   );
