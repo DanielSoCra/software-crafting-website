@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase-server';
+import { apiError } from '@/lib/api-error';
 
 const MAX_COMMENT_LENGTH = 500;
 
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const deliverableId = req.nextUrl.searchParams.get('deliverable_id');
   if (!deliverableId) {
-    return NextResponse.json({ error: 'deliverable_id required' }, { status: 400 });
+    return apiError(400, 'INVALID_INPUT', 'deliverable_id required');
   }
 
   // RLS enforces scope: clients see only their own feedback, admins see all.
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('mood-board-feedback GET error:', error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return apiError(500, 'INTERNAL_ERROR', 'Internal error');
   }
   return NextResponse.json(data ?? []);
 }
@@ -43,23 +44,17 @@ export async function POST(req: NextRequest) {
   } = body;
 
   if (!deliverable_id || !variant_name) {
-    return NextResponse.json(
-      { error: 'deliverable_id and variant_name required' },
-      { status: 400 },
-    );
+    return apiError(400, 'INVALID_INPUT', 'deliverable_id and variant_name required');
   }
   if (typeof variant_name !== 'string' || variant_name.length > 100) {
-    return NextResponse.json({ error: 'variant_name too long' }, { status: 400 });
+    return apiError(400, 'INVALID_INPUT', 'variant_name too long');
   }
   if (vote !== undefined && vote !== null && !['like', 'dislike'].includes(vote)) {
-    return NextResponse.json({ error: 'Invalid vote value' }, { status: 400 });
+    return apiError(400, 'INVALID_INPUT', 'Invalid vote value');
   }
   for (const [key, value] of Object.entries({ comment_negative, comment_positive, comment_very_good })) {
     if (value !== undefined && value !== null && typeof value === 'string' && value.length > MAX_COMMENT_LENGTH) {
-      return NextResponse.json(
-        { error: `${key} exceeds ${MAX_COMMENT_LENGTH} characters` },
-        { status: 400 },
-      );
+      return apiError(400, 'INVALID_INPUT', `${key} exceeds ${MAX_COMMENT_LENGTH} characters`);
     }
   }
 
@@ -72,10 +67,10 @@ export async function POST(req: NextRequest) {
     .single();
   if (delError && delError.code !== 'PGRST116') {
     console.error('mood-board-feedback POST deliverable lookup error:', delError);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return apiError(500, 'INTERNAL_ERROR', 'Internal error');
   }
   if (!deliverable) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError(404, 'NOT_FOUND', 'Not found');
   }
 
   // Verify caller's own client matches the deliverable owner. Admins cannot
@@ -86,7 +81,7 @@ export async function POST(req: NextRequest) {
     .eq('user_id', user.id)
     .maybeSingle();
   if (!myClient || myClient.id !== deliverable.client_id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return apiError(403, 'FORBIDDEN', 'Forbidden');
   }
 
   const updateFields: Record<string, unknown> = {
@@ -114,7 +109,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('mood-board-feedback POST upsert error:', error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return apiError(500, 'INTERNAL_ERROR', 'Internal error');
   }
   return NextResponse.json(data);
 }

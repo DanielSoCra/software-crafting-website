@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase-server';
+import { apiError } from '@/lib/api-error';
 
 export async function PUT(
   req: NextRequest,
@@ -27,11 +28,11 @@ export async function PUT(
     .single();
 
   if (error && error.code === 'PGRST116') {
-    return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 });
+    return apiError(404, 'NOT_FOUND', 'Not found or forbidden');
   }
   if (error) {
     console.error('mood-board-feedback submit error:', error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return apiError(500, 'INTERNAL_ERROR', 'Internal error');
   }
   return NextResponse.json(data);
 }

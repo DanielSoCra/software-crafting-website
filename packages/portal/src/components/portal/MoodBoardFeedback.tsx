@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, FieldGroup, FieldLabel, FieldDescription } from '@/components/ui/field';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from '@/components/ui/toast';
 
 interface VariantFeedback {
   vote: 'like' | 'dislike' | null;
@@ -86,7 +87,7 @@ export default function MoodBoardFeedback({
       return await response.json();
     } catch (err) {
       console.error('Failed to save feedback:', err);
-      alert('Fehler beim Speichern');
+      toast.error('Fehler beim Speichern');
     }
   }, [deliverableId]);
 
@@ -197,7 +198,7 @@ export default function MoodBoardFeedback({
       setIsSubmitted(true);
     } catch (err) {
       console.error('Failed to submit:', err);
-      alert('Fehler beim Absenden');
+      toast.error('Fehler beim Absenden');
     } finally {
       setSubmitting(false);
     }
@@ -229,7 +230,7 @@ export default function MoodBoardFeedback({
       setIsSubmitted(false);
     } catch (err) {
       console.error('Failed to unlock:', err);
-      alert('Fehler beim Freigeben');
+      toast.error('Fehler beim Freigeben');
     } finally {
       setUnlocking(false);
     }

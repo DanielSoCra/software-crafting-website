@@ -27,6 +27,7 @@ test.describe('Portal — unauthenticated access is refused', () => {
   test('API /mood-board-feedback returns 401 without auth', async ({ request }) => {
     const res = await request.get('/portal/api/mood-board-feedback?deliverable_id=00000000-0000-0000-0000-000000000000');
     expect(res.status()).toBe(401);
+    expect(await res.json()).toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
   test('API /mood-board-feedback POST returns 401 without auth', async ({ request }) => {
@@ -34,6 +35,7 @@ test.describe('Portal — unauthenticated access is refused', () => {
       data: { deliverable_id: '00000000-0000-0000-0000-000000000000', variant_name: 'v1' },
     });
     expect(res.status()).toBe(401);
+    expect(await res.json()).toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
   test('API /mood-board-feedback/:id/unlock returns 401 without auth', async ({ request }) => {
@@ -41,11 +43,13 @@ test.describe('Portal — unauthenticated access is refused', () => {
       '/portal/api/mood-board-feedback/00000000-0000-0000-0000-000000000000/unlock?deliverable_id=00000000-0000-0000-0000-000000000000',
     );
     expect(res.status()).toBe(401);
+    expect(await res.json()).toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
   test('API /deliverables returns 401 without auth', async ({ request }) => {
     const res = await request.get('/portal/api/deliverables/analysis/foo.md');
     expect(res.status()).toBe(401);
+    expect(await res.json()).toMatchObject({ code: 'UNAUTHORIZED' });
   });
 });
 

@@ -47,7 +47,10 @@ export async function middleware(request: NextRequest) {
   // Each API route still performs its own auth check — middleware is the safety net.
   if (!user && !isPublicRoute) {
     if (isApiRoute) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+        { status: 401 },
+      );
     }
     return NextResponse.redirect(new URL('/portal/login', origin));
   }

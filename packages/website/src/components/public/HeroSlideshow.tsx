@@ -47,66 +47,34 @@ export default function HeroSlideshow() {
   return (
     <div className="relative w-full">
       {/* Glow behind */}
-      <div
-        className="absolute -inset-4 rounded-2xl blur-2xl"
-        style={{ backgroundColor: "oklch(0.55 0.2 280 / 0.05)" }}
-      />
+      <div className="absolute -inset-4 rounded-2xl blur-2xl bg-primary/5" />
 
       {/* Browser frame */}
       <div
-        className="relative rounded-xl overflow-hidden"
-        style={{
-          boxShadow: "0 25px 50px -12px oklch(0.55 0.2 280 / 0.1)",
-          border: "1px solid oklch(0.25 0.01 270 / 0.2)",
-        }}
+        className="relative rounded-xl overflow-hidden border border-border/20 shadow-[0_25px_50px_-12px_var(--color-primary)]/10"
       >
         {/* Address bar hint */}
-        <div
-          className="px-4 py-2 flex items-center gap-2"
-          style={{
-            backgroundColor: "oklch(0.7 0 0 / 0.05)",
-            backdropFilter: "blur(8px)",
-            borderBottom: "1px solid oklch(0.25 0.01 270 / 0.1)",
-          }}
-        >
+        <div className="px-4 py-2 flex items-center gap-2 bg-text-muted/5 backdrop-blur-md border-b border-border/10">
           <div className="flex gap-1.5">
-            <div
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: "oklch(0.7 0 0 / 0.2)" }}
-            />
-            <div
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: "oklch(0.7 0 0 / 0.2)" }}
-            />
-            <div
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: "oklch(0.7 0 0 / 0.2)" }}
-            />
+            <div className="w-2.5 h-2.5 rounded-full bg-text-muted/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-text-muted/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-text-muted/20" />
           </div>
           <div className="flex-1 mx-8">
-            <div
-              className="rounded-md h-5 max-w-[200px] mx-auto"
-              style={{ backgroundColor: "oklch(0.7 0 0 / 0.08)" }}
-            />
+            <div className="rounded-md h-5 max-w-[200px] mx-auto bg-text-muted/10" />
           </div>
         </div>
 
         {/* Slideshow area */}
-        <div
-          className="relative aspect-[16/10]"
-          style={{ backgroundColor: "oklch(0.15 0.02 270)" }}
-        >
+        <div className="relative aspect-[16/10] bg-bg">
           <img
             src={slides[current].src}
             alt={slides[current].alt}
             width={1280}
             height={800}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              opacity: isTransitioning ? 0 : 1,
-              transform: isTransitioning ? "scale(0.98)" : "scale(1)",
-              transition: "opacity 0.4s ease-in-out, transform 0.4s ease-in-out",
-            }}
+            className={`absolute inset-0 w-full h-full object-cover transition-[opacity,transform] duration-[400ms] ease-in-out ${
+              isTransitioning ? 'opacity-0 scale-[0.98]' : 'opacity-100 scale-100'
+            }`}
           />
         </div>
       </div>
@@ -117,15 +85,9 @@ export default function HeroSlideshow() {
           <button
             key={i}
             onClick={() => goTo(i)}
-            className="rounded-full transition-all duration-500"
-            style={{
-              height: "4px",
-              width: i === current ? "24px" : "6px",
-              backgroundColor:
-                i === current
-                  ? "oklch(0.55 0.2 280)"
-                  : "oklch(0.7 0 0 / 0.3)",
-            }}
+            className={`h-1 rounded-full transition-all duration-500 ${
+              i === current ? 'w-6 bg-primary' : 'w-1.5 bg-text-muted/30'
+            }`}
             aria-label={`Slide ${i + 1}`}
           />
         ))}

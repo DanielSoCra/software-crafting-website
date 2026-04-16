@@ -2,6 +2,10 @@ import { useState } from "react";
 
 type Status = "idle" | "sending" | "sent" | "error";
 
+const inputClasses =
+  "w-full h-12 rounded-lg border border-border/50 bg-bg-secondary/50 px-4 text-sm text-text " +
+  "outline-none transition-colors focus:border-primary font-sans";
+
 export default function ContactForm() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "", website: "" });
   const [status, setStatus] = useState<Status>("idle");
@@ -45,36 +49,15 @@ export default function ContactForm() {
 
   if (status === "sent") {
     return (
-      <div
-        className="rounded-2xl p-12 text-center"
-        style={{
-          backgroundColor: "oklch(0.18 0.015 270)",
-          border: "1px solid oklch(0.25 0.01 270 / 0.4)",
-        }}
-      >
-        <p
-          className="font-display text-2xl font-bold mb-4"
-          style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
-        >
-          Vielen Dank!
-        </p>
-        <p
-          className="font-light text-base"
-          style={{ color: "oklch(0.7 0 0)" }}
-        >
+      <div className="rounded-2xl p-12 text-center bg-bg-secondary border border-border/40">
+        <p className="font-display text-2xl font-bold mb-4">Vielen Dank!</p>
+        <p className="font-light text-base text-text-muted">
           Ihre Nachricht ist angekommen. Wir melden uns innerhalb von 24 Stunden
           bei Ihnen.
         </p>
         <button
           onClick={() => setStatus("idle")}
-          className="mt-6 text-sm font-medium transition-colors"
-          style={{ color: "oklch(0.55 0.2 280)" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = "oklch(0.7 0.12 70)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "oklch(0.55 0.2 280)")
-          }
+          className="mt-6 text-sm font-medium text-primary hover:text-accent transition-colors"
         >
           Weitere Nachricht senden
         </button>
@@ -82,24 +65,10 @@ export default function ContactForm() {
     );
   }
 
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: "oklch(0.18 0.015 270 / 0.5)",
-    border: "1px solid oklch(0.25 0.01 270 / 0.5)",
-    color: "oklch(0.95 0 0)",
-    height: "48px",
-    borderRadius: "8px",
-    padding: "0 16px",
-    width: "100%",
-    fontSize: "14px",
-    fontFamily: '"Inter", system-ui, sans-serif',
-    outline: "none",
-    transition: "border-color 0.2s",
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Honeypot field — hidden from real users, filled by bots */}
-      <div style={{ position: "absolute", left: "-9999px" }} aria-hidden="true">
+      <div className="absolute -left-[9999px]" aria-hidden="true">
         <input
           type="text"
           name="website"
@@ -116,13 +85,7 @@ export default function ContactForm() {
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
-          style={inputStyle}
-          onFocus={(e) =>
-            (e.currentTarget.style.borderColor = "oklch(0.55 0.2 280)")
-          }
-          onBlur={(e) =>
-            (e.currentTarget.style.borderColor = "oklch(0.25 0.01 270 / 0.5)")
-          }
+          className={inputClasses}
         />
         <input
           type="email"
@@ -130,13 +93,7 @@ export default function ContactForm() {
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
-          style={inputStyle}
-          onFocus={(e) =>
-            (e.currentTarget.style.borderColor = "oklch(0.55 0.2 280)")
-          }
-          onBlur={(e) =>
-            (e.currentTarget.style.borderColor = "oklch(0.25 0.01 270 / 0.5)")
-          }
+          className={inputClasses}
         />
       </div>
       <textarea
@@ -145,25 +102,11 @@ export default function ContactForm() {
         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
         required
         rows={6}
-        style={{
-          ...inputStyle,
-          height: "auto",
-          minHeight: "160px",
-          padding: "12px 16px",
-          resize: "vertical",
-        }}
-        onFocus={(e) =>
-          (e.currentTarget.style.borderColor = "oklch(0.55 0.2 280)")
-        }
-        onBlur={(e) =>
-          (e.currentTarget.style.borderColor = "oklch(0.25 0.01 270 / 0.5)")
-        }
+        className={`${inputClasses} h-auto min-h-40 py-3 resize-y`}
       />
 
       {status === "error" && (
-        <p className="text-sm" style={{ color: "oklch(0.65 0.2 25)" }}>
-          {errorMsg}
-        </p>
+        <p className="text-sm text-error">{errorMsg}</p>
       )}
 
       <button

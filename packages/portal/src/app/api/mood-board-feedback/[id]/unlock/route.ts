@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isUserAdmin } from '@/lib/supabase-server';
+import { apiError } from '@/lib/api-error';
 
 export async function PUT(
   req: NextRequest,
@@ -10,13 +11,13 @@ export async function PUT(
   const { supabase, user } = auth;
 
   if (!(await isUserAdmin(supabase, user.id))) {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 });
+    return apiError(403, 'ADMIN_ONLY', 'Admin only');
   }
 
   const { id } = await params;
   const deliverableId = req.nextUrl.searchParams.get('deliverable_id');
   if (!deliverableId) {
-    return NextResponse.json({ error: 'deliverable_id required' }, { status: 400 });
+    return apiError(400, 'INVALID_INPUT', 'deliverable_id required');
   }
 
   // Scope the update to the provided deliverable so a stray id cannot flip
@@ -35,11 +36,11 @@ export async function PUT(
     .single();
 
   if (error && error.code === 'PGRST116') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError(404, 'NOT_FOUND', 'Not found');
   }
   if (error) {
     console.error('mood-board-feedback unlock error:', error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return apiError(500, 'INTERNAL_ERROR', 'Internal error');
   }
   return NextResponse.json(data);
 }

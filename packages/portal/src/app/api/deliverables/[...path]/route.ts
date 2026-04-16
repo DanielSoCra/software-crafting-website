@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveDeliverablePath, readDeliverableFile, getMimeType } from '@/lib/deliverables';
 import { DELIVERABLE_TYPES } from '@/lib/types';
 import type { DeliverableType } from '@/lib/types';
+import { apiError } from '@/lib/api-error';
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +14,7 @@ export async function GET(
   const filePath = pathSegments.slice(1).join('/');
 
   if (!deliverableType || !DELIVERABLE_TYPES.includes(deliverableType) || !filePath) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError(404, 'NOT_FOUND', 'Not found');
   }
 
   const auth = await requireAuth(request);
@@ -26,31 +27,31 @@ export async function GET(
 
   const { data: client, error: clientError } = await resolveClient(supabase, user.id, clientParam, isAdmin);
   if (clientError && clientError.code !== 'PGRST116') {
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return apiError(500, 'INTERNAL_ERROR', 'Internal error');
   }
   if (!client) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError(404, 'NOT_FOUND', 'Not found');
   }
 
   // Verify deliverable published
   const { data: deliverable, error: delError } = await supabase
     .from('deliverables').select('id').eq('client_id', client.id).eq('type', deliverableType).single();
   if (delError && delError.code !== 'PGRST116') {
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return apiError(500, 'INTERNAL_ERROR', 'Internal error');
   }
   if (!deliverable) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError(404, 'NOT_FOUND', 'Not found');
   }
 
   // Resolve and validate path
   const resolvedPath = resolveDeliverablePath(client.slug, `${deliverableType}/${filePath}`);
   if (!resolvedPath) {
-    return NextResponse.json({ error: 'Invalid path' }, { status: 403 });
+    return apiError(403, 'FORBIDDEN', 'Invalid path');
   }
 
   const content = readDeliverableFile(client.slug, `${deliverableType}/${filePath}`);
   if (!content) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError(404, 'NOT_FOUND', 'Not found');
   }
 
   const mimeType = getMimeType(filePath);

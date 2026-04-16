@@ -1,6 +1,7 @@
 import '@/styles/globals.css';
 import type { Metadata } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { Toaster } from '@/components/ui/toast';
 
 export const metadata: Metadata = {
   title: {
@@ -85,6 +86,7 @@ export default async function RootLayout({
             </div>
           </div>
         </footer>
+        <Toaster />
       </body>
     </html>
   );

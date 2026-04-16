@@ -18,7 +18,7 @@ export default function ObfuscatedContact() {
 
   if (!mounted) {
     return (
-      <p style={{ color: 'oklch(0.7 0 0)' }}>
+      <p className="text-text-muted">
         Kontaktdaten werden geladen…
       </p>
     );

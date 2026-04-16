@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import { apiError } from './api-error';
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
@@ -105,7 +106,7 @@ export async function requireAuth(
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError(401, 'UNAUTHORIZED', 'Unauthorized');
   }
   return { supabase, user };
 }

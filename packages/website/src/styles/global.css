@@ -23,6 +23,7 @@
   --color-border: oklch(0.25 0.01 270);
 
   --color-success: oklch(0.65 0.15 145);
+  --color-error: oklch(0.65 0.2 25);
 
   --font-sans: "Inter", system-ui, sans-serif;
   --font-display: "Playfair Display", Georgia, serif;
