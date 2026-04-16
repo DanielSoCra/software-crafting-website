@@ -36,22 +36,15 @@ export default async function LoginPage({ searchParams }: Props) {
   const errorDescription = params.error_description?.replace(/\+/g, ' ');
 
   return (
-    <div className="max-w-md mx-auto mt-12">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-display font-bold mb-2">Dein Projektbereich</h1>
+    <div className="max-w-md mx-auto mt-8 sm:mt-12">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-display font-bold mb-2">Dein Projektbereich</h1>
         <p className="text-muted-foreground text-sm">
           Hier siehst du, wie es mit deiner Website vorangeht.
         </p>
       </div>
       {hasError && (
-        <div
-          className="rounded-lg p-4 mb-6 text-sm"
-          style={{
-            backgroundColor: 'oklch(0.25 0.05 25)',
-            border: '1px solid oklch(0.35 0.08 25)',
-            color: 'oklch(0.75 0.12 25)',
-          }}
-        >
+        <div className="rounded-lg p-4 mb-6 text-sm bg-destructive/10 border border-destructive/30 text-destructive">
           {errorDescription === 'Email link is invalid or has expired'
             ? 'Der Link ist leider abgelaufen. Fordere einfach unten einen neuen an.'
             : errorDescription || 'Etwas hat nicht geklappt. Bitte versuche es nochmal.'}

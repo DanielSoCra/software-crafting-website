@@ -43,7 +43,7 @@ export default async function RootLayout({
         style={{ fontFamily: 'var(--font-sans)' }}
       >
         <header className="border-b border-border/50 backdrop-blur-md bg-card/80">
-          <nav className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <nav className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
             <a href="/portal" className="font-display text-lg font-bold tracking-tight">
               Software <span className="text-primary">Crafting</span>
               <span className="text-muted-foreground font-sans text-sm font-light ml-2">
@@ -67,12 +67,12 @@ export default async function RootLayout({
           </nav>
         </header>
 
-        <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
+        <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-10">
           {children}
         </main>
 
         <footer className="border-t border-border/50 mt-auto">
-          <div className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between text-xs font-light text-muted-foreground">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between text-xs font-light text-muted-foreground">
             <p>Software Crafting &middot; Inh. Daniel Eberl</p>
             <div className="flex gap-4">
               <a href="/datenschutz" className="hover:text-foreground transition-colors">

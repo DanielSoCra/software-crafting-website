@@ -224,14 +224,14 @@ function StepDot({ status, icon, isActive }: { status: StepStatus; icon: string;
 function ReadyCard({ step }: { step: ProjectStep }) {
   return (
     <Card className="border-primary/30 bg-primary/5">
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <h3 className="font-semibold text-foreground">{step.label}</h3>
           <Badge variant="outline" className="border-primary/50 text-primary">Bereit</Badge>
         </div>
         {step.description && <p className="text-sm text-muted-foreground mb-3">{step.description}</p>}
         {step.href && (
-          <Button asChild variant="default" size="sm">
+          <Button asChild variant="default" className="h-11 px-5 text-sm">
             <a href={step.href} className="inline-flex items-center gap-1.5">
               {step.ctaLabel}
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -261,7 +261,7 @@ function CompletedRow({ step }: { step: ProjectStep }) {
 function InProgressCard({ step }: { step: ProjectStep }) {
   return (
     <Card>
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2 mb-1">
           <h3 className="font-medium text-foreground">{step.label}</h3>
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
@@ -273,6 +273,7 @@ function InProgressCard({ step }: { step: ProjectStep }) {
           </span>
         </div>
         {step.description && <p className="text-sm text-muted-foreground">{step.description}</p>}
+        <p className="text-xs text-muted-foreground/70 mt-2">Hier musst du nichts tun — wir melden uns, sobald es weitergeht.</p>
       </CardContent>
     </Card>
   );
@@ -324,8 +325,8 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
 
   return (
     <div className="max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">{company}</h1>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">{company}</h1>
         <p className="text-muted-foreground text-sm mt-1">
           {isFirstVisit
             ? 'Schön, dass du da bist! Wir bereiten gerade alles für dein Projekt vor.'
@@ -334,6 +335,16 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
               : 'Hier siehst du, wie es mit deiner Website vorangeht.'
           }
         </p>
+
+        {isFirstVisit && (
+          <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border/50">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Auf dieser Seite siehst du alle Schritte für dein Website-Projekt.
+              Wenn etwas für dich bereitliegt, bekommst du einen blauen Button zum Anklicken.
+              Du kannst jederzeit hierher zurückkommen.
+            </p>
+          </div>
+        )}
 
         {completedCount > 0 && (
           <div className="mt-4 flex items-center gap-3">
