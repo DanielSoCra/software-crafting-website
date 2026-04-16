@@ -1,7 +1,6 @@
 import '@/styles/globals.css';
 import type { Metadata } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import ThemeToggle from '@/components/portal/ThemeToggle';
 
 export const metadata: Metadata = {
   title: {
@@ -50,20 +49,22 @@ export default async function RootLayout({
                 Kundenportal
               </span>
             </a>
-            <div className="flex items-center gap-4 text-sm font-light">
-              <ThemeToggle />
-              {user && (
-                <>
-                  <span className="text-muted-foreground hidden sm:inline">{user.email}</span>
-                  <a
-                    href="/portal/login?logout=true"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Abmelden
-                  </a>
-                </>
-              )}
-            </div>
+            {user && (
+              <div className="flex items-center gap-4 text-sm font-light">
+                <a
+                  href="/portal/settings"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Einstellungen
+                </a>
+                <a
+                  href="/portal/login?logout=true"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Abmelden
+                </a>
+              </div>
+            )}
           </nav>
         </header>
 

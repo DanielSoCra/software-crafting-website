@@ -55,73 +55,73 @@ const STEP_META: Record<string, StepMeta> = {
     icon: '📋',
     cta: 'Fragebogen öffnen',
     owner: 'client',
-    duration: 'ca. 10 Minuten',
-    summary: 'Kurze Fragen zu deinem Projekt, damit wir alles Wichtige wissen.',
+    duration: '10 Min.',
+    summary: 'Kurze Fragen zu deinem Projekt.',
     desc: {
-      ready: 'Ein paar kurze Fragen zu dir und deinem Projekt — damit wir deine Website genau passend gestalten können.',
-      resume: 'Du hast schon angefangen. Nimm dir die Zeit, die du brauchst.',
-      completed: 'Danke für deine Antworten!',
-      in_progress: 'Wird gerade für dich vorbereitet.',
+      ready: 'Fragen zu deinem Projekt beantworten.',
+      resume: 'Du hast begonnen. Weitermachen, wann du willst.',
+      completed: 'Antworten erhalten.',
+      in_progress: 'Wird vorbereitet.',
     },
   },
   analysis: {
     icon: '🔍',
     cta: 'Analyse ansehen',
     owner: 'agency',
-    duration: 'ca. 2-3 Tage',
-    summary: 'Wir analysieren deine Branche, Mitbewerber und Zielgruppe.',
+    duration: '2–3 Tage',
+    summary: 'Branchen- und Wettbewerbsanalyse.',
     desc: {
-      ready: 'Deine Branchen- und Wettbewerbsanalyse ist fertig.',
+      ready: 'Analyse ist fertig.',
       completed: 'Analyse abgeschlossen.',
-      in_progress: 'Wir schauen uns deine Branche und deine Mitbewerber an.',
+      in_progress: 'Analyse läuft.',
     },
   },
   'mood-board': {
     icon: '🎨',
     cta: 'Designvorschläge ansehen',
     owner: 'both',
-    duration: 'ca. 3-5 Tage',
-    summary: 'Verschiedene Designrichtungen — du wählst den Stil, der zu dir passt.',
+    duration: '3–5 Tage',
+    summary: 'Designrichtungen zur Auswahl.',
     desc: {
-      ready: 'Verschiedene Designrichtungen für dich — welche gefällt dir am besten?',
-      completed: 'Designrichtung gewählt.',
-      in_progress: 'Wir arbeiten an Designvorschlägen für dich.',
+      ready: 'Wähle die passende Designrichtung.',
+      completed: 'Richtung gewählt.',
+      in_progress: 'Entwürfe in Arbeit.',
     },
   },
   'brand-guide': {
     icon: '🎯',
     cta: 'Brand Guide ansehen',
     owner: 'agency',
-    duration: 'ca. 2-3 Tage',
-    summary: 'Farben, Schriften und Stil-Regeln für einen einheitlichen Auftritt.',
+    duration: '2–3 Tage',
+    summary: 'Farben, Schriften, Stilrichtlinien.',
     desc: {
-      ready: 'Farben, Schriften und Stil — dein einheitlicher Markenauftritt.',
-      completed: 'Markenauftritt definiert.',
-      in_progress: 'Dein Brand Guide wird gerade erstellt.',
+      ready: 'Brand Guide ist fertig.',
+      completed: 'Brand Guide abgeschlossen.',
+      in_progress: 'Brand Guide in Arbeit.',
     },
   },
   'website-preview': {
     icon: '🌐',
     cta: 'Vorschau ansehen',
     owner: 'agency',
-    duration: 'ca. 1-2 Wochen',
-    summary: 'Eine erste lauffähige Version deiner Website zum Anschauen.',
+    duration: '1–2 Wochen',
+    summary: 'Lauffähige Vorschau deiner Website.',
     desc: {
-      ready: 'So wird deine neue Website aussehen!',
+      ready: 'Vorschau bereit zum Ansehen.',
       completed: 'Vorschau angesehen.',
-      in_progress: 'Wir bauen deine Website-Vorschau.',
+      in_progress: 'Umsetzung läuft.',
     },
   },
   proposal: {
     icon: '📄',
     cta: 'Angebot ansehen',
     owner: 'agency',
-    duration: 'ca. 1-2 Tage',
-    summary: 'Ein verbindliches Angebot mit allen Leistungen und Preisen.',
+    duration: '1–2 Tage',
+    summary: 'Verbindliches Angebot mit Leistungen und Preisen.',
     desc: {
-      ready: 'Dein persönliches Angebot mit allen besprochenen Leistungen.',
+      ready: 'Angebot liegt vor.',
       completed: 'Angebot erhalten.',
-      in_progress: 'Dein Angebot wird erstellt.',
+      in_progress: 'Angebot wird erstellt.',
     },
   },
 };
@@ -229,8 +229,8 @@ function buildSteps(
 }
 
 const OWNER_LABEL: Record<StepOwner, string> = {
-  agency: 'Wir machen das',
-  client: 'Du bist dran',
+  agency: 'Agentur',
+  client: 'Du',
   both: 'Gemeinsam',
 };
 
@@ -282,10 +282,10 @@ function StepDot({ status }: { status: StepStatus }) {
 
 function StatusPill({ status }: { status: StepStatus }) {
   if (status === 'completed') {
-    return <Badge variant="outline" className="text-xs border-success/50 text-success">Fertig</Badge>;
+    return <Badge variant="outline" className="text-xs border-success/50 text-success">Erledigt</Badge>;
   }
   if (status === 'ready') {
-    return <Badge variant="outline" className="text-xs border-primary text-primary bg-primary/5">Jetzt dran</Badge>;
+    return <Badge variant="outline" className="text-xs border-primary text-primary bg-primary/5">Offen</Badge>;
   }
   if (status === 'in_progress') {
     return (
@@ -294,11 +294,11 @@ function StatusPill({ status }: { status: StepStatus }) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
         </span>
-        Läuft gerade
+        In Arbeit
       </Badge>
     );
   }
-  return <Badge variant="outline" className="text-xs border-border/60 text-muted-foreground/70">Bald</Badge>;
+  return <Badge variant="outline" className="text-xs border-border/60 text-muted-foreground/70">Geplant</Badge>;
 }
 
 function StepRow({ step }: { step: ProjectStep }) {
@@ -319,7 +319,7 @@ function StepRow({ step }: { step: ProjectStep }) {
           {step.description && <p className="text-sm text-muted-foreground mb-3">{step.description}</p>}
           {step.duration && (
             <p className="text-xs text-muted-foreground mb-3">
-              {step.owner === 'client' ? 'Zeitaufwand für dich' : 'Dauert in der Regel'}: {step.duration}
+              {step.owner === 'client' ? 'Dein Aufwand' : 'Dauer'}: {step.duration}
             </p>
           )}
           {step.href && (
@@ -351,11 +351,11 @@ function StepRow({ step }: { step: ProjectStep }) {
           </div>
           {step.description && <p className="text-sm text-muted-foreground">{step.description}</p>}
           {step.duration && (
-            <p className="text-xs text-muted-foreground mt-2">Dauert in der Regel: {step.duration}</p>
+            <p className="text-xs text-muted-foreground mt-2">Dauer: {step.duration}</p>
           )}
           {step.owner === 'agency' && (
             <p className="text-xs text-muted-foreground/70 mt-2">
-              Hier musst du nichts tun — wir melden uns, sobald es weitergeht.
+              Keine Aktion nötig. Wir melden uns, sobald es weitergeht.
             </p>
           )}
         </CardContent>
@@ -363,15 +363,14 @@ function StepRow({ step }: { step: ProjectStep }) {
     );
   }
 
-  // Completed = quiet row with optional "nochmal ansehen"
+  // Completed = quiet row with optional "Ansehen"
   if (step.status === 'completed') {
     return (
       <div className="py-2 flex items-center gap-2 flex-wrap">
         <span className="text-sm font-medium text-foreground">{step.label}</span>
-        <span className="text-xs text-muted-foreground">— fertig</span>
         {step.href && (
           <a href={step.href} className="text-xs text-primary hover:underline ml-auto">
-            nochmal ansehen →
+            Ansehen
           </a>
         )}
       </div>
@@ -390,7 +389,7 @@ function StepRow({ step }: { step: ProjectStep }) {
         <p className="text-xs text-muted-foreground">{step.summary}</p>
       )}
       {step.duration && (
-        <p className="text-xs text-muted-foreground/70 mt-0.5">Dauert in der Regel: {step.duration}</p>
+        <p className="text-xs text-muted-foreground/70 mt-0.5">Dauer: {step.duration}</p>
       )}
     </div>
   );
@@ -409,10 +408,8 @@ function StatusSummary({
     return (
       <Card className="bg-muted/40 border-border/60">
         <CardContent className="p-4">
-          <p className="text-sm text-foreground font-medium mb-1">Herzlich willkommen!</p>
           <p className="text-sm text-muted-foreground">
-            Wir bereiten gerade alles für dein Projekt vor. Unten siehst du alle Schritte,
-            die wir gemeinsam gehen werden.
+            Projekt angelegt. Die Schritte unten zeigen den geplanten Ablauf.
           </p>
         </CardContent>
       </Card>
@@ -424,36 +421,22 @@ function StatusSummary({
 
   return (
     <Card className="bg-muted/40 border-border/60">
-      <CardContent className="p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Stand heute
-          </span>
-        </div>
-        <div className="space-y-1.5 text-sm">
-          {readySteps.length > 0 && (
-            <p className="text-foreground">
-              <span className="font-semibold text-primary">Für dich bereit:</span>{' '}
-              {readySteps.map(s => s.label).join(', ')}
-            </p>
-          )}
-          {inProgressSteps.length > 0 && (
-            <p className="text-muted-foreground">
-              <span className="font-medium text-foreground">Wir arbeiten an:</span>{' '}
-              {inProgressSteps.map(s => s.label).join(', ')}
-            </p>
-          )}
-          {readySteps.length === 0 && inProgressSteps.length === 0 && (
-            <p className="text-muted-foreground">
-              Alle Schritte abgeschlossen. Gute Arbeit!
-            </p>
-          )}
-          {completedCount > 0 && (
-            <p className="text-xs text-muted-foreground pt-1">
-              {completedCount} von {steps.length} Schritten erledigt
-            </p>
-          )}
-        </div>
+      <CardContent className="p-4 space-y-1.5 text-sm">
+        {readySteps.length > 0 && (
+          <p>
+            <span className="font-semibold text-primary">Offen für dich:</span>{' '}
+            <span className="text-foreground">{readySteps.map(s => s.label).join(', ')}</span>
+          </p>
+        )}
+        {inProgressSteps.length > 0 && (
+          <p>
+            <span className="font-medium text-foreground">In Arbeit:</span>{' '}
+            <span className="text-muted-foreground">{inProgressSteps.map(s => s.label).join(', ')}</span>
+          </p>
+        )}
+        {readySteps.length === 0 && inProgressSteps.length === 0 && (
+          <p className="text-muted-foreground">Alle Schritte abgeschlossen.</p>
+        )}
       </CardContent>
     </Card>
   );
@@ -497,7 +480,7 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
       {/* Full timeline — ALL steps visible */}
       <div className="relative">
         <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Alle Schritte
+          Ablauf
         </div>
         {steps.map((step, i) => {
           const isLast = i === steps.length - 1;
@@ -522,13 +505,10 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
         })}
       </div>
 
-      {/* Closing help text */}
-      <div className="mt-6 p-3 rounded-lg bg-muted/40 border border-border/50">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          <strong className="text-foreground">Fragen?</strong> Schreib einfach Daniel direkt —
-          das Portal ist zum Mitlesen, nicht zum Alleine-lassen. Wir melden uns bei jedem neuen Schritt.
-        </p>
-      </div>
+      {/* Contact hint */}
+      <p className="mt-6 text-xs text-muted-foreground">
+        Fragen? <a href="mailto:daniel@software-crafting.de" className="text-primary hover:underline">daniel@software-crafting.de</a>
+      </p>
     </div>
   );
 }
