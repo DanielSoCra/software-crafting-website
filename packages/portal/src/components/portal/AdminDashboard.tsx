@@ -146,8 +146,8 @@ export default function AdminDashboard({ clients, deliverables, forms }: Props) 
             ⚡ Aktion nötig
           </div>
           <div className="flex flex-col gap-2">
-            {alerts.map((alert, i) => (
-              <a key={i} href={alert.href} className="block no-underline">
+            {alerts.map((alert) => (
+              <a key={alert.href} href={alert.href} className="block no-underline">
                 <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow">
                   <CardContent className="px-4 py-3 flex items-center justify-between">
                     <div>

@@ -55,8 +55,7 @@ export default function MoodBoardViewer({
           <iframe
             srcDoc={variantData[activeVariant]}
             sandbox="allow-scripts"
-            className="border border-border rounded-lg"
-            style={{ width: '100%', minHeight: '80vh' }}
+            className="w-full min-h-[80vh] border border-border rounded-lg"
           />
         </div>
       </div>

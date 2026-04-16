@@ -160,7 +160,9 @@ export default function MoodBoardFeedback({
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      // 1. Ensure all variants have feedback rows
+      // 1. Ensure all variants have feedback rows. Individual failures here
+      // are tolerated (a variant that can't be created won't be in the
+      // feedback list queried next, which is fine).
       for (const variant of variants) {
         const createResponse = await fetch(FUNCTION_URL, {
           method: 'POST',
@@ -172,7 +174,7 @@ export default function MoodBoardFeedback({
           }),
         });
         if (!createResponse.ok) {
-          const err = await createResponse.json();
+          const err = await createResponse.json().catch(() => ({}));
           console.warn(`Failed to ensure variant ${variant} exists:`, err);
         }
       }
@@ -181,11 +183,13 @@ export default function MoodBoardFeedback({
       const response = await fetch(`${FUNCTION_URL}?deliverable_id=${deliverableId}`, {
         credentials: 'same-origin',
       });
+      if (!response.ok) throw new Error(`GET feedback: ${response.status}`);
       const allFeedback = await response.json();
       const feedbackIds = allFeedback.map((f: MoodBoardFeedbackType) => f.id);
 
-      // 3. Submit all feedback rows
-      await Promise.all(
+      // 3. Submit all feedback rows — fail the whole batch on any error so
+      // the user isn't told "submitted" when some rows didn't persist.
+      const submitResults = await Promise.all(
         feedbackIds.map((id: string) =>
           fetch(`${FUNCTION_URL}/${id}/submit`, {
             method: 'PUT',
@@ -194,6 +198,8 @@ export default function MoodBoardFeedback({
           })
         )
       );
+      const failedSubmit = submitResults.find(r => !r.ok);
+      if (failedSubmit) throw new Error(`PUT submit: ${failedSubmit.status}`);
 
       setIsSubmitted(true);
     } catch (err) {
@@ -213,10 +219,11 @@ export default function MoodBoardFeedback({
       const response = await fetch(`${FUNCTION_URL}?deliverable_id=${deliverableId}`, {
         credentials: 'same-origin',
       });
+      if (!response.ok) throw new Error(`GET feedback: ${response.status}`);
       const allFeedback = await response.json();
       const feedbackIds = allFeedback.map((f: MoodBoardFeedbackType) => f.id);
 
-      await Promise.all(
+      const unlockResults = await Promise.all(
         feedbackIds.map((id: string) =>
           fetch(`${FUNCTION_URL}/${id}/unlock?deliverable_id=${deliverableId}`, {
             method: 'PUT',
@@ -225,6 +232,8 @@ export default function MoodBoardFeedback({
           })
         )
       );
+      const failedUnlock = unlockResults.find(r => !r.ok);
+      if (failedUnlock) throw new Error(`PUT unlock: ${failedUnlock.status}`);
 
       setUnlocked(true);
       setIsSubmitted(false);
@@ -287,7 +296,7 @@ export default function MoodBoardFeedback({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="ml-4 border-amber-500 text-amber-500 hover:bg-amber-500/10"
+                      className="ml-4 border-warning text-warning hover:bg-warning/10"
                       onClick={handleUnlock}
                       disabled={unlocking || unlocked}
                     >
@@ -454,7 +463,7 @@ export default function MoodBoardFeedback({
             {submitting ? 'Wird gesendet...' : 'Jetzt absenden'}
           </Button>
         ) : (
-          <div className="rounded-lg bg-green-950/30 border border-green-600 text-green-400 text-center py-3 font-semibold">
+          <div className="rounded-lg bg-success/10 border border-success text-success text-center py-3 font-semibold">
             ✓ Danke für dein Feedback!
           </div>
         )}

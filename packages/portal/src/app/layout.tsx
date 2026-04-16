@@ -38,10 +38,7 @@ export default async function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body
-        className="portal-page min-h-screen flex flex-col bg-background text-foreground"
-        style={{ fontFamily: 'var(--font-sans)' }}
-      >
+      <body className="portal-page font-sans min-h-screen flex flex-col bg-background text-foreground">
         <header className="border-b border-border/50 backdrop-blur-md bg-card/80">
           <nav className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
             <a href="/portal" className="font-display text-lg font-bold tracking-tight">

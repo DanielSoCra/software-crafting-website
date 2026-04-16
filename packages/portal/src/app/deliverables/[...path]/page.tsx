@@ -197,13 +197,12 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
         <iframe
           src={iframeSrc}
           sandbox="allow-scripts"
-          className="w-full border border-border rounded-lg"
-          style={{ minHeight: '80vh' }}
+          className="w-full min-h-[80vh] border border-border rounded-lg"
         />
       )}
 
       {renderMode === 'pdf' && (
-        <object data={pdfPath} type="application/pdf" className="w-full rounded-lg" style={{ minHeight: '80vh' }}>
+        <object data={pdfPath} type="application/pdf" className="w-full min-h-[80vh] rounded-lg">
           <p>PDF kann nicht angezeigt werden. <a href={pdfPath} className="text-primary underline">Herunterladen</a></p>
         </object>
       )}

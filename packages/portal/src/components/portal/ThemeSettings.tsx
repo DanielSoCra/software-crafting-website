@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -53,34 +55,29 @@ export default function ThemeSettings() {
   return (
     <fieldset>
       <legend className="sr-only">Farbschema</legend>
-      <div className="space-y-2">
+      <RadioGroup value={theme} onValueChange={(v) => select(v as Theme)} className="gap-2">
         {OPTIONS.map((opt) => {
           const selected = theme === opt.value;
+          const id = `theme-${opt.value}`;
           return (
-            <label
+            <Label
               key={opt.value}
+              htmlFor={id}
               className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors ${
                 selected
                   ? 'border-primary bg-primary/5'
                   : 'border-border hover:bg-muted/50'
               }`}
             >
-              <input
-                type="radio"
-                name="theme"
-                value={opt.value}
-                checked={selected}
-                onChange={() => select(opt.value)}
-                className="mt-0.5 accent-primary"
-              />
+              <RadioGroupItem id={id} value={opt.value} className="mt-0.5" />
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-foreground">{opt.label}</div>
                 <div className="text-xs text-muted-foreground">{opt.description}</div>
               </div>
-            </label>
+            </Label>
           );
         })}
-      </div>
+      </RadioGroup>
     </fieldset>
   );
 }
