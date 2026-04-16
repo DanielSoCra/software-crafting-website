@@ -1,4 +1,4 @@
-import { createSupabaseServerClient, isUserAdmin, resolveClient } from '@/lib/supabase-server';
+import { requireAuth, isUserAdmin, resolveClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveDeliverablePath, readDeliverableFile, getMimeType } from '@/lib/deliverables';
 import { DELIVERABLE_TYPES } from '@/lib/types';
@@ -16,11 +16,9 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAuth(request);
+  if (auth instanceof NextResponse) return auth;
+  const { supabase, user } = auth;
 
   // Resolve client
   const clientParam = request.nextUrl.searchParams.get('client');

@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireAuth } from '@/lib/supabase-server';
 
 const MAX_COMMENT_LENGTH = 500;
 
 export async function GET(req: NextRequest) {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+  const { supabase } = auth;
 
   const deliverableId = req.nextUrl.searchParams.get('deliverable_id');
   if (!deliverableId) {
@@ -29,11 +27,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+  const { supabase, user } = auth;
 
   const body = await req.json();
   const {

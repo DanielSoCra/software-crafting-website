@@ -128,6 +128,9 @@ export interface AdminForm {
 }
 
 // Mood Board Feedback Types
+// Row shape matches Database["public"]["Tables"]["mood_board_feedback"]["Row"]
+// directly — narrowing happens at the component boundary. Application-level
+// unions below describe the *semantic* values the UI writes.
 export type MoodBoardVote = 'like' | 'dislike' | 'favorite' | null;
 export type MoodBoardFeedbackStatus = 'editing' | 'submitted';
 
@@ -136,15 +139,15 @@ export interface MoodBoardFeedback {
   deliverable_id: string;
   client_id: string;
   variant_name: string;
-  vote: MoodBoardVote;
-  is_favorite: boolean;
+  vote: string | null;
+  is_favorite: boolean | null;
   comment_negative: string | null;
   comment_positive: string | null;
   comment_very_good: string | null;
-  status: MoodBoardFeedbackStatus;
+  status: string | null;
   submitted_at: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface MoodBoardFeedbackInput {

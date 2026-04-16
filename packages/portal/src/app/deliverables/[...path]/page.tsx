@@ -142,7 +142,7 @@ export default async function DeliverablesPage({ params, searchParams }: Props) 
         variantData,
         activeVariant: activeVariantName,
         variants: Object.keys(variantData),
-        feedbackData: (feedbackData || []) as unknown as MoodBoardFeedbackType[],
+        feedbackData: feedbackData ?? [],
       };
     } else if (deliverableType === 'analysis') {
       renderMode = 'filelist';

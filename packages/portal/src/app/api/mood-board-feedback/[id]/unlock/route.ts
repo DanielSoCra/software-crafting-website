@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient, isUserAdmin } from '@/lib/supabase-server';
+import { requireAuth, isUserAdmin } from '@/lib/supabase-server';
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+  const { supabase, user } = auth;
 
   if (!(await isUserAdmin(supabase, user.id))) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 });

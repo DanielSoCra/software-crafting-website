@@ -7,6 +7,8 @@
     "dev:portal": "pnpm --filter @portal/portal dev",
     "build": "pnpm -r build",
     "build:website": "pnpm --filter @portal/website build",
-    "build:portal": "pnpm --filter @portal/portal build"
+    "build:portal": "pnpm --filter @portal/portal build",
+    "type-check": "pnpm -r type-check",
+    "test": "pnpm -r test"
   }
 }

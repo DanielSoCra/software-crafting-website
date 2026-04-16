@@ -2,7 +2,7 @@
 import PublicLayout from '../../layouts/PublicLayout.astro';
 import ScrollReveal from '../../components/public/ScrollReveal.astro';
 import CTASection from '../../components/public/CTASection.astro';
-import { projects } from '../../data/projects';
+import { projects, type Project, type ProjectResult } from '../../data/projects';
 import type { GetStaticPaths } from 'astro';
 
 export const prerender = true;
@@ -11,7 +11,7 @@ export const getStaticPaths: GetStaticPaths = () => {
   return projects.map((p) => ({ params: { slug: p.slug }, props: { project: p } }));
 };
 
-const { project } = Astro.props;
+const { project } = Astro.props as { project: Project };
 
 const images = import.meta.glob<{ default: ImageMetadata }>(
   "/src/assets/projects/*.{jpg,jpeg,png,webp}",
@@ -88,7 +88,7 @@ const resolved = images[imagePath]?.default;
         <h2 class="font-display text-3xl md:text-4xl font-bold mb-16 text-center">Zahlen, die sprechen.</h2>
       </ScrollReveal>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-        {project.results.map((r, i) => (
+        {project.results.map((r: ProjectResult, i: number) => (
           <ScrollReveal delay={i * 80}>
             <div class="text-center">
               <p class="font-display text-4xl md:text-5xl font-bold gradient-text mb-2">{r.value}</p>
@@ -106,7 +106,7 @@ const resolved = images[imagePath]?.default;
       <ScrollReveal>
         <p class="text-primary text-xs tracking-[0.2em] uppercase mb-4">Eingesetzte Leistungen</p>
         <ul class="space-y-4 mt-8">
-          {project.services.map((s) => (
+          {project.services.map((s: string) => (
             <li class="flex items-center gap-3 text-text/80 font-light text-lg">
               <svg class="w-5 h-5 text-primary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
               {s}

@@ -2,15 +2,22 @@
 import path from 'node:path';
 import fs from 'node:fs';
 
-const PORTAL_ASSETS_BASE = process.env.PORTAL_ASSETS_BASE || '/var/www/portal-assets';
-const PORTAL_DEV_MODE = process.env.PORTAL_DEV_MODE === 'true';
+// Env is read per-call (not cached) so test setup can mutate PORTAL_ASSETS_BASE
+// and dev workflows can flip PORTAL_DEV_MODE without a process restart.
+function assetsBase(): string {
+  return process.env.PORTAL_ASSETS_BASE || '/var/www/portal-assets';
+}
+
+function devMode(): boolean {
+  return process.env.PORTAL_DEV_MODE === 'true';
+}
 
 /**
  * Resolve a deliverable file path safely.
  * Returns the absolute path on disk, or null if the path escapes the client directory.
  */
 export function resolveDeliverablePath(clientSlug: string, filePath: string): string | null {
-  const clientBase = path.join(PORTAL_ASSETS_BASE, clientSlug);
+  const clientBase = path.join(assetsBase(), clientSlug);
   const resolved = path.resolve(clientBase, filePath);
 
   // Security: ensure resolved path is within the client's directory
@@ -21,7 +28,7 @@ export function resolveDeliverablePath(clientSlug: string, filePath: string): st
   // Symlink defense: verify real path is also within client directory.
   // Skip only when explicitly opted into dev mode — local dev uses symlinks
   // to the agency repo. A stray PORTAL_ASSETS_BASE in prod must NOT disable this.
-  if (!PORTAL_DEV_MODE) {
+  if (!devMode()) {
     try {
       const real = fs.realpathSync(resolved);
       const realBase = fs.realpathSync(clientBase);

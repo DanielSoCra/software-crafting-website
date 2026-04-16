@@ -49,7 +49,7 @@ export default function MoodBoardFeedback({
       map[fb.variant_name] = {
         // 'favorite' in MoodBoardVote is a legacy value — favorite is tracked via is_favorite boolean
         vote: fb.vote === 'favorite' ? null : (fb.vote as 'like' | 'dislike' | null),
-        is_favorite: fb.is_favorite,
+        is_favorite: fb.is_favorite ?? false,
         comment_negative: fb.comment_negative || '',
         comment_positive: fb.comment_positive || '',
         comment_very_good: fb.comment_very_good || '',
