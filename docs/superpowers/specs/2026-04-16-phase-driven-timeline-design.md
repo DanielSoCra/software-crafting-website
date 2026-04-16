@@ -22,17 +22,19 @@ Before designing the fix, we settled the data-ownership question that was blocki
 
 > The second brain reflects reality; it doesn't run it.
 
-**Hybrid source-of-truth split:**
+**Hybrid source-of-truth split (target):**
 
-| Data | Owner | Why |
-|---|---|---|
-| Live portal state (`status`, `phase`, `project_plan`) | **Supabase** | Portal renders it; RLS can gate by it; queryable across clients |
-| Discovery snapshot (problem, budget, goals, qualification, references, contacts, contract, discovery chain) | **Agency repo `client-profile.yml`** | Edited iteratively during discovery; YAML is the best editing surface; git-diff-reviewable |
-| Personal pointer (slug, company, relationship, started, tags, agency path) | **Vault `_profile.md`** | Obsidian graph + personal annotation; not operational |
+| Data | Target owner | Current owner | Why |
+|---|---|---|---|
+| Live portal state (`status`, `phase`, `project_plan`) | **Supabase** | Supabase (partial) | Portal renders it; RLS can gate by it; queryable across clients |
+| Discovery snapshot (problem, budget, goals, qualification, references, contacts, contract, discovery chain) | **Agency repo `client-profile.yml`** | Vault `_profile.md` | Edited iteratively during discovery; YAML is the best editing surface; git-diff-reviewable |
+| Personal pointer (slug, company, relationship, started, tags, agency path) | **Vault `_profile.md`** | Vault `_profile.md` | Obsidian graph + personal annotation; not operational |
 
-**Sync direction:** writes flow outward from each owner. Agency → Supabase at pipeline milestones. Agency → Vault at creation. No bi-directional sync.
+**Current state:** The vault-primary architecture from `cozy-petting-parasol.md` was partially implemented — `client-profile.yml` was eliminated and skills read from vault via Obsidian MCP. The target hybrid state requires moving the discovery snapshot back to YAML. That migration is scoped in a separate spec (TBD, not a blocker for this work).
 
-This spec covers only the Supabase-side addition (`status` + `phase` columns) and the portal rendering change. Agency YAML structure is unchanged. Vault sync is deferred.
+**This spec's scope is orthogonal to discovery data location.** The dashboard reads `phase` from Supabase and deliverables/forms from their own tables; it does not read discovery snapshot data. This spec can land before YAML restoration is done.
+
+**Sync direction (target):** writes flow outward from each owner. Agency → Supabase at pipeline milestones. Agency → Vault at creation. No bi-directional sync.
 
 ---
 
@@ -51,16 +53,38 @@ alter table public.clients
   add column phase text not null default 'discovery'
     check (phase in ('discovery','delivery'));
 
--- Backfill existing clients to current reality
-update public.clients set status = 'active', phase = 'delivery'
-  where slug in ('arinya','gr8progress');
-update public.clients set status = 'lead', phase = 'discovery'
-  where slug = 'bossler-most';
+-- Backfill existing clients to current reality + clear discovery overrides
+do $$
+declare r int;
+begin
+  update public.clients set status = 'active', phase = 'delivery'
+    where slug in ('arinya','gr8progress');
+  get diagnostics r = row_count;
+  raise notice 'active/delivery backfill: % rows', r;
+  if r <> 2 then raise warning 'expected 2, got %', r; end if;
+
+  update public.clients set status = 'lead', phase = 'discovery'
+    where slug = 'bossler-most';
+  get diagnostics r = row_count;
+  raise notice 'lead/discovery backfill: % rows', r;
+  if r <> 1 then raise warning 'expected 1, got %', r; end if;
+
+  -- Clear existing project_plan overrides for discovery-phase clients.
+  -- Existing overrides (e.g. bossler-most) were admin-curated aspirationally
+  -- and include delivery-phase steps that shouldn't render during discovery.
+  -- Clearing lets the phase default take over. Delivery-phase clients keep
+  -- their overrides untouched.
+  update public.clients
+    set metadata = metadata - 'project_plan'
+    where phase = 'discovery' and metadata ? 'project_plan';
+  get diagnostics r = row_count;
+  raise notice 'cleared discovery project_plan overrides: % rows', r;
+end $$;
 ```
 
 This is a new migration that stacks on top of the existing `20260402100000_baseline.sql`. Do **not** edit the baseline — fresh projects run baseline → this migration in order and end up at the same state as prod.
 
-**No transition validation at the DB layer.** Check constraints validate current values only; encoding state-machine transitions in SQL is more overhead than signal. Admin trust; if they set the wrong thing, fix in Studio.
+**No transition validation at the DB layer.** Check constraints validate current values only; encoding state-machine transitions in SQL is more overhead than signal. Admin trust; if they set the wrong thing, fix in Studio. Adding a new status value later requires a follow-up `ALTER TABLE ... DROP CONSTRAINT ... ADD CONSTRAINT` — acceptable tax for enforcement.
 
 **RLS:** unchanged. Existing policies operate on `id` / `user_id` joins; new columns are read through the same selects.
 
@@ -111,6 +135,8 @@ Quiet link (`text-primary hover:underline`), no card, no duration, no descriptio
 
 Completed and upcoming rendering: unchanged.
 
+**Order of operations:** apply the `also-ready` demotion AFTER the existing "first `upcoming` after `completed` → `in_progress`" auto-infer (lines 214-226 in current `Dashboard.tsx`). Both orderings yield equivalent results for the current rule set; documenting fixes the order if rules change.
+
 #### 2d. `StatusSummary` banner
 
 Discovery phase shows a single line: "Fragebogen offen — ca. 10 Min." or "Antworten erhalten — wir melden uns." No "Offen für dich / In Arbeit" split in discovery, since there's at most one client-owned action.
@@ -119,12 +145,13 @@ Delivery phase: existing split ("Offen für dich" + "In Arbeit") is retained, bu
 
 #### 2e. `Dashboard.tsx` changes summary
 
-- `Props` gains `phase: 'discovery' | 'delivery'` (read from `client.phase` in `dashboard/page.tsx`)
+- `dashboard/page.tsx`: SELECT extends to `id, company, slug, metadata, phase` and passes `phase` as a new Dashboard prop
+- `Props` gains `phase: 'discovery' | 'delivery'`
 - `getDefaultPlan` takes `phase` and `hasQuestionnaire`, returns the discovery or delivery template
 - `buildSteps` recognizes the `next-step` key and renders it per table in §2b
 - `StepStatus` type extends to include `'also-ready'`
 - New `StepRow` branch for `also-ready`
-- `StatusSummary` copy differs between phases (§2d)
+- `StatusSummary` accepts `phase` prop; copy and layout differ between phases (§2d)
 
 No changes to `AdminDashboard.tsx`. The admin pipeline grid is orthogonal — it always shows all six deliverable columns regardless of phase.
 
@@ -152,17 +179,16 @@ The `prospect → active` + phase flip is the business-meaningful transition. Ma
 - `dashboard-plan.test.ts` (new): `buildSteps` with each phase + questionnaire status combination; multi-ready hierarchy assertion (first emphasized, rest `also-ready`); `project_plan` override wins over phase default
 - `next-step.test.ts` (new or merged): `next-step` row rendering across all four questionnaire states
 
-**E2E (`packages/portal/tests/e2e/`):**
-- `dashboard-phase.spec.ts` (new): set a test client to `phase=discovery`, assert only questionnaire + next-step visible; flip to `phase=delivery`, assert full pipeline visible
+**E2E:** skipped in this spec. `playwright.config.ts` targets `https://software-crafting.de`; a phase-flip E2E would mutate prod state and require admin auth in CI. Unit tests cover the rendering logic. If read-only E2E coverage is wanted later, seed a permanent `demo-discovery` and `demo-delivery` client with stable phase and assert their rendered views.
 
 **Manual:**
-- Apply migration, flip `bossler-most` phase in Supabase Studio, refresh portal, confirm view changes
-- Flip back to `discovery`, confirm the dashboard collapses
+- Apply migration, flip `bossler-most` phase in Supabase Studio, refresh portal, confirm view changes (full pipeline appears)
+- Flip back to `discovery`, confirm the dashboard shrinks: delivery steps disappear; questionnaire persists (as completed if submitted); `next-step` row re-appears
 
 ### 6. Commits
 
-1. `feat(portal): add status + phase columns to clients table` — migration + types regen
-2. `feat(portal): phase-driven timeline with multi-ready hierarchy` — Dashboard.tsx changes + tests
+1. `feat(portal): add status + phase columns + clear discovery overrides` — migration + types regen
+2. `feat(portal): phase-driven timeline with multi-ready hierarchy` — Dashboard.tsx + dashboard/page.tsx + tests
 3. `feat(agency): /invite flips status lead→prospect` — skill change
 4. `docs(agency): client lifecycle + phase-flip runbook` — CLAUDE.md updates
 
@@ -170,13 +196,13 @@ The `prospect → active` + phase flip is the business-meaningful transition. Ma
 
 ## Non-goals / deferred
 
+- **Restoring `client-profile.yml` to the agency repo.** Separate spec. This spec is orthogonal — Dashboard does not read discovery snapshot data. Skills that currently read vault via MCP continue to do so until YAML restoration lands.
+- **Cleaning up vault operational writes in skills.** `/invite` writes `invite_sent`, `discovery_next_step`, and Supabase IDs to vault. Under the target hybrid model those become mirror writes. Cleanup deferred to a separate spec.
 - **Vault sync.** Mirroring `status` from Supabase to `_profile.md` so it's visible in Obsidian — separate skill, not blocking.
 - **Admin UI for phase flips.** Supabase Studio is adequate for now. Revisit when there are enough clients to make Studio tedious.
 - **`/activate-client` skill.** Deferred until we know what "activating" means beyond the phase flip.
-- **Agency YAML changes.** `client-profile.yml` stays as-is. No new fields added to it as part of this change.
 - **`AdminDashboard.tsx` rework.** The admin pipeline grid already shows all six deliverable columns — that's its job. Orthogonal to this change.
 - **Transition validation at DB.** Trust the admin. The state machine lives in skills and documentation, not schema.
-- **Superseding `cozy-petting-parasol.md`.** Delete when this spec is committed.
 
 ## Open questions
 
@@ -186,4 +212,4 @@ None.
 
 - **Phase flip is manual.** If admin forgets to flip `phase=delivery` after signing a contract, the delivery-phase client still sees the discovery view. Mitigation: document in lifecycle runbook; consider surfacing a reminder in `AdminDashboard.tsx` (a client with `status=active, phase=discovery` is a drift signal).
 - **`also-ready` rendering could be missed by non-technical users** if too quiet. Mitigation: verify visually with Arinya's mother or similar test user; adjust contrast if it reads as disabled.
-- **Backfill UPDATEs depend on current slugs.** If a slug has changed since this spec was written, the UPDATE won't match. Mitigation: verify slugs before applying; migration should print affected row counts.
+- **Backfill UPDATEs depend on current slugs.** If a slug has changed since this spec was written, the UPDATE won't match. Mitigation: the DO block in §1 emits `RAISE NOTICE`/`WARNING` on unexpected row counts. Verify migration output before deploying.
