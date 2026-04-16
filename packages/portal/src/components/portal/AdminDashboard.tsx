@@ -65,7 +65,7 @@ function buildAlerts(
   for (const client of clients) {
     // Deliverables unviewed > 48h
     for (const d of deliverables.filter((x) => x.client_id === client.id && !x.viewed_at)) {
-      const publishedAt = new Date(d.created_at).getTime();
+      const publishedAt = new Date(d.published_at).getTime();
       if (now - publishedAt > TWO_DAYS) {
         const label = DELIVERABLE_LABELS[d.type as DeliverableType] ?? d.type;
         const days = Math.floor((now - publishedAt) / (24 * 60 * 60 * 1000));

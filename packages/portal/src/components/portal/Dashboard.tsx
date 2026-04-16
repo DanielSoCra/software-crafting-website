@@ -266,8 +266,8 @@ function InProgressCard({ step }: { step: ProjectStep }) {
           <h3 className="font-medium text-foreground">{step.label}</h3>
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--color-accent)' }} />
-              <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: 'var(--color-accent)' }} />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
             </span>
             In Bearbeitung
           </span>
