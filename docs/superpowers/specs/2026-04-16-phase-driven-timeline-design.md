@@ -30,7 +30,7 @@ Before designing the fix, we settled the data-ownership question that was blocki
 | Discovery snapshot (problem, budget, goals, qualification, references, contacts, contract, discovery chain) | **Agency repo `client-profile.yml`** | Vault `_profile.md` | Edited iteratively during discovery; YAML is the best editing surface; git-diff-reviewable |
 | Personal pointer (slug, company, relationship, started, tags, agency path) | **Vault `_profile.md`** | Vault `_profile.md` | Obsidian graph + personal annotation; not operational |
 
-**Current state:** The vault-primary architecture from `cozy-petting-parasol.md` was partially implemented — `client-profile.yml` was eliminated and skills read from vault via Obsidian MCP. The target hybrid state requires moving the discovery snapshot back to YAML. That migration is scoped in a separate spec (TBD, not a blocker for this work).
+**Current state:** The vault-primary architecture from `cozy-petting-parasol.md` was partially implemented — `client-profile.yml` was eliminated and skills read from vault via Obsidian MCP. The target hybrid state requires moving the discovery snapshot back to YAML. That migration will be scoped in a follow-up spec (working title: `restore-client-profile-yml.md`) — not a blocker for this work.
 
 **This spec's scope is orthogonal to discovery data location.** The dashboard reads `phase` from Supabase and deliverables/forms from their own tables; it does not read discovery snapshot data. This spec can land before YAML restoration is done.
 
@@ -48,9 +48,9 @@ Single migration adds two columns with check constraints and backfills the three
 -- supabase/migrations/YYYYMMDDHHMMSS_client_status_phase.sql
 
 alter table public.clients
-  add column status text not null default 'lead'
+  add column if not exists status text not null default 'lead'
     check (status in ('lead','prospect','active','paused','churned')),
-  add column phase text not null default 'discovery'
+  add column if not exists phase text not null default 'discovery'
     check (phase in ('discovery','delivery'));
 
 -- Backfill existing clients to current reality + clear discovery overrides
@@ -63,22 +63,23 @@ begin
   raise notice 'active/delivery backfill: % rows', r;
   if r <> 2 then raise warning 'expected 2, got %', r; end if;
 
-  update public.clients set status = 'lead', phase = 'discovery'
+  -- bossler-most: invited, awaiting reply → prospect (not lead)
+  update public.clients set status = 'prospect', phase = 'discovery'
     where slug = 'bossler-most';
   get diagnostics r = row_count;
-  raise notice 'lead/discovery backfill: % rows', r;
+  raise notice 'prospect/discovery backfill: % rows', r;
   if r <> 1 then raise warning 'expected 1, got %', r; end if;
 
-  -- Clear existing project_plan overrides for discovery-phase clients.
-  -- Existing overrides (e.g. bossler-most) were admin-curated aspirationally
-  -- and include delivery-phase steps that shouldn't render during discovery.
-  -- Clearing lets the phase default take over. Delivery-phase clients keep
-  -- their overrides untouched.
+  -- Clear bossler-most's existing project_plan override. His override was
+  -- admin-curated aspirationally and includes delivery-phase steps that
+  -- shouldn't render during discovery. Clearing lets the phase default take
+  -- over. Scoped by slug to avoid clearing demo-client overrides used for
+  -- testing (alpinvest, gruenwerk, etc.).
   update public.clients
     set metadata = metadata - 'project_plan'
-    where phase = 'discovery' and metadata ? 'project_plan';
+    where slug = 'bossler-most' and metadata ? 'project_plan';
   get diagnostics r = row_count;
-  raise notice 'cleared discovery project_plan overrides: % rows', r;
+  raise notice 'cleared bossler-most project_plan: % rows', r;
 end $$;
 ```
 
@@ -97,10 +98,13 @@ This is a new migration that stacks on top of the existing `20260402100000_basel
 When `client.metadata.project_plan` is absent, `Dashboard.tsx` derives the plan from `phase`:
 
 ```
-phase = discovery → [questionnaire, next-step]
-phase = delivery  → [questionnaire (completed), analysis, mood-board,
-                     brand-guide, website-preview, proposal]
+phase = discovery → [questionnaire (if form exists), next-step]
+phase = delivery  → [questionnaire (if form exists; status auto-derived),
+                     analysis, mood-board, brand-guide, website-preview,
+                     proposal]
 ```
+
+**Edge case — discovery, no form yet:** plan resolves to `[next-step]`, and next-step is hidden per §2b when no form. Dashboard would render empty. This is a transient admin-side state (client created but questionnaire not yet generated via `/questionnaire`) — resolves as soon as a form is created. Acceptable; no special handling needed.
 
 `project_plan` override precedence: **override always wins**. If admin sets `metadata.project_plan = [...]`, it renders verbatim regardless of phase. This is the escape hatch for non-standard clients.
 
@@ -145,7 +149,7 @@ Delivery phase: existing split ("Offen für dich" + "In Arbeit") is retained, bu
 
 #### 2e. `Dashboard.tsx` changes summary
 
-- `dashboard/page.tsx`: SELECT extends to `id, company, slug, metadata, phase` and passes `phase` as a new Dashboard prop
+- `dashboard/page.tsx`: SELECT extends to `id, company, slug, metadata, phase` and passes `phase` as a new Dashboard prop. Narrow the DB string to a union: `const phase = client.phase === 'delivery' ? 'delivery' : 'discovery';` (TS types from `supabase gen types` don't reflect check constraints)
 - `Props` gains `phase: 'discovery' | 'delivery'`
 - `getDefaultPlan` takes `phase` and `hasQuestionnaire`, returns the discovery or delivery template
 - `buildSteps` recognizes the `next-step` key and renders it per table in §2b
@@ -191,6 +195,8 @@ The `prospect → active` + phase flip is the business-meaningful transition. Ma
 2. `feat(portal): phase-driven timeline with multi-ready hierarchy` — Dashboard.tsx + dashboard/page.tsx + tests
 3. `feat(agency): /invite flips status lead→prospect` — skill change
 4. `docs(agency): client lifecycle + phase-flip runbook` — CLAUDE.md updates
+
+**Deploy ordering:** apply the migration (commit 1) to prod BEFORE deploying the code (commit 2). Otherwise the dashboard SELECT fails on the missing `phase` column. Window between the two: Bossler sees the old full-pipeline default (override cleared, no phase logic yet) — acceptable brief regression.
 
 ---
 
