@@ -24,8 +24,10 @@ export type Database = {
           id: string
           industry_key: string | null
           metadata: Json | null
+          phase: string
           phone: string | null
           slug: string
+          status: string
           updated_at: string | null
           user_id: string | null
         }
@@ -38,8 +40,10 @@ export type Database = {
           id?: string
           industry_key?: string | null
           metadata?: Json | null
+          phase?: string
           phone?: string | null
           slug: string
+          status?: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -52,8 +56,10 @@ export type Database = {
           id?: string
           industry_key?: string | null
           metadata?: Json | null
+          phase?: string
           phone?: string | null
           slug?: string
+          status?: string
           updated_at?: string | null
           user_id?: string | null
         }
