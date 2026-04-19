@@ -1,20 +1,19 @@
 import React from 'react';
-import type { Deliverable, DeliverableType, Form } from '@/lib/types';
-import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '@/lib/types';
+import type { Deliverable, Form } from '@/lib/types';
+import {
+  buildSteps,
+  type PlanStep,
+  type ProjectStep,
+  type StepStatus,
+  type StepOwner,
+  STEP_META,
+} from '@/lib/dashboard-plan';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 
-/** Per-client project plan step, stored in client.metadata.project_plan */
-export interface PlanStep {
-  key: string;
-  label?: string;
-  icon?: string;
-  status?: StepStatus;
-  description?: string;
-  href?: string;
-}
+export type { PlanStep };
 
 interface Props {
   company: string;
@@ -23,209 +22,7 @@ interface Props {
   questionnaireStatus: Form['status'] | null;
   clientSlug?: string;
   projectPlan?: PlanStep[] | null;
-}
-
-type StepStatus = 'completed' | 'ready' | 'in_progress' | 'upcoming';
-type StepOwner = 'agency' | 'client' | 'both';
-
-interface ProjectStep {
-  id: string;
-  label: string;
-  icon: string;
-  status: StepStatus;
-  description: string;
-  href?: string;
-  ctaLabel: string;
-  owner: StepOwner;
-  duration?: string;
-  summary: string;  // Always-visible short description regardless of status
-}
-
-interface StepMeta {
-  icon: string;
-  cta: string;
-  owner: StepOwner;
-  duration?: string;
-  summary: string;  // What this step is about (always shown)
-  desc: Record<string, string>;  // Status-specific description
-}
-
-const STEP_META: Record<string, StepMeta> = {
-  questionnaire: {
-    icon: '📋',
-    cta: 'Fragebogen öffnen',
-    owner: 'client',
-    duration: '10 Min.',
-    summary: 'Kurze Fragen zu deinem Projekt.',
-    desc: {
-      ready: 'Fragen zu deinem Projekt beantworten.',
-      resume: 'Du hast begonnen. Weitermachen, wann du willst.',
-      completed: 'Antworten erhalten.',
-      in_progress: 'Wird vorbereitet.',
-    },
-  },
-  analysis: {
-    icon: '🔍',
-    cta: 'Analyse ansehen',
-    owner: 'agency',
-    duration: '2–3 Tage',
-    summary: 'Branchen- und Wettbewerbsanalyse.',
-    desc: {
-      ready: 'Analyse ist fertig.',
-      completed: 'Analyse abgeschlossen.',
-      in_progress: 'Analyse läuft.',
-    },
-  },
-  'mood-board': {
-    icon: '🎨',
-    cta: 'Designvorschläge ansehen',
-    owner: 'both',
-    duration: '3–5 Tage',
-    summary: 'Designrichtungen zur Auswahl.',
-    desc: {
-      ready: 'Wähle die passende Designrichtung.',
-      completed: 'Richtung gewählt.',
-      in_progress: 'Entwürfe in Arbeit.',
-    },
-  },
-  'brand-guide': {
-    icon: '🎯',
-    cta: 'Brand Guide ansehen',
-    owner: 'agency',
-    duration: '2–3 Tage',
-    summary: 'Farben, Schriften, Stilrichtlinien.',
-    desc: {
-      ready: 'Brand Guide ist fertig.',
-      completed: 'Brand Guide abgeschlossen.',
-      in_progress: 'Brand Guide in Arbeit.',
-    },
-  },
-  'website-preview': {
-    icon: '🌐',
-    cta: 'Vorschau ansehen',
-    owner: 'agency',
-    duration: '1–2 Wochen',
-    summary: 'Lauffähige Vorschau deiner Website.',
-    desc: {
-      ready: 'Vorschau bereit zum Ansehen.',
-      completed: 'Vorschau angesehen.',
-      in_progress: 'Umsetzung läuft.',
-    },
-  },
-  proposal: {
-    icon: '📄',
-    cta: 'Angebot ansehen',
-    owner: 'agency',
-    duration: '1–2 Tage',
-    summary: 'Verbindliches Angebot mit Leistungen und Preisen.',
-    desc: {
-      ready: 'Angebot liegt vor.',
-      completed: 'Angebot erhalten.',
-      in_progress: 'Angebot wird erstellt.',
-    },
-  },
-};
-
-function getDefaultPlan(hasQuestionnaire: boolean): PlanStep[] {
-  const plan: PlanStep[] = [];
-  if (hasQuestionnaire) plan.push({ key: 'questionnaire' });
-  for (const type of DELIVERABLE_TYPES) plan.push({ key: type });
-  return plan;
-}
-
-function resolveLabel(entry: PlanStep, isQuestionnaire: boolean, isStandardDeliverable: boolean): string {
-  if (entry.label) return entry.label;
-  if (isQuestionnaire) return 'Fragebogen';
-  if (isStandardDeliverable) return DELIVERABLE_LABELS[entry.key as DeliverableType];
-  return entry.key;
-}
-
-function buildSteps(
-  projectPlan: PlanStep[] | null | undefined,
-  deliverables: Deliverable[],
-  questionnaireFormId: string | null,
-  questionnaireStatus: Form['status'] | null,
-  queryParam: string,
-): ProjectStep[] {
-  const deliverableMap = new Map(deliverables.map(d => [d.type, d]));
-  const plan = projectPlan ?? getDefaultPlan(!!questionnaireFormId);
-  const steps: ProjectStep[] = [];
-  let hasExplicitInProgress = false;
-
-  for (const entry of plan) {
-    const isQuestionnaire = entry.key === 'questionnaire';
-    const isStandardDeliverable = (DELIVERABLE_TYPES as readonly string[]).includes(entry.key);
-    const meta = STEP_META[entry.key];
-
-    const label = resolveLabel(entry, isQuestionnaire, isStandardDeliverable);
-    const icon = entry.icon ?? meta?.icon ?? '📌';
-    const owner: StepOwner = meta?.owner ?? 'agency';
-    const duration = meta?.duration;
-    const summary = meta?.summary ?? '';
-    let ctaLabel = meta?.cta ?? 'Ansehen';
-    let status: StepStatus;
-    let description = '';
-    let href: string | undefined;
-
-    if (isQuestionnaire) {
-      if (!questionnaireFormId) {
-        status = 'upcoming';
-      } else if (questionnaireStatus === 'completed') {
-        status = 'completed';
-        description = meta.desc.completed;
-      } else if (questionnaireStatus === 'in_progress') {
-        status = 'ready';
-        description = meta.desc.resume;
-        ctaLabel = 'Fragebogen fortsetzen';
-      } else if (questionnaireStatus === 'sent') {
-        status = 'ready';
-        description = meta.desc.ready;
-      } else {
-        status = 'upcoming';
-        description = meta.desc.in_progress;
-      }
-      if ((status === 'ready' || status === 'completed') && questionnaireFormId) {
-        href = `/portal/questionnaire/${questionnaireFormId}${queryParam}`;
-      }
-    } else if (isStandardDeliverable) {
-      const deliverable = deliverableMap.get(entry.key as DeliverableType);
-      if (deliverable?.viewed_at) {
-        status = 'completed';
-        description = meta?.desc.completed ?? '';
-      } else if (deliverable) {
-        status = 'ready';
-        description = meta?.desc.ready ?? '';
-      } else {
-        status = 'upcoming';
-      }
-      if (deliverable) href = `/portal/deliverables/${entry.key}${queryParam}`;
-    } else {
-      status = entry.status ?? 'upcoming';
-      if (status === 'in_progress') hasExplicitInProgress = true;
-      // Only allow relative paths and http(s) URLs to prevent javascript: XSS
-      if (entry.href && /^(\/|https?:\/\/)/.test(entry.href)) href = entry.href;
-    }
-
-    if (entry.description) description = entry.description;
-
-    steps.push({ id: entry.key, label, icon, status, description, href, ctaLabel, owner, duration, summary });
-  }
-
-  // Auto-infer first "in_progress": the first 'upcoming' after a completed step
-  if (!hasExplicitInProgress) {
-    let prevCompleted = true;
-    for (const step of steps) {
-      if (step.status === 'upcoming' && prevCompleted) {
-        step.status = 'in_progress';
-        const m = STEP_META[step.id];
-        if (m && !step.description) step.description = m.desc.in_progress ?? '';
-        break;
-      }
-      prevCompleted = step.status === 'completed';
-    }
-  }
-
-  return steps;
+  phase: 'discovery' | 'delivery';
 }
 
 const OWNER_LABEL: Record<StepOwner, string> = {
@@ -262,6 +59,13 @@ function StepDot({ status }: { status: StepStatus }) {
     return (
       <div className="w-7 h-7 rounded-full bg-primary/10 border-2 border-primary ring-4 ring-primary/15 flex items-center justify-center">
         <div className="w-2 h-2 rounded-full bg-primary" />
+      </div>
+    );
+  }
+  if (status === 'also-ready') {
+    return (
+      <div className="w-7 h-7 rounded-full bg-primary/5 border-2 border-primary/40 flex items-center justify-center">
+        <div className="w-1.5 h-1.5 rounded-full bg-primary/70" />
       </div>
     );
   }
@@ -377,6 +181,23 @@ function StepRow({ step }: { step: ProjectStep }) {
     );
   }
 
+  if (step.status === 'also-ready') {
+    return (
+      <div className="py-2 flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-muted-foreground">Auch schon offen:</span>
+        <span className="text-sm font-medium text-foreground">{step.label}</span>
+        {step.href && (
+          <a href={step.href} className="text-sm text-primary hover:underline ml-auto inline-flex items-center gap-1">
+            Ansehen
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+        )}
+      </div>
+    );
+  }
+
   // Upcoming = muted but readable row with summary (not hidden!)
   return (
     <div className="py-2">
@@ -399,11 +220,29 @@ function StatusSummary({
   steps,
   completedCount,
   isFirstVisit,
+  phase,
+  questionnaireStatus,
 }: {
   steps: ProjectStep[];
   completedCount: number;
   isFirstVisit: boolean;
+  phase: 'discovery' | 'delivery';
+  questionnaireStatus: Form['status'] | null;
 }) {
+  if (phase === 'discovery') {
+    const copy =
+      questionnaireStatus === 'completed'
+        ? 'Antworten erhalten — wir melden uns.'
+        : 'Fragebogen offen — ca. 10 Min.';
+    return (
+      <Card className="bg-muted/40 border-border/60">
+        <CardContent className="p-4">
+          <p className="text-sm text-muted-foreground">{copy}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isFirstVisit) {
     return (
       <Card className="bg-muted/40 border-border/60">
@@ -442,9 +281,12 @@ function StatusSummary({
   );
 }
 
-export default function Dashboard({ company, deliverables, questionnaireFormId, questionnaireStatus, clientSlug, projectPlan }: Props) {
+export default function Dashboard({
+  company, deliverables, questionnaireFormId, questionnaireStatus,
+  clientSlug, projectPlan, phase,
+}: Props) {
   const queryParam = clientSlug ? `?client=${clientSlug}` : '';
-  const steps = buildSteps(projectPlan, deliverables, questionnaireFormId, questionnaireStatus, queryParam);
+  const steps = buildSteps(projectPlan, deliverables, questionnaireFormId, questionnaireStatus, queryParam, phase);
 
   let completedCount = 0;
   let hasReadyOrInProgress = false;
@@ -474,7 +316,13 @@ export default function Dashboard({ company, deliverables, questionnaireFormId, 
 
       {/* Status summary card */}
       <div className="mb-6">
-        <StatusSummary steps={steps} completedCount={completedCount} isFirstVisit={isFirstVisit} />
+        <StatusSummary
+          steps={steps}
+          completedCount={completedCount}
+          isFirstVisit={isFirstVisit}
+          phase={phase}
+          questionnaireStatus={questionnaireStatus}
+        />
       </div>
 
       {/* Full timeline — ALL steps visible */}

@@ -1,3 +1,14 @@
+/**
+ * Dashboard page — phase-driven rendering.
+ *
+ * Reads `phase` from the clients table and passes it to the Dashboard
+ * component. Default plan behavior:
+ *   - phase = 'discovery' → questionnaire + next-step row only
+ *   - phase = 'delivery'  → full pipeline (analysis → proposal)
+ *
+ * `metadata.project_plan` overrides the phase default — admin-curated
+ * plans render verbatim. See spec 2026-04-16-phase-driven-timeline-design.md.
+ */
 import { createSupabaseServerClient, isUserAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import Dashboard from '@/components/portal/Dashboard';
@@ -54,7 +65,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   }
 
   // Client view (regular user OR admin with ?client=slug)
-  let clientQuery = supabase.from('clients').select('id, company, slug, metadata');
+  let clientQuery = supabase.from('clients').select('id, company, slug, metadata, phase');
   let clientSlug: string | undefined;
   if (isAdmin && clientParam) {
     clientQuery = clientQuery.eq('slug', clientParam);
@@ -73,7 +84,27 @@ export default async function DashboardPage({ searchParams }: Props) {
     redirect(isAdmin ? '/dashboard' : '/login');
   }
 
-  const client = clientData as { id: string; company: string; slug: string; metadata: { project_plan?: PlanStep[] } };
+  const client = clientData as {
+    id: string;
+    company: string;
+    slug: string;
+    metadata: { project_plan?: PlanStep[] } | null;
+    phase: string;
+  };
+
+  // Narrow DB string to union. Check constraint currently limits values to
+  // 'discovery' | 'delivery', but we match each value explicitly so that any
+  // future addition (e.g., 'paused-delivery') logs loudly instead of collapsing
+  // silently to 'discovery'. Observable via server logs / Sentry.
+  let phase: 'discovery' | 'delivery';
+  if (client.phase === 'delivery') {
+    phase = 'delivery';
+  } else if (client.phase === 'discovery') {
+    phase = 'discovery';
+  } else {
+    console.warn(`unexpected client.phase "${client.phase}" for slug=${client.slug}; defaulting to discovery`);
+    phase = 'discovery';
+  }
 
   const [delRes, formRes] = await Promise.all([
     supabase.from('deliverables').select('*').eq('client_id', client.id),
@@ -94,6 +125,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       questionnaireFormId={latestForm?.id ?? null}
       questionnaireStatus={latestForm?.status ?? null}
       clientSlug={clientSlug}
+      phase={phase}
       projectPlan={
         Array.isArray(client.metadata?.project_plan)
           ? client.metadata.project_plan.filter((s: PlanStep) => typeof s?.key === 'string')

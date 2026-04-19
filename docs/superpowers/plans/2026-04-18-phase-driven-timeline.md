@@ -696,6 +696,12 @@ if (isNextStep) {
       duration: undefined,
       summary: waitingCopy,
     });
+    // Lock out auto-infer: next-step's status is fully determined by this
+    // branch and must never be promoted by the "first upcoming after completed"
+    // rule. Without this, `[next-step]` alone or as the first upcoming row
+    // gets promoted to in_progress (the initial prevCompleted=true in the
+    // auto-infer loop triggers the first-upcoming rule).
+    hasExplicitInProgress = true;
   }
   continue;
 }
