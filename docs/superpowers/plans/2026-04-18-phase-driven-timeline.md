@@ -10,6 +10,10 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-16-phase-driven-timeline-design.md`
 
+**Execution split (important):** Phases 1 & 2 are executed inside a `software-crafting-website` worktree via `superpowers:subagent-driven-development`. Phases 3 & 4 modify a *different* repository (`~/code/local-web-agency`) and therefore cannot run inside the portal worktree — the subagent orchestrator assumes one repo per worktree. Those phases are executed separately after the portal worktree is merged or kept.
+
+**Rollback appendix:** see Appendix A at the bottom of this file for the full rollback procedure (schema + Bossler's `project_plan` restore).
+
 ---
 
 ## File Structure
@@ -55,14 +59,14 @@ begin
     where slug in ('arinya','gr8progress');
   get diagnostics r = row_count;
   raise notice 'active/delivery backfill: % rows', r;
-  if r <> 2 then raise warning 'expected 2, got %', r; end if;
+  if r <> 2 then raise exception 'active/delivery backfill: expected 2 rows, got %', r; end if;
 
   -- bossler-most: invited, awaiting reply → prospect (not lead)
   update public.clients set status = 'prospect', phase = 'discovery'
     where slug = 'bossler-most';
   get diagnostics r = row_count;
   raise notice 'prospect/discovery backfill: % rows', r;
-  if r <> 1 then raise warning 'expected 1, got %', r; end if;
+  if r <> 1 then raise exception 'prospect/discovery backfill: expected 1 row, got %', r; end if;
 
   -- Clear Bossler's project_plan so phase=discovery default takes over.
   -- Scoped by slug to avoid clearing demo-client overrides (alpinvest, gruenwerk, …).
@@ -74,17 +78,40 @@ begin
 end $$;
 ```
 
-- [ ] **Step 2: Apply the migration to prod via Supabase MCP**
+- [ ] **Step 2: Snapshot Bossler's current `project_plan` for rollback**
+
+Before the migration clears Bossler's override, capture the exact JSON. Run via `mcp__plugin_supabase_supabase__execute_sql`:
+
+```sql
+select metadata->'project_plan' as project_plan
+  from public.clients where slug = 'bossler-most';
+```
+
+Paste the returned JSON into `docs/superpowers/plans/2026-04-18-phase-driven-timeline-rollback.md` under a heading "Bossler pre-migration project_plan snapshot". If the returned value is `null`, record `null` explicitly — still useful for rollback verification.
+
+This snapshot is the rollback anchor: if we need to undo, we restore this value via `UPDATE clients SET metadata = jsonb_set(metadata, '{project_plan}', '<snapshot>'::jsonb) WHERE slug='bossler-most'`. See Appendix A for the full rollback procedure.
+
+- [ ] **Step 3: Commit the migration file (before applying to prod)**
+
+```bash
+cd /Users/daniel/code/software-crafting-website
+git add supabase/migrations/20260418120000_client_status_phase.sql docs/superpowers/plans/2026-04-18-phase-driven-timeline-rollback.md
+git commit -m "feat(portal): add status + phase columns + clear discovery overrides"
+```
+
+Committing before applying ensures that if the MCP apply step fails or is interrupted, git history still matches what was attempted on prod.
+
+- [ ] **Step 4: Apply the migration to prod via Supabase MCP**
 
 Run via `mcp__plugin_supabase_supabase__apply_migration` with:
 - `name`: `client_status_phase`
 - `query`: contents of the file (copy from Step 1)
 
-Expected output: 3 `NOTICE` lines (2-row, 1-row, 1-row). No WARNINGs.
+Expected output: 3 `NOTICE` lines (2-row, 1-row, 1-row). No errors.
 
-If a `WARNING` appears ("expected X, got Y") — STOP. Investigate slug drift; do not proceed.
+If an `EXCEPTION` is raised ("expected X rows, got Y") — STOP. The transaction has aborted. Investigate slug drift (run `select slug, status from public.clients`) and either fix the slugs in prod or fix the migration file before re-applying.
 
-- [ ] **Step 3: Verify column state**
+- [ ] **Step 5: Verify column state**
 
 Run via `mcp__plugin_supabase_supabase__execute_sql`:
 ```sql
@@ -96,14 +123,6 @@ Expected rows (at minimum):
 - `arinya` → active, delivery, has_override=false (unless admin added one)
 - `bossler-most` → prospect, discovery, has_override=false
 - `gr8progress` → active, delivery, has_override=false
-
-- [ ] **Step 4: Commit the migration file**
-
-```bash
-cd /Users/daniel/code/software-crafting-website
-git add supabase/migrations/20260418120000_client_status_phase.sql
-git commit -m "feat(portal): add status + phase columns + clear discovery overrides"
-```
 
 ### Task 2: Regenerate types
 
@@ -161,6 +180,9 @@ Create `packages/portal/src/lib/dashboard-plan.ts` with this content (copied fro
 import type { Deliverable, DeliverableType, Form } from '@/lib/types';
 import { DELIVERABLE_TYPES, DELIVERABLE_LABELS } from '@/lib/types';
 
+export type StepStatus = 'completed' | 'ready' | 'in_progress' | 'upcoming';
+export type StepOwner = 'agency' | 'client' | 'both';
+
 export interface PlanStep {
   key: string;
   label?: string;
@@ -169,9 +191,6 @@ export interface PlanStep {
   description?: string;
   href?: string;
 }
-
-export type StepStatus = 'completed' | 'ready' | 'in_progress' | 'upcoming';
-export type StepOwner = 'agency' | 'client' | 'both';
 
 export interface ProjectStep {
   id: string;
@@ -388,11 +407,21 @@ describe('buildSteps (baseline)', () => {
 
 - [ ] **Step 3: Remove extracted code from Dashboard.tsx and import**
 
-In `packages/portal/src/components/portal/Dashboard.tsx`:
+In `packages/portal/src/components/portal/Dashboard.tsx`, delete by identifier (do NOT use line numbers — the file evolves):
 
-1. Delete lines 2-3 (old imports of `Deliverable`, `DeliverableType`, `Form`, `DELIVERABLE_TYPES`, `DELIVERABLE_LABELS`). The rendering code still needs `Deliverable` and `Form` for Props.
-2. Delete lines 9-229 (the `PlanStep`, `StepStatus`, `StepOwner`, `ProjectStep`, `StepMeta`, `STEP_META`, `getDefaultPlan`, `resolveLabel`, `buildSteps` definitions).
-3. Add near the top:
+1. **Remove** the existing top imports of `DeliverableType`, `DELIVERABLE_TYPES`, `DELIVERABLE_LABELS` (the rendering code still needs `Deliverable` and `Form` for the Props interface, so KEEP those).
+2. **Remove these definitions** (they are now in `dashboard-plan.ts`):
+   - `export interface PlanStep` block
+   - `type StepStatus` alias
+   - `type StepOwner` alias
+   - `interface ProjectStep` block
+   - `interface StepMeta` block
+   - `const STEP_META` object
+   - `function getDefaultPlan`
+   - `function resolveLabel`
+   - `function buildSteps`
+3. **KEEP** the `interface Props` block — Dashboard's default export still uses it. It's currently just after `PlanStep`; the `projectPlan?: PlanStep[] | null` field on Props will use the imported `PlanStep` type.
+4. **Add** near the top (replacing the removed imports):
 
 ```typescript
 import type { Deliverable, Form } from '@/lib/types';
@@ -406,11 +435,13 @@ import {
 } from '@/lib/dashboard-plan';
 ```
 
-4. Re-export `PlanStep` so `dashboard/page.tsx` import still works:
+5. **Re-export** `PlanStep` so `dashboard/page.tsx` import still works:
 
 ```typescript
 export type { PlanStep };
 ```
+
+**Verification after this step:** Run `grep -n "^export\|^interface\|^type\|^function\|^const STEP_META" packages/portal/src/components/portal/Dashboard.tsx`. You should see the `Props` interface still present but no definitions of `PlanStep`, `StepStatus`, `StepOwner`, `ProjectStep`, `StepMeta`, `STEP_META`, `getDefaultPlan`, `resolveLabel`, or `buildSteps`.
 
 - [ ] **Step 4: Run the baseline tests to verify behavior is unchanged**
 
@@ -470,6 +501,32 @@ describe('getDefaultPlan with phase', () => {
     expect(plan.map(s => s.key)).toEqual([
       'analysis', 'mood-board', 'brand-guide', 'website-preview', 'proposal',
     ]);
+  });
+});
+
+describe('override wins over phase (load-bearing invariant per spec §2a)', () => {
+  it('explicit projectPlan overrides phase=discovery default', () => {
+    const steps = buildSteps(
+      [{ key: 'analysis' }, { key: 'proposal' }],
+      [], 'f1', 'sent' as Form['status'], '', 'discovery'
+    );
+    expect(steps.map(s => s.id)).toEqual(['analysis', 'proposal']);
+    // Crucially: 'next-step' does NOT appear even though phase=discovery
+    expect(steps.find(s => s.id === 'next-step')).toBeUndefined();
+  });
+
+  it('explicit projectPlan overrides phase=delivery default', () => {
+    const steps = buildSteps(
+      [{ key: 'questionnaire' }, { key: 'proposal' }],
+      [], 'f1', 'completed' as Form['status'], '', 'delivery'
+    );
+    expect(steps.map(s => s.id)).toEqual(['questionnaire', 'proposal']);
+    // No analysis/mood-board/brand-guide/website-preview despite delivery default
+  });
+
+  it('empty explicit projectPlan renders zero steps regardless of phase', () => {
+    const steps = buildSteps([], [], 'f1', 'sent' as Form['status'], '', 'discovery');
+    expect(steps).toHaveLength(0);
   });
 });
 ```
@@ -551,6 +608,16 @@ describe('next-step row rendering', () => {
     expect(steps).toHaveLength(0);
   });
 
+  it('is hidden when form is draft (not yet sent)', () => {
+    const steps = run('f1', 'draft' as Form['status']);
+    expect(steps).toHaveLength(0);
+  });
+
+  it('is hidden when form is published (not yet sent)', () => {
+    const steps = run('f1', 'published' as Form['status']);
+    expect(steps).toHaveLength(0);
+  });
+
   it('is upcoming when form is sent, not started', () => {
     const steps = run('f1', 'sent' as Form['status']);
     expect(steps).toHaveLength(1);
@@ -594,6 +661,8 @@ Then branch on `isNextStep` BEFORE the existing `if (isQuestionnaire)`:
 if (isNextStep) {
   // Hide when no form exists — next-step only makes sense after a questionnaire was sent
   if (!questionnaireFormId) continue;
+  // Hide when form is still draft/published (not yet sent to the client) — next-step is a client-facing row
+  if (questionnaireStatus === 'draft' || questionnaireStatus === 'published') continue;
 
   const waitingCopy = 'Nach deinen Antworten melden wir uns mit einem Angebot.';
   const thanksCopy = 'Danke! Wir melden uns in 2–3 Tagen mit einem Angebot.';
@@ -798,19 +867,9 @@ if (status === 'also-ready') {
 }
 ```
 
-- [ ] **Step 4: Update `StatusPill` to handle `also-ready`**
+- [ ] **Step 4: Give `StatusSummary` a `phase` prop with phase-aware copy**
 
-After the `ready` branch in `StatusPill`, add:
-
-```typescript
-if (status === 'also-ready') {
-  return <Badge variant="outline" className="text-xs border-primary/40 text-primary/80">Auch offen</Badge>;
-}
-```
-
-(This pill is used by the `upcoming` rendering; `also-ready` has its own StepRow branch so it won't hit the pill, but keep the function total.)
-
-- [ ] **Step 5: Give `StatusSummary` a `phase` prop with phase-aware copy**
+(The old "Step 4: Update StatusPill" was removed — `also-ready` has its own StepRow branch and never reaches StatusPill, so adding an unreachable branch there was dead code. If totality checking is desired later, prefer a `never`-typed exhaustiveness guard inside StatusPill.)
 
 Replace the entire `StatusSummary` component:
 
@@ -881,7 +940,7 @@ function StatusSummary({
 }
 ```
 
-- [ ] **Step 6: Update the StatusSummary call site in Dashboard**
+- [ ] **Step 5: Update the StatusSummary call site in Dashboard**
 
 Replace:
 ```typescript
@@ -899,7 +958,7 @@ With:
 />
 ```
 
-- [ ] **Step 7: Type-check**
+- [ ] **Step 6: Type-check**
 
 ```bash
 cd packages/portal && pnpm type-check
@@ -933,8 +992,19 @@ const client = clientData as {
   phase: string;
 };
 
-// Narrow DB string to union — check constraint guarantees one of these two values.
-const phase: 'discovery' | 'delivery' = client.phase === 'delivery' ? 'delivery' : 'discovery';
+// Narrow DB string to union. Check constraint currently limits values to
+// 'discovery' | 'delivery', but we match each value explicitly so that any
+// future addition (e.g., 'paused-delivery') logs loudly instead of collapsing
+// silently to 'discovery'. Observable via server logs / Sentry.
+let phase: 'discovery' | 'delivery';
+if (client.phase === 'delivery') {
+  phase = 'delivery';
+} else if (client.phase === 'discovery') {
+  phase = 'discovery';
+} else {
+  console.warn(`unexpected client.phase "${client.phase}" for slug=${client.slug}; defaulting to discovery`);
+  phase = 'discovery';
+}
 
 const [delRes, formRes] = await Promise.all([
   supabase.from('deliverables').select('*').eq('client_id', client.id),
@@ -1159,3 +1229,50 @@ After all phases ship:
 - [ ] Flipping back to `discovery` collapses to questionnaire + next-step
 - [ ] `pnpm test` passes
 - [ ] `pnpm type-check` passes
+
+---
+
+## Appendix A: Rollback Procedure
+
+Use this procedure if Phase 2 is abandoned or the new dashboard rendering causes a visible regression that cannot be patched forward.
+
+### Prerequisites
+
+- The snapshot file `docs/superpowers/plans/2026-04-18-phase-driven-timeline-rollback.md` must exist (produced in Phase 1 Task 1 Step 2). If missing, Bossler's `project_plan` cannot be restored without reconstructing it manually.
+
+### Steps
+
+1. **Restore Bossler's `project_plan`:**
+
+```sql
+-- Replace <SNAPSHOT_JSON> with the JSON value recorded in the snapshot file.
+-- If the snapshot recorded `null`, use: set metadata = metadata - 'project_plan'
+update public.clients
+  set metadata = jsonb_set(metadata, '{project_plan}', '<SNAPSHOT_JSON>'::jsonb)
+  where slug = 'bossler-most';
+```
+
+2. **Revert the portal code** (if Phase 2 was already merged): `git revert <phase-2-commit-sha>` and redeploy.
+
+3. **Drop the new columns** (optional — leave them if you plan to retry):
+
+```sql
+alter table public.clients
+  drop column if exists phase,
+  drop column if exists status;
+```
+
+4. **Verify:**
+
+```sql
+select slug, metadata ? 'project_plan' as has_override, column_name
+  from public.clients
+  left join information_schema.columns
+    on table_schema='public' and table_name='clients' and column_name in ('phase','status')
+  where slug = 'bossler-most'
+  group by slug, has_override, column_name;
+```
+
+### Why the snapshot matters
+
+Bossler's `project_plan` was admin-curated (includes custom `security-review`, `website-preview: Landingpage-Vorschau`, etc.). Reconstructing it from memory is lossy. The Step 2 snapshot is the only authoritative copy.
