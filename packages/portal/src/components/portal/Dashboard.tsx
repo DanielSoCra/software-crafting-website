@@ -218,13 +218,11 @@ function StepRow({ step }: { step: ProjectStep }) {
 
 function StatusSummary({
   steps,
-  completedCount,
   isFirstVisit,
   phase,
   questionnaireStatus,
 }: {
   steps: ProjectStep[];
-  completedCount: number;
   isFirstVisit: boolean;
   phase: 'discovery' | 'delivery';
   questionnaireStatus: Form['status'] | null;
@@ -318,7 +316,6 @@ export default function Dashboard({
       <div className="mb-6">
         <StatusSummary
           steps={steps}
-          completedCount={completedCount}
           isFirstVisit={isFirstVisit}
           phase={phase}
           questionnaireStatus={questionnaireStatus}

@@ -24,7 +24,7 @@ packages/
 
 ## Portal: Client Dashboard
 
-The client dashboard (`/portal/dashboard`) shows a **vertical timeline** of project steps. Each step has a status: `completed`, `ready`, `in_progress`, or `upcoming`.
+The client dashboard (`/portal/dashboard`) shows a **vertical timeline** of project steps. Each step has a status: `completed`, `ready`, `in_progress`, `upcoming`, or `also-ready` (see multi-ready hierarchy below). The dashboard also branches on a `phase` field on the client row — see "Phase-Driven Rendering" below.
 
 ### Per-Client Project Plan
 
@@ -37,7 +37,7 @@ interface PlanStep {
   key: string;              // deliverable type, 'questionnaire', or custom key
   label?: string;           // override default label (e.g. "Landingpage-Vorschau" instead of "Website-Vorschau")
   icon?: string;            // override default icon emoji
-  status?: StepStatus;      // for CUSTOM steps only: 'completed' | 'ready' | 'in_progress' | 'upcoming'
+  status?: StepStatus;      // for CUSTOM steps only: 'completed' | 'ready' | 'in_progress' | 'upcoming' | 'also-ready'
   description?: string;     // override auto-generated description text
   href?: string;            // for custom steps: link target
 }
@@ -48,8 +48,10 @@ interface PlanStep {
 - `key` matches a deliverable type (`analysis`, `mood-board`, `brand-guide`, `website-preview`, `proposal`) → auto-detected from `deliverables` table (published/viewed)
 - Custom key (anything else) → uses `status` from the plan entry (default: `upcoming`)
 - Auto-inferred `in_progress`: the first `upcoming` step after a `completed` step gets promoted
+- **Multi-ready demotion:** when multiple steps would be `ready`, only the first stays `ready`; subsequent ones become `also-ready` (quiet "Auch schon offen: X →" row rather than an emphasized card). Applied after the `in_progress` auto-infer.
+- **Synthetic `next-step` row:** the key `'next-step'` is NOT in `deliverables` — it's a discovery-phase-only placeholder. Hidden when no form exists or form is draft/published; `upcoming` when sent/in_progress; `in_progress` (no CTA) when completed. It locks out auto-infer, so it never gets promoted by other rules.
 
-**Example plan (bossler-most):**
+**Example plan (historical, bossler-most pre-2026-04-19 migration — retained as a schema reference):**
 ```json
 {
   "project_plan": [
@@ -65,6 +67,8 @@ interface PlanStep {
 ```
 
 **No plan → default pipeline:** questionnaire (if form exists) → analysis → mood-board → brand-guide → website-preview → proposal.
+
+**Phase-driven default plan:** `clients.phase` (either `'discovery'` or `'delivery'`) changes the default plan when `project_plan` is null. Discovery renders `[questionnaire, next-step]` (minimum-viable pre-contract UX — no delivery steps shown). Delivery renders the full pipeline above. An explicit `project_plan` always wins over the phase default. See the spec at `docs/superpowers/specs/2026-04-16-phase-driven-timeline-design.md` and the agency repo's `CLAUDE.md` "Client Lifecycle" section for transitions.
 
 ### Deliverable Types
 
